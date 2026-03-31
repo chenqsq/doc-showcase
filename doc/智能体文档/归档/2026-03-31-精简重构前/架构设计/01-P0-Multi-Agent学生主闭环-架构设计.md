@@ -16,7 +16,7 @@
 5. P0 知识库、变量与记忆流转图
 6. P0 运行流程图
 7. P0 发布与访问图
-8. P0 模型绑定
+8. P0 异常兜底图
 9. 组件职责表
 10. 验收与演示建议
 11. 官方依据
@@ -93,13 +93,13 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    A["学生请求"] --> B["主控智能体"]
-    B --> C["诊断智能体"]
-    C --> D["讲解智能体"]
-    D --> E["练习测评智能体"]
+    A["学生请求"] --> B["TeacherOrchestrator"]
+    B --> C["DiagnosisAgent"]
+    C --> D["ExplanationAgent"]
+    D --> E["PracticeEvalAgent"]
     E --> F{"是否达标"}
     F -->|否| D
-    F -->|是| G["复盘计划智能体"]
+    F -->|是| G["ReviewPlanAgent"]
     G --> H["主控汇总并回复学生"]
 ```
 
@@ -194,37 +194,26 @@ flowchart LR
 
 ---
 
-## 8. P0 模型绑定
+## 8. P0 异常兜底图（图 6）
 
-| Agent | 推荐模型 | 输入 | 输出 |
-| --- | --- | --- | --- |
-| `TeacherOrchestrator` | `Tencent HY 2.0 Think` | 学生问题、上下文、变量、子 Agent 结果 | 调度决策、最终回复 |
-| `DiagnosisAgent` | `DeepSeek-R1-0528` | 问题、课程标签、历史记录 | 学习阶段、卡点、建议路径 |
-| `ExplanationAgent` | `Tencent HY 2.0 Instruct` | 诊断结果、知识库片段 | 分层讲解、步骤、例子 |
-| `PracticeEvalAgent` | `DeepSeek-V3.2` | 讲解结果、题库、学生作答 | 练习题、评分、达标判断 |
-| `ReviewPlanAgent` | `DeepSeek-R1-0528` | 错题、评分、知识点标签 | 错因归因、学习计划 |
+```mermaid
+flowchart TD
+    A["主链路执行中"] --> B{"异常类型"}
+    B -->|低置信| C["降级为保守讲解 + 引导澄清"]
+    B -->|检索不足| D["回退基础知识包 + 提示补充资料"]
+    B -->|节点超时| E["工作流异常处理 / 重试"]
+    B -->|整体不稳| F["退回 Standard 保底路线"]
+    C --> G["保留主闭环"]
+    D --> G
+    E --> G
+    F --> H["保留知识库 + 发布入口"]
+```
 
-结论：
+这张图想说明什么：
 
-- `P0` 主链路固定用 `混元 + DeepSeek`
-- 不引入 `TeacherOpsAgent`
-- 不引入 `Kimi`
-
-### 8.1 P0 高等数学 RAG 策略
-
-| 项 | 配置 |
-| --- | --- |
-| 科目 | `高等数学` |
-| 当前章节 | `极限` |
-| 知识源 | 教材、讲义、PPT、题库、典型错题 |
-| 标签边界 | `course_id=高等数学`、`chapter_id=极限`、`role=student` |
-| 检索策略 | 先按课程，再按章节，再按角色 |
-
-说明：
-
-- 主线使用 ADP 自带知识库能力
-- 不自建 `pgvector`
-- 命中不足时提示补充资料或切换章节
+- P0 不是只设计成功路径，也要设计失败路径。
+- 只要异常不致命，优先保持学生主闭环不中断。
+- 如果主链路稳定性不够，允许退回 `Standard` 保住演示。
 
 ---
 
@@ -282,3 +271,4 @@ flowchart LR
   https://cloud.tencent.com/document/product/1759/122458
 - 《应用发布概述》  
   https://cloud.tencent.com/document/product/1759/104209
+
