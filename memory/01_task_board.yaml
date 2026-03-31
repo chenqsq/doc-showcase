@@ -1,13 +1,13 @@
 meta:
-  project: "课堂知识重构与自适应伴学智能体（AI教师版）"
+  project: "AI主导学习平台（内含AI教师子引擎）"
   timezone: "Asia/Shanghai"
   source_of_truth: "LOCAL_FILES"
   runtime_memory: "TENCENT_ADP_LONG_TERM_MEMORY"
   tracking_mode: "FR_AC_DUAL_LAYER"
   delivery_focus: "P0_FIRST"
-  current_checkpoint_id: "CP-20260321-1746-05"
-  checkpoint_sequence_today: 5
-  last_updated_at: "2026-03-21T17:46:00+08:00"
+  current_checkpoint_id: "CP-20260331-2200-06"
+  checkpoint_sequence_today: 6
+  last_updated_at: "2026-03-31T22:00:00+08:00"
   task_id_rule:
     mode: "AUTO_BY_CODEX"
     internal_task_id_pattern: "AUTO-{checkpoint_id}-{NN}"

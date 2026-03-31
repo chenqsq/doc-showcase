@@ -2,7 +2,7 @@
 
 - 索引版本：v1.2
 - 时区：`Asia/Shanghai`
-- 当前 checkpoint：`CP-20260321-1746-05`
+- 当前 checkpoint：`CP-20260331-2200-06`
 
 ## 1. 证据字段规范
 
@@ -33,6 +33,7 @@
 | EVD-20260321-002 | CP-20260321-1719-03 | FR-00 | N/A | LOCAL_NOTE | N/A | AUTO-CP-20260321-1719-03-01 | auto | N/A | task-id-rule-clarified | 明确 task_id 优先使用 ADP 实际执行 ID，无则本地生成 | "" |
 | EVD-20260321-003 | CP-20260321-1724-04 | FR-00 | N/A | LOCAL_NOTE | N/A | AUTO-CP-20260321-1724-04-01 | auto | N/A | protocol-v1p1-auto-id | 证据协议升级为用户免填 task_id，系统自动生成 internal_task_id | "" |
 | EVD-20260321-004 | CP-20260321-1746-05 | FR-00 | N/A | LOCAL_NOTE | N/A | AUTO-CP-20260321-1746-05-01 | auto | N/A | protocol-v1p2-remark | 证据协议升级新增备注字段，便于记录用户遇到的麻烦 | "新增可选备注字段" |
+| EVD-20260331-005 | CP-20260331-2200-06 | FR-00 | N/A | LOCAL_NOTE | N/A | AUTO-CP-20260331-2200-06-01 | auto | N/A | doc-system-platform-refactor | 文档体系完成平台主导重构，AI教师降级为子引擎 | "更新目录结构与交接口径" |
 
 ## 3. 待补证据队列
 
