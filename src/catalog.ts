@@ -200,6 +200,7 @@ function buildCatalog(): CatalogItem[] {
 export const catalog = buildCatalog();
 export const catalogById = new Map(catalog.map((item) => [item.id, item]));
 export const catalogByPath = new Map(catalog.map((item) => [item.relativePath, item]));
+export const navigableCatalog = catalog.filter((item) => item.type !== 'image');
 
 export const featuredResources = FEATURED_PATHS.map((path) => catalogByPath.get(path)).filter(
   (item): item is CatalogItem => Boolean(item)
@@ -212,8 +213,7 @@ export const topLevelLayers: Layer[] = [
   '交付层',
   '归档',
   '比赛资料',
-  '腾讯平台资料',
-  '图像资源'
+  '腾讯平台资料'
 ];
 
 export function makeHeadingId(text: string, occurrence: number): string {
@@ -280,8 +280,12 @@ export function getRelatedResources(item: CatalogItem): CatalogItem[] {
 }
 
 export function getImageResourcesForItem(item: CatalogItem): CatalogItem[] {
-  if (item.group === '高等数学' || item.relativePath.includes('高等数学')) {
+  if (
+    item.group === '高等数学' ||
+    item.relativePath.includes('高等数学') ||
+    item.rawText?.includes('高等数学')
+  ) {
     return catalog.filter((candidate) => candidate.layer === '图像资源' && candidate.group === '高等数学');
   }
-  return catalog.filter((candidate) => candidate.layer === '图像资源').slice(0, 6);
+  return [];
 }

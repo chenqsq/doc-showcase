@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="700" viewBox="0 0 960 700" role="img" aria-labelledby="title desc">
   <title id="title">函数图像示例：y = 1/x</title>
   <desc id="desc">一条双曲线，x 等于 0 时无定义，图像分成左右两支并靠近坐标轴。</desc>
-  <rect width="960" height="640" fill="#fcfcfa"/>
+  <rect width="960" height="700" fill="#fcfcfa"/>
   <rect x="70" y="70" width="820" height="470" rx="18" fill="#ffffff" stroke="#d8d8d8"/>
   <g stroke="#ececec" stroke-width="1">
     <line x1="150" y1="110" x2="150" y2="500"/>
@@ -48,6 +48,6 @@
     <text x="575" y="565">点 C：(1, 1)</text>
     <text x="665" y="595">点 D：(2, 0.5)</text>
   </g>
-  <rect x="110" y="585" width="740" height="34" rx="10" fill="#f6efdc" stroke="#d9c8a0"/>
-  <text x="130" y="608" fill="#5a4b1f" font-family="Microsoft YaHei, SimHei, Arial, sans-serif" font-size="20">读图提示：x = 0 处无定义，图像会靠近坐标轴，但不会在中间连起来。</text>
+  <rect x="110" y="630" width="740" height="34" rx="10" fill="#f6efdc" stroke="#d9c8a0"/>
+  <text x="130" y="653" fill="#5a4b1f" font-family="Microsoft YaHei, SimHei, Arial, sans-serif" font-size="20">读图提示：x = 0 处无定义，图像会靠近坐标轴，但不会在中间连起来。</text>
 </svg>
