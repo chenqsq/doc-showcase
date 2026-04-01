@@ -571,6 +571,21 @@ img {
   margin-bottom: 12px;
 }
 
+.mermaid-toolbar .inline-figure-zoom {
+  color: var(--accent-600);
+  background: rgba(177, 74, 61, 0.08);
+  border-color: rgba(177, 74, 61, 0.28);
+  font-weight: 600;
+}
+
+.mermaid-toolbar .inline-figure-zoom:disabled {
+  color: rgba(109, 106, 99, 0.7);
+  border-color: rgba(109, 106, 99, 0.18);
+  background: rgba(109, 106, 99, 0.06);
+  cursor: default;
+  transform: none;
+}
+
 .mermaid-stage {
   width: 100%;
   padding: 0;
@@ -808,10 +823,16 @@ img {
 }
 
 @media (min-width: 901px) {
+  .app-shell {
+    padding-top: calc(var(--shell-padding, 20px) + var(--header-height, 100px));
+  }
+
   .app-header {
-    position: sticky;
+    position: fixed;
     top: var(--shell-padding, 20px);
-    z-index: 60;
+    left: var(--shell-padding, 20px);
+    right: var(--shell-padding, 20px);
+    z-index: 80;
   }
 
   .frame-grid--reader {
