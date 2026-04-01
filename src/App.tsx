@@ -28,6 +28,7 @@ import type { CatalogItem, Layer, LightboxState } from './types';
 
 const RECENT_KEY = 'doc-showcase-recent';
 const HEADER_FALLBACK_HEIGHT = 100;
+type MobilePanel = 'closed' | 'catalog' | 'context' | 'appearance';
 
 type ShellStyle = CSSProperties & {
   [key: `--${string}`]: string;
@@ -53,8 +54,7 @@ function writeRecentIds(ids: string[]) {
 function App() {
   const [search, setSearch] = useState('');
   const [layerFilter, setLayerFilter] = useState<Layer | '全部'>('全部');
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [mobileAsideOpen, setMobileAsideOpen] = useState(false);
+  const [mobilePanel, setMobilePanel] = useState<MobilePanel>('closed');
   const [lightbox, setLightbox] = useState<LightboxState | null>(null);
   const [recentIds, setRecentIds] = useState<string[]>(() => readRecentIds());
   const [appearance, setAppearance] = useState<AppearanceState>(() => readAppearance());
@@ -62,10 +62,11 @@ function App() {
   const [headerCompressed, setHeaderCompressed] = useState(false);
   const headerRef = useRef<HTMLElement | null>(null);
   const location = useLocation();
+  const isReaderRoute = location.pathname.startsWith('/read/');
+  const isLibraryRoute = location.pathname === '/library';
 
   useEffect(() => {
-    setMobileNavOpen(false);
-    setMobileAsideOpen(false);
+    setMobilePanel('closed');
   }, [location.pathname]);
 
   useEffect(() => {
@@ -106,6 +107,31 @@ function App() {
     writeAppearance(appearance);
   }, [appearance]);
 
+  useEffect(() => {
+    if (mobilePanel === 'closed') {
+      return;
+    }
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobilePanel('closed');
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [mobilePanel]);
+
   const filteredCatalog = useMemo(
     () => searchCatalog(navigableCatalog, search, layerFilter),
     [search, layerFilter]
@@ -138,17 +164,36 @@ function App() {
     [appearance, headerHeight]
   );
 
+  const toggleMobilePanel = useCallback((panel: Exclude<MobilePanel, 'closed'>) => {
+    setMobilePanel((current) => (current === panel ? 'closed' : panel));
+  }, []);
+
+  const closeMobilePanel = useCallback(() => {
+    setMobilePanel('closed');
+  }, []);
+
+  const mobileContextButtonLabel = isReaderRoute ? '大纲' : isLibraryRoute ? '信息' : '精选';
+  const mobileContextPanelLabel = isReaderRoute ? '文档大纲' : isLibraryRoute ? '资料信息' : '推荐阅读';
+  const mobileAppearancePanel = (
+    <AppearanceControl
+      renderVariant="panel"
+      appearance={appearance}
+      onThemeChange={(themeId) => setAppearance((current) => ({ ...current, themeId }))}
+      onFontScaleChange={(fontScale) => setAppearance((current) => ({ ...current, fontScale }))}
+    />
+  );
+
   return (
-    <div className="app-shell" style={shellStyle}>
+    <div className={`app-shell ${mobilePanel !== 'closed' ? 'has-mobile-panel' : ''}`.trim()} style={shellStyle}>
       <header ref={headerRef} className={`app-header ${headerCompressed ? 'is-scrolled' : ''}`.trim()}>
-        <div>
+        <div className="header-brand">
           <div className="section-kicker">Archive Showcase</div>
           <h1>AI 主导学习平台文档展台</h1>
         </div>
         <div className="header-actions">
           <nav className="top-nav">
-          <NavLink to="/">总览</NavLink>
-          <NavLink to="/library">资料库</NavLink>
+            <NavLink to="/">总览</NavLink>
+            <NavLink to="/library">资料库</NavLink>
           </nav>
           <AppearanceControl
             className="appearance-control--desktop"
@@ -157,19 +202,34 @@ function App() {
             onFontScaleChange={(fontScale) => setAppearance((current) => ({ ...current, fontScale }))}
           />
         </div>
+        <nav className="mobile-top-nav">
+          <NavLink to="/">总览</NavLink>
+          <NavLink to="/library">资料库</NavLink>
+        </nav>
         <div className="mobile-actions">
-          <AppearanceControl
-            className="appearance-control--mobile"
-            compact
-            appearance={appearance}
-            onThemeChange={(themeId) => setAppearance((current) => ({ ...current, themeId }))}
-            onFontScaleChange={(fontScale) => setAppearance((current) => ({ ...current, fontScale }))}
-          />
-          <button type="button" onClick={() => setMobileNavOpen((value) => !value)}>
+          <button
+            type="button"
+            className={mobilePanel === 'catalog' ? 'is-active' : ''}
+            aria-expanded={mobilePanel === 'catalog'}
+            onClick={() => toggleMobilePanel('catalog')}
+          >
             目录
           </button>
-          <button type="button" onClick={() => setMobileAsideOpen((value) => !value)}>
-            侧栏
+          <button
+            type="button"
+            className={mobilePanel === 'context' ? 'is-active' : ''}
+            aria-expanded={mobilePanel === 'context'}
+            onClick={() => toggleMobilePanel('context')}
+          >
+            {mobileContextButtonLabel}
+          </button>
+          <button
+            type="button"
+            className={mobilePanel === 'appearance' ? 'is-active' : ''}
+            aria-expanded={mobilePanel === 'appearance'}
+            onClick={() => toggleMobilePanel('appearance')}
+          >
+            外观
           </button>
         </div>
       </header>
@@ -187,11 +247,14 @@ function App() {
                   layerFilter={layerFilter}
                   onLayerChange={setLayerFilter}
                   items={filteredCatalog}
+                  onLinkSelect={closeMobilePanel}
                 />
               }
-              right={<HomeAside recentItems={recentItems} />}
-              mobileNavOpen={mobileNavOpen}
-              mobileAsideOpen={mobileAsideOpen}
+              right={<HomeAside recentItems={recentItems} onLinkSelect={closeMobilePanel} />}
+              mobilePanel={mobilePanel}
+              onCloseMobilePanel={closeMobilePanel}
+              mobileAppearance={mobileAppearancePanel}
+              mobileContextLabel={mobileContextPanelLabel}
             >
               <HomePage recentItems={recentItems} onZoom={setLightbox} />
             </Frame>
@@ -209,11 +272,14 @@ function App() {
                   layerFilter={layerFilter}
                   onLayerChange={setLayerFilter}
                   items={filteredCatalog}
+                  onLinkSelect={closeMobilePanel}
                 />
               }
               right={<LibraryAside filteredCatalog={filteredCatalog} />}
-              mobileNavOpen={mobileNavOpen}
-              mobileAsideOpen={mobileAsideOpen}
+              mobilePanel={mobilePanel}
+              onCloseMobilePanel={closeMobilePanel}
+              mobileAppearance={mobileAppearancePanel}
+              mobileContextLabel={mobileContextPanelLabel}
             >
               <LibraryPage items={filteredCatalog} onZoom={setLightbox} />
             </Frame>
@@ -230,8 +296,10 @@ function App() {
               items={filteredCatalog}
               rememberResource={rememberResource}
               onZoom={setLightbox}
-              mobileNavOpen={mobileNavOpen}
-              mobileAsideOpen={mobileAsideOpen}
+              mobilePanel={mobilePanel}
+              onCloseMobilePanel={closeMobilePanel}
+              mobileAppearance={mobileAppearancePanel}
+              mobileContextLabel={mobileContextPanelLabel}
               themeId={appearance.themeId}
             />
           }
@@ -249,6 +317,9 @@ interface AppearanceControlProps {
   onFontScaleChange: (fontScale: FontScaleId) => void;
   compact?: boolean;
   className?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  renderVariant?: 'popover' | 'panel';
 }
 
 function AppearanceControl({
@@ -256,19 +327,36 @@ function AppearanceControl({
   onThemeChange,
   onFontScaleChange,
   compact = false,
-  className = ''
+  className = '',
+  open,
+  onOpenChange,
+  renderVariant = 'popover'
 }: AppearanceControlProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const location = useLocation();
   const activeTheme = getThemePreset(appearance.themeId);
+  const isControlled = typeof open === 'boolean';
+  const isOpen = renderVariant === 'panel' ? true : isControlled ? open : internalOpen;
+
+  const setOpen = useCallback(
+    (next: boolean) => {
+      if (!isControlled) {
+        setInternalOpen(next);
+      }
+      onOpenChange?.(next);
+    },
+    [isControlled, onOpenChange]
+  );
 
   useEffect(() => {
-    setOpen(false);
-  }, [location.pathname]);
+    if (renderVariant === 'popover' && !isControlled) {
+      setInternalOpen(false);
+    }
+  }, [isControlled, location.pathname, renderVariant]);
 
   useEffect(() => {
-    if (!open) {
+    if (renderVariant !== 'popover' || !isOpen) {
       return;
     }
 
@@ -290,78 +378,84 @@ function AppearanceControl({
       window.removeEventListener('mousedown', handlePointerDown);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open]);
+  }, [isOpen, renderVariant, setOpen]);
+
+  const panelContent = (
+    <div className={`appearance-popover ${renderVariant === 'panel' ? 'appearance-popover--panel' : ''}`.trim()}>
+      <div className="appearance-popover-header">
+        <div className="section-kicker">Reading Setup</div>
+        <h3>阅读外观</h3>
+        <p>切换护眼底色和阅读字号，首页、资料库和阅读页会保持一致。</p>
+      </div>
+
+      <div className="appearance-section">
+        <div className="appearance-section-head">
+          <strong>护眼背景</strong>
+          <span>{activeTheme.tone}</span>
+        </div>
+        <div className="theme-grid">
+          {THEME_PRESETS.map((theme) => (
+            <button
+              key={theme.id}
+              type="button"
+              className={`theme-option ${appearance.themeId === theme.id ? 'is-active' : ''}`.trim()}
+              onClick={() => onThemeChange(theme.id)}
+              aria-pressed={appearance.themeId === theme.id}
+            >
+              <span className="theme-option-swatches">
+                {theme.swatches.map((color) => (
+                  <span key={color} style={{ background: color }} />
+                ))}
+              </span>
+              <span className="theme-option-copy">
+                <strong>{theme.label}</strong>
+                <small>{theme.tone}</small>
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="appearance-section">
+        <div className="appearance-section-head">
+          <strong>正文字号</strong>
+          <span>{FONT_SCALE_PRESETS.find((item) => item.id === appearance.fontScale)?.hint}</span>
+        </div>
+        <div className="font-scale-row">
+          {FONT_SCALE_PRESETS.map((scale) => (
+            <button
+              key={scale.id}
+              type="button"
+              className={`font-scale-option ${appearance.fontScale === scale.id ? 'is-active' : ''}`.trim()}
+              onClick={() => onFontScaleChange(scale.id)}
+              aria-pressed={appearance.fontScale === scale.id}
+            >
+              <strong>{scale.label}</strong>
+              <span>{scale.hint}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (renderVariant === 'panel') {
+    return <div className={`appearance-control ${className}`.trim()}>{panelContent}</div>;
+  }
 
   return (
     <div ref={rootRef} className={`appearance-control ${className}`.trim()}>
       <button
         type="button"
-        className={`appearance-trigger ${open ? 'is-open' : ''}`.trim()}
-        onClick={() => setOpen((current) => !current)}
-        aria-expanded={open}
+        className={`appearance-trigger ${isOpen ? 'is-open' : ''}`.trim()}
+        onClick={() => setOpen(!isOpen)}
+        aria-expanded={isOpen}
       >
         <span className="appearance-trigger-dot" />
         <span>{compact ? '外观' : `阅读外观 · ${activeTheme.label}`}</span>
       </button>
 
-      {open ? (
-        <div className="appearance-popover">
-          <div className="appearance-popover-header">
-            <div className="section-kicker">Reading Setup</div>
-            <h3>阅读外观</h3>
-            <p>切换护眼底色和阅读字号，首页、资料库和阅读页会保持一致。</p>
-          </div>
-
-          <div className="appearance-section">
-            <div className="appearance-section-head">
-              <strong>护眼背景</strong>
-              <span>{activeTheme.tone}</span>
-            </div>
-            <div className="theme-grid">
-              {THEME_PRESETS.map((theme) => (
-                <button
-                  key={theme.id}
-                  type="button"
-                  className={`theme-option ${appearance.themeId === theme.id ? 'is-active' : ''}`.trim()}
-                  onClick={() => onThemeChange(theme.id)}
-                  aria-pressed={appearance.themeId === theme.id}
-                >
-                  <span className="theme-option-swatches">
-                    {theme.swatches.map((color) => (
-                      <span key={color} style={{ background: color }} />
-                    ))}
-                  </span>
-                  <span className="theme-option-copy">
-                    <strong>{theme.label}</strong>
-                    <small>{theme.tone}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="appearance-section">
-            <div className="appearance-section-head">
-              <strong>正文字号</strong>
-              <span>{FONT_SCALE_PRESETS.find((item) => item.id === appearance.fontScale)?.hint}</span>
-            </div>
-            <div className="font-scale-row">
-              {FONT_SCALE_PRESETS.map((scale) => (
-                <button
-                  key={scale.id}
-                  type="button"
-                  className={`font-scale-option ${appearance.fontScale === scale.id ? 'is-active' : ''}`.trim()}
-                  onClick={() => onFontScaleChange(scale.id)}
-                  aria-pressed={appearance.fontScale === scale.id}
-                >
-                  <strong>{scale.label}</strong>
-                  <span>{scale.hint}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {isOpen ? panelContent : null}
     </div>
   );
 }
@@ -370,18 +464,52 @@ interface FrameProps {
   left: ReactNode;
   children: ReactNode;
   right: ReactNode;
-  mobileNavOpen: boolean;
-  mobileAsideOpen: boolean;
+  mobilePanel: MobilePanel;
+  onCloseMobilePanel: () => void;
+  mobileAppearance: ReactNode;
+  mobileContextLabel: string;
   mode?: 'default' | 'reader';
 }
 
-function Frame({ left, children, right, mobileNavOpen, mobileAsideOpen, mode = 'default' }: FrameProps) {
+function Frame({
+  left,
+  children,
+  right,
+  mobilePanel,
+  onCloseMobilePanel,
+  mobileAppearance,
+  mobileContextLabel,
+  mode = 'default'
+}: FrameProps) {
+  const mobileContent =
+    mobilePanel === 'catalog' ? left : mobilePanel === 'context' ? right : mobilePanel === 'appearance' ? mobileAppearance : null;
+
   return (
-    <div className={`frame-grid ${mode === 'reader' ? 'frame-grid--reader' : ''}`.trim()}>
-      <aside className={`frame-left ${mobileNavOpen ? 'is-open' : ''}`}>{left}</aside>
-      <main className="frame-main">{children}</main>
-      <aside className={`frame-right ${mobileAsideOpen ? 'is-open' : ''}`}>{right}</aside>
-    </div>
+    <>
+      <div className={`frame-grid ${mode === 'reader' ? 'frame-grid--reader' : ''}`.trim()}>
+        <aside className="frame-left">{left}</aside>
+        <main className="frame-main">{children}</main>
+        <aside className="frame-right">{right}</aside>
+      </div>
+
+      {mobilePanel !== 'closed' && mobileContent ? (
+        <>
+          <button type="button" className="mobile-panel-backdrop" aria-label="关闭面板" onClick={onCloseMobilePanel} />
+          <section
+            className="mobile-panel-shell"
+            data-panel={mobilePanel}
+            role="dialog"
+            aria-modal="true"
+            aria-label={mobilePanel === 'catalog' ? '资料目录' : mobilePanel === 'appearance' ? '阅读外观' : mobileContextLabel}
+          >
+            <button type="button" className="mobile-panel-close" onClick={onCloseMobilePanel}>
+              关闭
+            </button>
+            <div className="mobile-panel-scroll">{mobileContent}</div>
+          </section>
+        </>
+      ) : null}
+    </>
   );
 }
 
@@ -392,6 +520,7 @@ interface CatalogSidebarProps {
   layerFilter: Layer | '全部';
   onLayerChange: (value: Layer | '全部') => void;
   items: CatalogItem[];
+  onLinkSelect?: () => void;
 }
 
 function CatalogSidebar({
@@ -400,7 +529,8 @@ function CatalogSidebar({
   onSearchChange,
   layerFilter,
   onLayerChange,
-  items
+  items,
+  onLinkSelect
 }: CatalogSidebarProps) {
   const grouped = useMemo(
     () =>
@@ -458,6 +588,7 @@ function CatalogSidebar({
                   key={item.id}
                   className={`tree-item ${activeId === item.id ? 'is-active' : ''}`}
                   to={`/read/${item.id}`}
+                  onClick={onLinkSelect}
                 >
                   <span>{item.title}</span>
                   <small>{item.group}</small>
@@ -471,7 +602,7 @@ function CatalogSidebar({
   );
 }
 
-function HomeAside({ recentItems }: { recentItems: CatalogItem[] }) {
+function HomeAside({ recentItems, onLinkSelect }: { recentItems: CatalogItem[]; onLinkSelect?: () => void }) {
   return (
     <div className="aside-panel">
       <div className="panel-header">
@@ -480,7 +611,7 @@ function HomeAside({ recentItems }: { recentItems: CatalogItem[] }) {
       </div>
       <div className="aside-list">
         {featuredResources.map((item) => (
-          <Link key={item.id} className="aside-link" to={`/read/${item.id}`}>
+          <Link key={item.id} className="aside-link" to={`/read/${item.id}`} onClick={onLinkSelect}>
             <strong>{item.title}</strong>
             <span>{item.layer}</span>
           </Link>
@@ -493,7 +624,7 @@ function HomeAside({ recentItems }: { recentItems: CatalogItem[] }) {
       <div className="aside-list">
         {recentItems.length ? (
           recentItems.map((item) => (
-            <Link key={item.id} className="aside-link" to={`/read/${item.id}`}>
+            <Link key={item.id} className="aside-link" to={`/read/${item.id}`} onClick={onLinkSelect}>
               <strong>{item.title}</strong>
               <span>{item.relativePath}</span>
             </Link>
@@ -655,8 +786,10 @@ interface ReaderRouteProps {
   items: CatalogItem[];
   rememberResource: (item: CatalogItem) => void;
   onZoom: (lightbox: LightboxState) => void;
-  mobileNavOpen: boolean;
-  mobileAsideOpen: boolean;
+  mobilePanel: MobilePanel;
+  onCloseMobilePanel: () => void;
+  mobileAppearance: ReactNode;
+  mobileContextLabel: string;
   themeId: ThemeId;
 }
 
@@ -693,11 +826,23 @@ function ReaderRoute(props: ReaderRouteProps) {
           layerFilter={props.layerFilter}
           onLayerChange={props.onLayerChange}
           items={props.items}
+          onLinkSelect={props.onCloseMobilePanel}
         />
       }
-      right={<ReaderAside item={item} outline={outline} related={related} images={images} onZoom={props.onZoom} />}
-      mobileNavOpen={props.mobileNavOpen}
-      mobileAsideOpen={props.mobileAsideOpen}
+      right={
+        <ReaderAside
+          item={item}
+          outline={outline}
+          related={related}
+          images={images}
+          onZoom={props.onZoom}
+          onLinkSelect={props.onCloseMobilePanel}
+        />
+      }
+      mobilePanel={props.mobilePanel}
+      onCloseMobilePanel={props.onCloseMobilePanel}
+      mobileAppearance={props.mobileAppearance}
+      mobileContextLabel={props.mobileContextLabel}
     >
       <ReaderPage key={item.id} item={item} onZoom={props.onZoom} themeId={props.themeId} />
     </Frame>
@@ -709,13 +854,15 @@ function ReaderAside({
   outline,
   related,
   images,
-  onZoom
+  onZoom,
+  onLinkSelect
 }: {
   item: CatalogItem;
   outline: ReturnType<typeof extractOutline>;
   related: CatalogItem[];
   images: CatalogItem[];
   onZoom: (lightbox: LightboxState) => void;
+  onLinkSelect?: () => void;
 }) {
   return (
     <div className="aside-panel">
@@ -750,7 +897,10 @@ function ReaderAside({
                 key={entry.id}
                 type="button"
                 className={`outline-link level-${entry.level}`}
-                onClick={() => document.getElementById(entry.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                onClick={() => {
+                  document.getElementById(entry.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  onLinkSelect?.();
+                }}
               >
                 {entry.text}
               </button>
@@ -765,7 +915,7 @@ function ReaderAside({
       </div>
       <div className="aside-list">
         {related.map((resource) => (
-          <Link key={resource.id} className="aside-link" to={`/read/${resource.id}`}>
+          <Link key={resource.id} className="aside-link" to={`/read/${resource.id}`} onClick={onLinkSelect}>
             <strong>{resource.title}</strong>
             <span>
               {resource.layer} · {resource.group}
@@ -786,7 +936,10 @@ function ReaderAside({
                 key={image.id}
                 type="button"
                 className="mini-figure"
-                onClick={() => onZoom({ src: image.assetUrl ?? '', title: image.title })}
+                onClick={() => {
+                  onLinkSelect?.();
+                  onZoom({ src: image.assetUrl ?? '', title: image.title });
+                }}
               >
                 <img src={image.assetUrl} alt={image.title} />
                 <span>{image.title}</span>
