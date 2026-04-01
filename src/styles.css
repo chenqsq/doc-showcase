@@ -823,6 +823,18 @@ img {
 }
 
 @media (min-width: 901px) {
+  .app-shell::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: calc(var(--frame-sticky-top, 138px) + 6px);
+    background:
+      radial-gradient(circle at top left, rgba(177, 74, 61, 0.22), transparent 34%),
+      linear-gradient(180deg, #11151b 0%, #171c23 42%, #141920 100%);
+    pointer-events: none;
+    z-index: 70;
+  }
+
   .app-shell {
     padding-top: calc(var(--shell-padding, 20px) + var(--header-height, 100px));
   }
