@@ -206,32 +206,6 @@ function App() {
           <NavLink to="/">总览</NavLink>
           <NavLink to="/library">资料库</NavLink>
         </nav>
-        <div className="mobile-actions">
-          <button
-            type="button"
-            className={mobilePanel === 'catalog' ? 'is-active' : ''}
-            aria-expanded={mobilePanel === 'catalog'}
-            onClick={() => toggleMobilePanel('catalog')}
-          >
-            目录
-          </button>
-          <button
-            type="button"
-            className={mobilePanel === 'context' ? 'is-active' : ''}
-            aria-expanded={mobilePanel === 'context'}
-            onClick={() => toggleMobilePanel('context')}
-          >
-            {mobileContextButtonLabel}
-          </button>
-          <button
-            type="button"
-            className={mobilePanel === 'appearance' ? 'is-active' : ''}
-            aria-expanded={mobilePanel === 'appearance'}
-            onClick={() => toggleMobilePanel('appearance')}
-          >
-            外观
-          </button>
-        </div>
       </header>
 
       <Routes>
@@ -305,6 +279,33 @@ function App() {
           }
         />
       </Routes>
+
+      <div className="mobile-actions" aria-label="移动端快捷入口">
+        <button
+          type="button"
+          className={mobilePanel === 'catalog' ? 'is-active' : ''}
+          aria-expanded={mobilePanel === 'catalog'}
+          onClick={() => toggleMobilePanel('catalog')}
+        >
+          目录
+        </button>
+        <button
+          type="button"
+          className={mobilePanel === 'context' ? 'is-active' : ''}
+          aria-expanded={mobilePanel === 'context'}
+          onClick={() => toggleMobilePanel('context')}
+        >
+          {mobileContextButtonLabel}
+        </button>
+        <button
+          type="button"
+          className={mobilePanel === 'appearance' ? 'is-active' : ''}
+          aria-expanded={mobilePanel === 'appearance'}
+          onClick={() => toggleMobilePanel('appearance')}
+        >
+          外观
+        </button>
+      </div>
 
       <ZoomLightbox lightbox={lightbox} onClose={() => setLightbox(null)} />
     </div>
