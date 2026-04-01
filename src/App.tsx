@@ -1,22 +1,29 @@
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { type CSSProperties, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
-  catalog,
   catalogById,
   extractOutline,
   featuredResources,
   getImageResourcesForItem,
   getRelatedResources,
+  navigableCatalog,
   searchCatalog,
   topLevelLayers
 } from './catalog';
-import { FigurePreviewCard } from './components/FigurePreviewCard';
 import { MarkdownArticle } from './components/MarkdownArticle';
 import { PdfViewer } from './components/PdfViewer';
 import { ZoomLightbox } from './components/ZoomLightbox';
 import type { CatalogItem, Layer, LightboxState } from './types';
 
 const RECENT_KEY = 'doc-showcase-recent';
+const HEADER_FALLBACK_HEIGHT = 100;
+
+type ShellStyle = CSSProperties & {
+  '--shell-padding': string;
+  '--frame-gap': string;
+  '--header-height': string;
+  '--frame-sticky-top': string;
+};
 
 function readRecentIds(): string[] {
   try {
@@ -42,6 +49,9 @@ function App() {
   const [mobileAsideOpen, setMobileAsideOpen] = useState(false);
   const [lightbox, setLightbox] = useState<LightboxState | null>(null);
   const [recentIds, setRecentIds] = useState<string[]>(() => readRecentIds());
+  const [headerHeight, setHeaderHeight] = useState(HEADER_FALLBACK_HEIGHT);
+  const [headerCompressed, setHeaderCompressed] = useState(false);
+  const headerRef = useRef<HTMLElement | null>(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -49,27 +59,74 @@ function App() {
     setMobileAsideOpen(false);
   }, [location.pathname]);
 
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) {
+      return;
+    }
+
+    const measureHeader = () => {
+      setHeaderHeight(Math.round(header.getBoundingClientRect().height));
+    };
+
+    measureHeader();
+
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => {
+      measureHeader();
+    });
+
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const syncHeaderShadow = () => {
+      setHeaderCompressed(window.scrollY > 8);
+    };
+
+    syncHeaderShadow();
+    window.addEventListener('scroll', syncHeaderShadow, { passive: true });
+    return () => window.removeEventListener('scroll', syncHeaderShadow);
+  }, []);
+
   const filteredCatalog = useMemo(
-    () => searchCatalog(catalog, search, layerFilter),
+    () => searchCatalog(navigableCatalog, search, layerFilter),
     [search, layerFilter]
   );
 
   const recentItems = useMemo(
-    () => recentIds.map((id) => catalogById.get(id)).filter((item): item is CatalogItem => Boolean(item)),
+    () =>
+      recentIds
+        .map((id) => catalogById.get(id))
+        .filter((item): item is CatalogItem => Boolean(item) && item?.type !== 'image'),
     [recentIds]
   );
 
-  const rememberResource = (item: CatalogItem) => {
+  const rememberResource = useCallback((item: CatalogItem) => {
     setRecentIds((current) => {
       const next = [item.id, ...current.filter((id) => id !== item.id)].slice(0, 8);
       writeRecentIds(next);
       return next;
     });
-  };
+  }, []);
+
+  const shellStyle: ShellStyle = useMemo(
+    () => ({
+      '--shell-padding': '20px',
+      '--frame-gap': '18px',
+      '--header-height': `${headerHeight}px`,
+      '--frame-sticky-top': 'calc(var(--shell-padding) + var(--header-height, 100px) + var(--frame-gap))'
+    }),
+    [headerHeight]
+  );
 
   return (
-    <div className="app-shell">
-      <header className="app-header">
+    <div className="app-shell" style={shellStyle}>
+      <header ref={headerRef} className={`app-header ${headerCompressed ? 'is-scrolled' : ''}`.trim()}>
         <div>
           <div className="section-kicker">Archive Showcase</div>
           <h1>AI 主导学习平台文档展台</h1>
@@ -162,11 +219,12 @@ interface FrameProps {
   right: ReactNode;
   mobileNavOpen: boolean;
   mobileAsideOpen: boolean;
+  mode?: 'default' | 'reader';
 }
 
-function Frame({ left, children, right, mobileNavOpen, mobileAsideOpen }: FrameProps) {
+function Frame({ left, children, right, mobileNavOpen, mobileAsideOpen, mode = 'default' }: FrameProps) {
   return (
-    <div className="frame-grid">
+    <div className={`frame-grid ${mode === 'reader' ? 'frame-grid--reader' : ''}`.trim()}>
       <aside className={`frame-left ${mobileNavOpen ? 'is-open' : ''}`}>{left}</aside>
       <main className="frame-main">{children}</main>
       <aside className={`frame-right ${mobileAsideOpen ? 'is-open' : ''}`}>{right}</aside>
@@ -326,15 +384,7 @@ function LibraryAside({ filteredCatalog }: { filteredCatalog: CatalogItem[] }) {
   );
 }
 
-function HomePage({
-  recentItems,
-  onZoom
-}: {
-  recentItems: CatalogItem[];
-  onZoom: (lightbox: LightboxState) => void;
-}) {
-  const heroImages = catalog.filter((item) => item.layer === '图像资源').slice(0, 3);
-
+function HomePage({ recentItems }: { recentItems: CatalogItem[]; onZoom: (lightbox: LightboxState) => void }) {
   return (
     <div className="page-stack">
       <section className="hero-panel">
@@ -350,17 +400,13 @@ function HomePage({
             {featuredResources[0] ? <Link to={`/read/${featuredResources[0].id}`}>从平台总纲开始</Link> : null}
           </div>
         </div>
-        <div className="hero-media">
-          {heroImages.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className="hero-image"
-              onClick={() => onZoom({ src: item.assetUrl ?? '', title: item.title })}
-            >
-              <img src={item.assetUrl} alt={item.title} />
-              <span>{item.title}</span>
-            </button>
+        <div className="hero-media hero-media--docs">
+          {featuredResources.map((item) => (
+            <Link key={item.id} to={`/read/${item.id}`} className="hero-doc">
+              <div className="section-kicker">{item.layer}</div>
+              <strong>{item.title}</strong>
+              <span>{item.group}</span>
+            </Link>
           ))}
         </div>
       </section>
@@ -404,13 +450,7 @@ function HomePage({
   );
 }
 
-function LibraryPage({
-  items,
-  onZoom
-}: {
-  items: CatalogItem[];
-  onZoom: (lightbox: LightboxState) => void;
-}) {
+function LibraryPage({ items }: { items: CatalogItem[]; onZoom: (lightbox: LightboxState) => void }) {
   const grouped = useMemo(
     () =>
       topLevelLayers
@@ -427,7 +467,7 @@ function LibraryPage({
       <section className="section-header section-header--page">
         <div className="section-kicker">Library</div>
         <h2>全部资料</h2>
-        <p>主文档、归档、比赛 PDF、腾讯平台资料和图像资源都在这里统一浏览。</p>
+        <p>主文档、归档、比赛 PDF 和腾讯平台资料在这里统一浏览，图像资源收敛到相关文档页内部展示。</p>
       </section>
 
       {grouped.map(({ layer, items: layerItems }) => (
@@ -437,29 +477,17 @@ function LibraryPage({
             <h2>{layer}</h2>
           </div>
 
-          {layer === '图像资源' ? (
-            <div className="figure-grid">
-              {layerItems.map((item) => (
-                <FigurePreviewCard
-                  key={item.id}
-                  item={item}
-                  onZoom={(catalogItem) => onZoom({ src: catalogItem.assetUrl ?? '', title: catalogItem.title })}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="resource-list">
-              {layerItems.map((item) => (
-                <Link key={item.id} to={`/read/${item.id}`} className="resource-row">
-                  <div>
-                    <div className="section-kicker">{item.group}</div>
-                    <strong>{item.title}</strong>
-                  </div>
-                  <span>{item.type.toUpperCase()}</span>
-                </Link>
-              ))}
-            </div>
-          )}
+          <div className="resource-list">
+            {layerItems.map((item) => (
+              <Link key={item.id} to={`/read/${item.id}`} className="resource-row">
+                <div>
+                  <div className="section-kicker">{item.group}</div>
+                  <strong>{item.title}</strong>
+                </div>
+                <span>{item.type.toUpperCase()}</span>
+              </Link>
+            ))}
+          </div>
         </section>
       ))}
     </div>
@@ -501,6 +529,8 @@ function ReaderRoute(props: ReaderRouteProps) {
 
   return (
     <Frame
+      mode="reader"
+      key={item.id}
       left={
         <CatalogSidebar
           activeId={item.id}
@@ -515,7 +545,7 @@ function ReaderRoute(props: ReaderRouteProps) {
       mobileNavOpen={props.mobileNavOpen}
       mobileAsideOpen={props.mobileAsideOpen}
     >
-      <ReaderPage item={item} onZoom={props.onZoom} />
+      <ReaderPage key={item.id} item={item} onZoom={props.onZoom} />
     </Frame>
   );
 }

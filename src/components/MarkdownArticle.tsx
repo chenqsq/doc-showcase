@@ -100,7 +100,13 @@ export function MarkdownArticle({ item, onOpenLightbox }: MarkdownArticleProps) 
       }) => {
         const code = String(children ?? '').replace(/\n$/, '');
         if (className?.includes('language-mermaid')) {
-          return <MermaidBlock chart={code} />;
+          return (
+            <MermaidBlock
+              chart={code}
+              title={`${item.title} - Mermaid 图表`}
+              onOpenLightbox={onOpenLightbox}
+            />
+          );
         }
 
         return <code className={className}>{children}</code>;
