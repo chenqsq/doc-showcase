@@ -1692,18 +1692,11 @@ body {
 
 @media (max-width: 900px) {
   .app-shell {
-    padding: 12px;
+    padding: 0;
   }
 
   .app-header {
-    position: static;
-    top: auto;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    align-items: start;
-    gap: 10px;
-    padding: 12px 14px 14px;
-    border-radius: 22px;
+    display: none;
   }
 
   .header-actions {
@@ -1768,16 +1761,120 @@ body {
 
   .mobile-actions {
     position: fixed;
-    right: 12px;
-    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-    z-index: 26;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 8px;
+    left: 12px;
+    top: 12px;
+    z-index: 28;
+    display: block;
   }
 
-  .mobile-actions button {
-    min-width: 82px;
+  .mobile-actions-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 27;
+    border: 0;
+    background: rgba(8, 12, 18, 0.2);
+    backdrop-filter: blur(6px);
+  }
+
+  .mobile-actions-trigger {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border-radius: 18px;
+    color: var(--chrome-ink);
+    background: color-mix(in srgb, var(--chrome-panel) 84%, rgba(17, 23, 32, 0.82));
+    border-color: color-mix(in srgb, var(--chrome-border) 78%, var(--accent-500));
+    box-shadow: 0 18px 36px rgba(8, 12, 18, 0.24);
+    backdrop-filter: blur(18px);
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .mobile-actions.is-open .mobile-actions-trigger {
+    background: var(--accent-soft);
+    border-color: var(--accent-500);
+  }
+
+  .mobile-actions-trigger span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+
+  .mobile-actions-menu {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    bottom: 12px;
+    width: min(320px, calc(100vw - 24px));
+    display: grid;
+    align-content: start;
+    gap: 14px;
+    padding: 72px 16px 18px;
+    border: 1px solid var(--chrome-border);
+    border-radius: 26px;
+    background: color-mix(in srgb, var(--chrome-panel) 92%, rgba(13, 19, 28, 0.94));
+    box-shadow: 0 28px 52px rgba(4, 8, 15, 0.32);
+    backdrop-filter: blur(22px);
+    overflow-y: auto;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-18px);
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+
+  .mobile-actions.is-open .mobile-actions-menu {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+  }
+
+  .mobile-actions-brand {
+    display: grid;
+    gap: 6px;
+  }
+
+  .mobile-actions-brand strong {
+    color: var(--chrome-ink);
+    font-family: var(--font-serif);
+    font-size: clamp(1.4rem, 6vw, 1.78rem);
+    line-height: 1.04;
+  }
+
+  .mobile-actions-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .mobile-actions-nav a {
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 1px solid var(--chrome-border);
+    border-radius: 999px;
+    background: var(--chrome-soft);
+    color: var(--chrome-muted);
+    font-size: 0.94rem;
+    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+  }
+
+  .mobile-actions-nav a.active {
+    border-color: var(--accent-500);
+    background: var(--accent-soft);
+    color: var(--chrome-ink);
+  }
+
+  .mobile-actions-shortcuts {
+    display: grid;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--chrome-divider);
+  }
+
+  .mobile-actions-shortcuts button {
+    width: 100%;
     min-height: 42px;
     padding: 10px 14px;
     border-radius: 18px;
@@ -1789,21 +1886,24 @@ body {
     backdrop-filter: blur(18px);
   }
 
-  .mobile-actions button.is-active {
+  .mobile-actions-shortcuts button.is-active {
     background: var(--accent-soft);
     border-color: var(--accent-500);
     color: var(--chrome-ink);
   }
 
-  .app-shell.has-mobile-panel .mobile-actions {
+  .app-shell.has-mobile-panel .mobile-actions,
+  .app-shell.has-mobile-panel .mobile-actions-backdrop {
     opacity: 0;
     pointer-events: none;
-    transform: translateX(10px);
+    transform: translateY(10px);
   }
 
   .frame-grid {
     grid-template-columns: 1fr;
     min-height: auto;
+    gap: 0;
+    margin-top: 0;
   }
 
   .frame-left,
@@ -1812,13 +1912,15 @@ body {
   }
 
   .frame-main {
-    min-height: calc(100vh - 140px);
+    min-height: 100vh;
     overflow: visible;
+    border-inline: 0;
+    border-radius: 0;
   }
 
   .page-stack {
     gap: 24px;
-    padding: 20px 18px 112px;
+    padding: 0 18px 96px;
   }
 
   .page-stack > * {

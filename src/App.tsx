@@ -55,6 +55,7 @@ function App() {
   const [search, setSearch] = useState('');
   const [layerFilter, setLayerFilter] = useState<Layer | '全部'>('全部');
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>('closed');
+  const [mobileQuickNavOpen, setMobileQuickNavOpen] = useState(false);
   const [lightbox, setLightbox] = useState<LightboxState | null>(null);
   const [recentIds, setRecentIds] = useState<string[]>(() => readRecentIds());
   const [appearance, setAppearance] = useState<AppearanceState>(() => readAppearance());
@@ -67,6 +68,7 @@ function App() {
 
   useEffect(() => {
     setMobilePanel('closed');
+    setMobileQuickNavOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -132,6 +134,21 @@ function App() {
     };
   }, [mobilePanel]);
 
+  useEffect(() => {
+    if (!mobileQuickNavOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobileQuickNavOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mobileQuickNavOpen]);
+
   const filteredCatalog = useMemo(
     () => searchCatalog(navigableCatalog, search, layerFilter),
     [search, layerFilter]
@@ -165,6 +182,7 @@ function App() {
   );
 
   const toggleMobilePanel = useCallback((panel: Exclude<MobilePanel, 'closed'>) => {
+    setMobileQuickNavOpen(false);
     setMobilePanel((current) => (current === panel ? 'closed' : panel));
   }, []);
 
@@ -280,31 +298,66 @@ function App() {
         />
       </Routes>
 
-      <div className="mobile-actions" aria-label="移动端快捷入口">
+      {mobileQuickNavOpen ? (
         <button
           type="button"
-          className={mobilePanel === 'catalog' ? 'is-active' : ''}
-          aria-expanded={mobilePanel === 'catalog'}
-          onClick={() => toggleMobilePanel('catalog')}
-        >
-          目录
-        </button>
+          className="mobile-actions-backdrop"
+          aria-label="关闭快捷导航"
+          onClick={() => setMobileQuickNavOpen(false)}
+        />
+      ) : null}
+      <div className={`mobile-actions ${mobileQuickNavOpen ? 'is-open' : ''}`.trim()} aria-label="移动端快捷入口">
         <button
           type="button"
-          className={mobilePanel === 'context' ? 'is-active' : ''}
-          aria-expanded={mobilePanel === 'context'}
-          onClick={() => toggleMobilePanel('context')}
+          className="mobile-actions-trigger"
+          aria-label={mobileQuickNavOpen ? '收起快捷导航' : '打开快捷导航'}
+          aria-expanded={mobileQuickNavOpen}
+          onClick={() => setMobileQuickNavOpen((current) => !current)}
         >
-          {mobileContextButtonLabel}
+          <span />
+          <span />
+          <span />
         </button>
-        <button
-          type="button"
-          className={mobilePanel === 'appearance' ? 'is-active' : ''}
-          aria-expanded={mobilePanel === 'appearance'}
-          onClick={() => toggleMobilePanel('appearance')}
-        >
-          外观
-        </button>
+        <div className="mobile-actions-menu" aria-hidden={!mobileQuickNavOpen}>
+          <div className="mobile-actions-brand">
+            <div className="section-kicker">Archive Showcase</div>
+            <strong>AI 主导学习平台文档展台</strong>
+          </div>
+          <nav className="mobile-actions-nav">
+            <NavLink to="/" onClick={() => setMobileQuickNavOpen(false)}>
+              总览
+            </NavLink>
+            <NavLink to="/library" onClick={() => setMobileQuickNavOpen(false)}>
+              资料库
+            </NavLink>
+          </nav>
+          <div className="mobile-actions-shortcuts">
+            <button
+              type="button"
+              className={mobilePanel === 'catalog' ? 'is-active' : ''}
+              aria-expanded={mobilePanel === 'catalog'}
+              onClick={() => toggleMobilePanel('catalog')}
+            >
+              目录
+            </button>
+            <button
+              type="button"
+              className={mobilePanel === 'context' ? 'is-active' : ''}
+              aria-expanded={mobilePanel === 'context'}
+              onClick={() => toggleMobilePanel('context')}
+            >
+              {mobileContextButtonLabel}
+            </button>
+            <button
+              type="button"
+              className={mobilePanel === 'appearance' ? 'is-active' : ''}
+              aria-expanded={mobilePanel === 'appearance'}
+              onClick={() => toggleMobilePanel('appearance')}
+            >
+              外观
+            </button>
+          </div>
+        </div>
       </div>
 
       <ZoomLightbox lightbox={lightbox} onClose={() => setLightbox(null)} />
