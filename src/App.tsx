@@ -1,6 +1,17 @@
 import { type CSSProperties, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
+  buildAppearanceVars,
+  FONT_SCALE_PRESETS,
+  getThemePreset,
+  readAppearance,
+  THEME_PRESETS,
+  type AppearanceState,
+  type FontScaleId,
+  type ThemeId,
+  writeAppearance
+} from './appearance';
+import {
   catalogById,
   extractOutline,
   featuredResources,
@@ -19,10 +30,7 @@ const RECENT_KEY = 'doc-showcase-recent';
 const HEADER_FALLBACK_HEIGHT = 100;
 
 type ShellStyle = CSSProperties & {
-  '--shell-padding': string;
-  '--frame-gap': string;
-  '--header-height': string;
-  '--frame-sticky-top': string;
+  [key: `--${string}`]: string;
 };
 
 function readRecentIds(): string[] {
@@ -49,6 +57,7 @@ function App() {
   const [mobileAsideOpen, setMobileAsideOpen] = useState(false);
   const [lightbox, setLightbox] = useState<LightboxState | null>(null);
   const [recentIds, setRecentIds] = useState<string[]>(() => readRecentIds());
+  const [appearance, setAppearance] = useState<AppearanceState>(() => readAppearance());
   const [headerHeight, setHeaderHeight] = useState(HEADER_FALLBACK_HEIGHT);
   const [headerCompressed, setHeaderCompressed] = useState(false);
   const headerRef = useRef<HTMLElement | null>(null);
@@ -93,6 +102,10 @@ function App() {
     return () => window.removeEventListener('scroll', syncHeaderShadow);
   }, []);
 
+  useEffect(() => {
+    writeAppearance(appearance);
+  }, [appearance]);
+
   const filteredCatalog = useMemo(
     () => searchCatalog(navigableCatalog, search, layerFilter),
     [search, layerFilter]
@@ -116,12 +129,13 @@ function App() {
 
   const shellStyle: ShellStyle = useMemo(
     () => ({
+      ...buildAppearanceVars(appearance),
       '--shell-padding': '20px',
       '--frame-gap': '18px',
       '--header-height': `${headerHeight}px`,
       '--frame-sticky-top': 'calc(var(--shell-padding) + var(--header-height, 100px) + var(--frame-gap))'
     }),
-    [headerHeight]
+    [appearance, headerHeight]
   );
 
   return (
@@ -131,11 +145,26 @@ function App() {
           <div className="section-kicker">Archive Showcase</div>
           <h1>AI 主导学习平台文档展台</h1>
         </div>
-        <nav className="top-nav">
+        <div className="header-actions">
+          <nav className="top-nav">
           <NavLink to="/">总览</NavLink>
           <NavLink to="/library">资料库</NavLink>
-        </nav>
+          </nav>
+          <AppearanceControl
+            className="appearance-control--desktop"
+            appearance={appearance}
+            onThemeChange={(themeId) => setAppearance((current) => ({ ...current, themeId }))}
+            onFontScaleChange={(fontScale) => setAppearance((current) => ({ ...current, fontScale }))}
+          />
+        </div>
         <div className="mobile-actions">
+          <AppearanceControl
+            className="appearance-control--mobile"
+            compact
+            appearance={appearance}
+            onThemeChange={(themeId) => setAppearance((current) => ({ ...current, themeId }))}
+            onFontScaleChange={(fontScale) => setAppearance((current) => ({ ...current, fontScale }))}
+          />
           <button type="button" onClick={() => setMobileNavOpen((value) => !value)}>
             目录
           </button>
@@ -203,12 +232,136 @@ function App() {
               onZoom={setLightbox}
               mobileNavOpen={mobileNavOpen}
               mobileAsideOpen={mobileAsideOpen}
+              themeId={appearance.themeId}
             />
           }
         />
       </Routes>
 
       <ZoomLightbox lightbox={lightbox} onClose={() => setLightbox(null)} />
+    </div>
+  );
+}
+
+interface AppearanceControlProps {
+  appearance: AppearanceState;
+  onThemeChange: (themeId: ThemeId) => void;
+  onFontScaleChange: (fontScale: FontScaleId) => void;
+  compact?: boolean;
+  className?: string;
+}
+
+function AppearanceControl({
+  appearance,
+  onThemeChange,
+  onFontScaleChange,
+  compact = false,
+  className = ''
+}: AppearanceControlProps) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const location = useLocation();
+  const activeTheme = getThemePreset(appearance.themeId);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+      }
+    };
+
+    window.addEventListener('mousedown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className={`appearance-control ${className}`.trim()}>
+      <button
+        type="button"
+        className={`appearance-trigger ${open ? 'is-open' : ''}`.trim()}
+        onClick={() => setOpen((current) => !current)}
+        aria-expanded={open}
+      >
+        <span className="appearance-trigger-dot" />
+        <span>{compact ? '外观' : `阅读外观 · ${activeTheme.label}`}</span>
+      </button>
+
+      {open ? (
+        <div className="appearance-popover">
+          <div className="appearance-popover-header">
+            <div className="section-kicker">Reading Setup</div>
+            <h3>阅读外观</h3>
+            <p>切换护眼底色和阅读字号，首页、资料库和阅读页会保持一致。</p>
+          </div>
+
+          <div className="appearance-section">
+            <div className="appearance-section-head">
+              <strong>护眼背景</strong>
+              <span>{activeTheme.tone}</span>
+            </div>
+            <div className="theme-grid">
+              {THEME_PRESETS.map((theme) => (
+                <button
+                  key={theme.id}
+                  type="button"
+                  className={`theme-option ${appearance.themeId === theme.id ? 'is-active' : ''}`.trim()}
+                  onClick={() => onThemeChange(theme.id)}
+                  aria-pressed={appearance.themeId === theme.id}
+                >
+                  <span className="theme-option-swatches">
+                    {theme.swatches.map((color) => (
+                      <span key={color} style={{ background: color }} />
+                    ))}
+                  </span>
+                  <span className="theme-option-copy">
+                    <strong>{theme.label}</strong>
+                    <small>{theme.tone}</small>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="appearance-section">
+            <div className="appearance-section-head">
+              <strong>正文字号</strong>
+              <span>{FONT_SCALE_PRESETS.find((item) => item.id === appearance.fontScale)?.hint}</span>
+            </div>
+            <div className="font-scale-row">
+              {FONT_SCALE_PRESETS.map((scale) => (
+                <button
+                  key={scale.id}
+                  type="button"
+                  className={`font-scale-option ${appearance.fontScale === scale.id ? 'is-active' : ''}`.trim()}
+                  onClick={() => onFontScaleChange(scale.id)}
+                  aria-pressed={appearance.fontScale === scale.id}
+                >
+                  <strong>{scale.label}</strong>
+                  <span>{scale.hint}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -504,6 +657,7 @@ interface ReaderRouteProps {
   onZoom: (lightbox: LightboxState) => void;
   mobileNavOpen: boolean;
   mobileAsideOpen: boolean;
+  themeId: ThemeId;
 }
 
 function ReaderRoute(props: ReaderRouteProps) {
@@ -545,7 +699,7 @@ function ReaderRoute(props: ReaderRouteProps) {
       mobileNavOpen={props.mobileNavOpen}
       mobileAsideOpen={props.mobileAsideOpen}
     >
-      <ReaderPage key={item.id} item={item} onZoom={props.onZoom} />
+      <ReaderPage key={item.id} item={item} onZoom={props.onZoom} themeId={props.themeId} />
     </Frame>
   );
 }
@@ -647,10 +801,12 @@ function ReaderAside({
 
 function ReaderPage({
   item,
-  onZoom
+  onZoom,
+  themeId
 }: {
   item: CatalogItem;
   onZoom: (lightbox: LightboxState) => void;
+  themeId: ThemeId;
 }) {
   return (
     <div className="page-stack">
@@ -671,7 +827,7 @@ function ReaderPage({
         ) : null}
       </section>
 
-      {item.type === 'markdown' ? <MarkdownArticle item={item} onOpenLightbox={onZoom} /> : null}
+      {item.type === 'markdown' ? <MarkdownArticle item={item} onOpenLightbox={onZoom} themeId={themeId} /> : null}
       {item.type === 'pdf' && item.assetUrl ? <PdfViewer src={item.assetUrl} title={item.title} /> : null}
       {item.type === 'image' && item.assetUrl ? (
         <section className="image-reader">

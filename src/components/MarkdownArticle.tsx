@@ -2,6 +2,7 @@ import { type ReactNode, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Link } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
+import type { ThemeId } from '../appearance';
 import { catalogByPath, findCatalogTarget, makeHeadingId, resolveRelativePath } from '../catalog';
 import type { CatalogItem, LightboxState } from '../types';
 import { MermaidBlock } from './MermaidBlock';
@@ -9,6 +10,7 @@ import { MermaidBlock } from './MermaidBlock';
 interface MarkdownArticleProps {
   item: CatalogItem;
   onOpenLightbox: (lightbox: LightboxState) => void;
+  themeId: ThemeId;
 }
 
 function flattenChildren(children: ReactNode): string {
@@ -27,7 +29,7 @@ function flattenChildren(children: ReactNode): string {
   return '';
 }
 
-export function MarkdownArticle({ item, onOpenLightbox }: MarkdownArticleProps) {
+export function MarkdownArticle({ item, onOpenLightbox, themeId }: MarkdownArticleProps) {
   const components = useMemo(() => {
     const headingCounts = new Map<string, number>();
 
@@ -91,6 +93,14 @@ export function MarkdownArticle({ item, onOpenLightbox }: MarkdownArticleProps) 
           </figure>
         );
       },
+      blockquote: ({ children }: { children?: ReactNode }) => (
+        <blockquote className="article-callout">{children}</blockquote>
+      ),
+      table: ({ children }: { children?: ReactNode }) => (
+        <div className="article-table-shell">
+          <table>{children}</table>
+        </div>
+      ),
       code: ({
         className,
         children
@@ -103,6 +113,7 @@ export function MarkdownArticle({ item, onOpenLightbox }: MarkdownArticleProps) 
           return (
             <MermaidBlock
               chart={code}
+              themeId={themeId}
               title={`${item.title} - Mermaid 图表`}
               onOpenLightbox={onOpenLightbox}
             />
@@ -112,7 +123,7 @@ export function MarkdownArticle({ item, onOpenLightbox }: MarkdownArticleProps) 
         return <code className={className}>{children}</code>;
       }
     };
-  }, [item.relativePath, onOpenLightbox]);
+  }, [item.relativePath, item.title, onOpenLightbox, themeId]);
 
   return (
     <article className="markdown-article">

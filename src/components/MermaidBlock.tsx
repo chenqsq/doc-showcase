@@ -1,26 +1,16 @@
 import { useEffect, useId, useMemo, useState } from 'react';
 import mermaid from 'mermaid';
+import { getMermaidTheme, type ThemeId } from '../appearance';
 import type { LightboxState } from '../types';
 
 interface MermaidBlockProps {
   chart: string;
+  themeId: ThemeId;
   title: string;
   onOpenLightbox: (lightbox: LightboxState) => void;
 }
 
-mermaid.initialize({
-  startOnLoad: false,
-  securityLevel: 'loose',
-  theme: 'neutral',
-  flowchart: {
-    useMaxWidth: false,
-    htmlLabels: true
-  },
-  fontFamily:
-    '"Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif'
-});
-
-export function MermaidBlock({ chart, title, onOpenLightbox }: MermaidBlockProps) {
+export function MermaidBlock({ chart, themeId, title, onOpenLightbox }: MermaidBlockProps) {
   const [svg, setSvg] = useState('');
   const [error, setError] = useState('');
   const elementId = useId().replace(/:/g, '-');
@@ -31,6 +21,21 @@ export function MermaidBlock({ chart, title, onOpenLightbox }: MermaidBlockProps
 
   useEffect(() => {
     let cancelled = false;
+    const mermaidTheme = getMermaidTheme(themeId);
+
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: 'loose',
+      theme: 'base',
+      darkMode: mermaidTheme.darkMode,
+      themeVariables: mermaidTheme.themeVariables,
+      flowchart: {
+        useMaxWidth: false,
+        htmlLabels: true
+      },
+      fontFamily:
+        '"Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif'
+    });
 
     mermaid
       .render(`mermaid-${elementId}`, chart)
@@ -49,7 +54,7 @@ export function MermaidBlock({ chart, title, onOpenLightbox }: MermaidBlockProps
     return () => {
       cancelled = true;
     };
-  }, [chart, elementId]);
+  }, [chart, elementId, themeId]);
 
   if (error) {
     return (
