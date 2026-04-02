@@ -15,7 +15,6 @@ import {
   catalogById,
   extractOutline,
   featuredResources,
-  getImageResourcesForItem,
   getRelatedResources,
   navigableCatalog,
   searchCatalog,
@@ -743,7 +742,7 @@ function LibraryAside({
         ))}
       </div>
       <p className="aside-note">
-        主文档层优先展示，技术参考和归档默认弱化。图像资源单独成组，适合答辩时直接打开细节查看。
+        主文档层优先展示，技术参考和归档默认弱化。比赛 PDF 和腾讯平台资料继续保留在资料库中统一浏览。
       </p>
     </div>
   );
@@ -755,10 +754,10 @@ function HomePage({ recentItems }: { recentItems: CatalogItem[]; onZoom: (lightb
       <section className="hero-panel">
         <div className="hero-copy">
           <div className="section-kicker">Archive Reading Desk</div>
-          <h2>把平台主文档、技术参考、比赛资料和学科图像放进同一个展示舞台。</h2>
+          <h2>把平台主文档、技术参考和比赛资料放进同一个展示舞台。</h2>
           <p>
             这不是普通文档站，而是一套面向平台说明与比赛展示的阅读台：主线文档优先、技术参考补充、
-            归档后置、图片可沉浸放大、PDF 可分页查看。
+            归档后置、正文插图可放大查看、PDF 可分页浏览。
           </p>
           <div className="hero-actions">
             <Link to="/library">进入资料库</Link>
@@ -898,16 +897,19 @@ function ReaderRoute(props: ReaderRouteProps) {
       navigate('/');
       return;
     }
+    if (item.type === 'image') {
+      navigate('/library', { replace: true });
+      return;
+    }
     props.rememberResource(item);
   }, [item, navigate, props.rememberResource]);
 
-  if (!item) {
+  if (!item || item.type === 'image') {
     return null;
   }
 
   const outline = extractOutline(item.rawText);
   const related = getRelatedResources(item);
-  const images = getImageResourcesForItem(item);
 
   return (
     <Frame
@@ -929,8 +931,6 @@ function ReaderRoute(props: ReaderRouteProps) {
           item={item}
           outline={outline}
           related={related}
-          images={images}
-          onZoom={props.onZoom}
           onLinkSelect={props.onCloseMobilePanel}
         />
       }
@@ -939,7 +939,7 @@ function ReaderRoute(props: ReaderRouteProps) {
       mobileAppearance={props.mobileAppearance}
       mobileContextLabel={props.mobileContextLabel}
     >
-      <ReaderPage key={item.id} item={item} onZoom={props.onZoom} themeId={props.themeId} />
+      <ReaderPage key={item.id} item={item} outline={outline} onZoom={props.onZoom} themeId={props.themeId} />
     </Frame>
   );
 }
@@ -948,15 +948,11 @@ function ReaderAside({
   item,
   outline,
   related,
-  images,
-  onZoom,
   onLinkSelect
 }: {
   item: CatalogItem;
   outline: ReturnType<typeof extractOutline>;
   related: CatalogItem[];
-  images: CatalogItem[];
-  onZoom: (lightbox: LightboxState) => void;
   onLinkSelect?: () => void;
 }) {
   return (
@@ -1018,41 +1014,18 @@ function ReaderAside({
           </Link>
         ))}
       </div>
-
-      {images.length ? (
-        <>
-          <div className="panel-header panel-header--spaced">
-            <div className="section-kicker">关联图像</div>
-            <h2>一键放大</h2>
-          </div>
-          <div className="mini-figure-list">
-            {images.map((image) => (
-              <button
-                key={image.id}
-                type="button"
-                className="mini-figure"
-                onClick={() => {
-                  onLinkSelect?.();
-                  onZoom({ src: image.assetUrl ?? '', title: image.title });
-                }}
-              >
-                <img src={image.assetUrl} alt={image.title} />
-                <span>{image.title}</span>
-              </button>
-            ))}
-          </div>
-        </>
-      ) : null}
     </div>
   );
 }
 
 function ReaderPage({
   item,
+  outline,
   onZoom,
   themeId
 }: {
   item: CatalogItem;
+  outline: ReturnType<typeof extractOutline>;
   onZoom: (lightbox: LightboxState) => void;
   themeId: ThemeId;
 }) {
@@ -1075,34 +1048,10 @@ function ReaderPage({
         ) : null}
       </section>
 
-      {item.type === 'markdown' ? <MarkdownArticle item={item} onOpenLightbox={onZoom} themeId={themeId} /> : null}
-      {item.type === 'pdf' && item.assetUrl ? <PdfViewer src={item.assetUrl} title={item.title} /> : null}
-      {item.type === 'image' && item.assetUrl ? (
-        <section className="image-reader">
-          <div className="reader-toolbar">
-            <div>
-              <div className="section-kicker">图像详情</div>
-              <h2>{item.title}</h2>
-            </div>
-            <div className="toolbar-actions">
-              <button type="button" onClick={() => onZoom({ src: item.assetUrl ?? '', title: item.title })}>
-                放大查看
-              </button>
-              <a href={item.assetUrl} target="_blank" rel="noreferrer">
-                原文件打开
-              </a>
-            </div>
-          </div>
-
-          <div className="image-stage">
-            <img className="document-image" src={item.assetUrl} alt={item.title} />
-          </div>
-
-          <p className="image-note">
-            当前详情页使用完整展示，不做封面式裁切；当视口较小时，由阅读区滚动，不让图片底部说明被遮挡。
-          </p>
-        </section>
+      {item.type === 'markdown' ? (
+        <MarkdownArticle item={item} outline={outline} onOpenLightbox={onZoom} themeId={themeId} />
       ) : null}
+      {item.type === 'pdf' && item.assetUrl ? <PdfViewer src={item.assetUrl} title={item.title} /> : null}
     </div>
   );
 }

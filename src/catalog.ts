@@ -286,14 +286,3 @@ export function getRelatedResources(item: CatalogItem): CatalogItem[] {
     .filter((candidate) => candidate.group === item.group || candidate.layer === item.layer)
     .slice(0, 8);
 }
-
-export function getImageResourcesForItem(item: CatalogItem): CatalogItem[] {
-  if (
-    item.group === '高等数学' ||
-    item.relativePath.includes('高等数学') ||
-    item.rawText?.includes('高等数学')
-  ) {
-    return catalog.filter((candidate) => candidate.layer === '图像资源' && candidate.group === '高等数学');
-  }
-  return [];
-}
