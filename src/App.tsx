@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   buildAppearanceVars,
@@ -33,6 +33,19 @@ type MobilePanel = 'closed' | 'catalog' | 'context' | 'appearance';
 type ShellStyle = CSSProperties & {
   [key: `--${string}`]: string;
 };
+
+function getVisibleLayers(items: CatalogItem[], layerFilter: Layer | '全部', search: string): Layer[] {
+  if (layerFilter !== '全部') {
+    return topLevelLayers.filter((layer) => layer === layerFilter);
+  }
+
+  if (!search.trim()) {
+    return topLevelLayers;
+  }
+
+  const visibleLayers = new Set(items.map((item) => item.layer));
+  return topLevelLayers.filter((layer) => visibleLayers.has(layer));
+}
 
 function readRecentIds(): string[] {
   try {
@@ -267,7 +280,7 @@ function App() {
                   onLinkSelect={closeMobilePanel}
                 />
               }
-              right={<LibraryAside filteredCatalog={filteredCatalog} />}
+              right={<LibraryAside filteredCatalog={filteredCatalog} layerFilter={layerFilter} search={search} />}
               mobilePanel={mobilePanel}
               onCloseMobilePanel={closeMobilePanel}
               mobileAppearance={mobileAppearancePanel}
@@ -586,13 +599,15 @@ function CatalogSidebar({
   items,
   onLinkSelect
 }: CatalogSidebarProps) {
+  const visibleLayers = useMemo(() => getVisibleLayers(items, layerFilter, search), [items, layerFilter, search]);
+  const shouldExpandVisibleLayers = layerFilter !== '全部' || Boolean(search.trim());
   const grouped = useMemo(
     () =>
-      topLevelLayers.map((layer) => ({
+      visibleLayers.map((layer) => ({
         layer,
         items: items.filter((item) => item.layer === layer)
       })),
-    [items]
+    [items, visibleLayers]
   );
 
   return (
@@ -631,7 +646,7 @@ function CatalogSidebar({
 
       <div className="layer-tree">
         {grouped.map(({ layer, items: layerItems }) => (
-          <details key={layer} open={layer !== '归档' && layer !== '技术参考'}>
+          <details key={layer} open={shouldExpandVisibleLayers || (layer !== '归档' && layer !== '技术参考')}>
             <summary>
               <span>{layer}</span>
               <span>{layerItems.length}</span>
@@ -691,14 +706,26 @@ function HomeAside({ recentItems, onLinkSelect }: { recentItems: CatalogItem[]; 
   );
 }
 
-function LibraryAside({ filteredCatalog }: { filteredCatalog: CatalogItem[] }) {
+function LibraryAside({
+  filteredCatalog,
+  layerFilter,
+  search
+}: {
+  filteredCatalog: CatalogItem[];
+  layerFilter: Layer | '全部';
+  search: string;
+}) {
+  const visibleLayers = useMemo(
+    () => getVisibleLayers(filteredCatalog, layerFilter, search),
+    [filteredCatalog, layerFilter, search]
+  );
   const counts = useMemo(
     () =>
-      topLevelLayers.map((layer) => ({
+      visibleLayers.map((layer) => ({
         layer,
         count: filteredCatalog.filter((item) => item.layer === layer).length
       })),
-    [filteredCatalog]
+    [filteredCatalog, visibleLayers]
   );
 
   return (
@@ -851,6 +878,20 @@ function ReaderRoute(props: ReaderRouteProps) {
   const { id } = useParams();
   const navigate = useNavigate();
   const item = id ? catalogById.get(id) : undefined;
+
+  useLayoutEffect(() => {
+    if (!item) {
+      return;
+    }
+
+    const scrollingElement = document.scrollingElement;
+    if (scrollingElement) {
+      scrollingElement.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      return;
+    }
+
+    window.scrollTo(0, 0);
+  }, [item?.id]);
 
   useEffect(() => {
     if (!item) {
