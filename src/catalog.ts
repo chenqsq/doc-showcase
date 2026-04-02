@@ -1,6 +1,6 @@
 import type { CatalogItem, Layer, OutlineItem, ResourceType } from './types';
 
-const markdownFiles = import.meta.glob('../doc/**/*.md', {
+const markdownFiles = import.meta.glob(['../doc/**/*.md', '../CLAW_CODE_ANALYSIS_REPORT.md'], {
   eager: true,
   import: 'default',
   query: '?raw'
@@ -25,10 +25,10 @@ const svgRawFiles = import.meta.glob('../doc/**/*.svg', {
 }) as Record<string, string>;
 
 const FEATURED_PATHS = [
+  'doc/智能体文档/00-文档总索引.md',
   'doc/智能体文档/平台层/AI主导学习平台-产品总纲.md',
-  'doc/智能体文档/平台层/AI主导学习平台-平台需求与验收.md',
-  'doc/智能体文档/学科层/高等数学-平台接入示范.md',
-  'doc/比赛资料/比赛.txt'
+  'doc/智能体文档/平台层/AI主导学习平台-学习生命周期与编排策略.md',
+  'doc/智能体文档/学科层/高等数学-平台接入示范.md'
 ];
 
 function normalizeImportPath(path: string): string {
@@ -74,6 +74,9 @@ function getLayer(relativePath: string, type: ResourceType): Layer {
   if (type === 'image') {
     return '图像资源';
   }
+  if (relativePath === 'CLAW_CODE_ANALYSIS_REPORT.md') {
+    return '技术参考';
+  }
   if (relativePath === 'doc/智能体文档/00-文档总索引.md') {
     return '平台层';
   }
@@ -106,6 +109,9 @@ function getGroup(relativePath: string, layer: Layer): string {
     const index = segments.findIndex((part) => part === '高等数学');
     return index >= 0 ? segments[index] : '图像资源';
   }
+  if (layer === '技术参考') {
+    return '方法参考';
+  }
   if (layer === '比赛资料' || layer === '腾讯平台资料') {
     return layer;
   }
@@ -127,6 +133,7 @@ function compareCatalog(a: CatalogItem, b: CatalogItem): number {
     '子引擎层',
     '学科层',
     '交付层',
+    '技术参考',
     '归档',
     '比赛资料',
     '腾讯平台资料',
@@ -211,6 +218,7 @@ export const topLevelLayers: Layer[] = [
   '子引擎层',
   '学科层',
   '交付层',
+  '技术参考',
   '归档',
   '比赛资料',
   '腾讯平台资料'

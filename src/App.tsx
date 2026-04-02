@@ -631,7 +631,7 @@ function CatalogSidebar({
 
       <div className="layer-tree">
         {grouped.map(({ layer, items: layerItems }) => (
-          <details key={layer} open={layer !== '归档'}>
+          <details key={layer} open={layer !== '归档' && layer !== '技术参考'}>
             <summary>
               <span>{layer}</span>
               <span>{layerItems.length}</span>
@@ -716,7 +716,7 @@ function LibraryAside({ filteredCatalog }: { filteredCatalog: CatalogItem[] }) {
         ))}
       </div>
       <p className="aside-note">
-        主文档层优先展示，归档默认弱化。图像资源单独成组，适合答辩时直接打开细节查看。
+        主文档层优先展示，技术参考和归档默认弱化。图像资源单独成组，适合答辩时直接打开细节查看。
       </p>
     </div>
   );
@@ -728,10 +728,10 @@ function HomePage({ recentItems }: { recentItems: CatalogItem[]; onZoom: (lightb
       <section className="hero-panel">
         <div className="hero-copy">
           <div className="section-kicker">Archive Reading Desk</div>
-          <h2>把平台文档、比赛资料、PDF 和学科图像放进同一个展示舞台。</h2>
+          <h2>把平台主文档、技术参考、比赛资料和学科图像放进同一个展示舞台。</h2>
           <p>
-            这不是普通文档站，而是一套面向比赛展示的档案馆式阅读台：主线文档优先、归档后置、
-            图片可沉浸放大、PDF 可分页查看。
+            这不是普通文档站，而是一套面向平台说明与比赛展示的阅读台：主线文档优先、技术参考补充、
+            归档后置、图片可沉浸放大、PDF 可分页查看。
           </p>
           <div className="hero-actions">
             <Link to="/library">进入资料库</Link>
@@ -805,7 +805,7 @@ function LibraryPage({ items }: { items: CatalogItem[]; onZoom: (lightbox: Light
       <section className="section-header section-header--page">
         <div className="section-kicker">Library</div>
         <h2>全部资料</h2>
-        <p>主文档、归档、比赛 PDF 和腾讯平台资料在这里统一浏览，图像资源收敛到相关文档页内部展示。</p>
+        <p>主文档优先，技术参考弱化展示；归档、比赛 PDF 和腾讯平台资料统一收在同一资料库里浏览。</p>
       </section>
 
       {grouped.map(({ layer, items: layerItems }) => (
