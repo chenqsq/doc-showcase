@@ -26,8 +26,9 @@ const svgRawFiles = import.meta.glob('../doc/**/*.svg', {
 
 const FEATURED_PATHS = [
   'doc/智能体文档/00-文档总索引.md',
+  'doc/智能体文档/平台层/AI主导学习平台-角色主线与阶段地图.md',
+  'doc/智能体文档/平台层/AI主导学习平台-统一对象与接口契约.md',
   'doc/智能体文档/平台层/AI主导学习平台-产品总纲.md',
-  'doc/智能体文档/平台层/AI主导学习平台-学习生命周期与编排策略.md',
   'doc/智能体文档/学科层/高等数学-平台接入示范.md'
 ];
 

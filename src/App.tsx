@@ -761,7 +761,7 @@ function HomePage({ recentItems }: { recentItems: CatalogItem[]; onZoom: (lightb
           </p>
           <div className="hero-actions">
             <Link to="/library">进入资料库</Link>
-            {featuredResources[0] ? <Link to={`/read/${featuredResources[0].id}`}>从平台总纲开始</Link> : null}
+            {featuredResources[0] ? <Link to={`/read/${featuredResources[0].id}`}>从总索引开始</Link> : null}
           </div>
         </div>
         <div className="hero-media hero-media--docs">
@@ -806,7 +806,7 @@ function HomePage({ recentItems }: { recentItems: CatalogItem[]; onZoom: (lightb
               </Link>
             ))
           ) : (
-            <div className="empty-state">你还没有打开任何文档，可以先从平台总纲或高等数学示范进入。</div>
+            <div className="empty-state">你还没有打开任何文档，可以先从总索引、角色主线或高等数学示范进入。</div>
           )}
         </div>
       </section>
