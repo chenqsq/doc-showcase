@@ -5,3 +5,4 @@ vite-dev.err
 *.tsbuildinfo
 npm-install.log
 output-*.png
+.playwright-cli/
