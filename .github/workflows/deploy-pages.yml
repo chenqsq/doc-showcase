@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - dev/highmath-kb-test
   workflow_dispatch:
 
 permissions:
