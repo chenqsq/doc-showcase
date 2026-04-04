@@ -1,7 +1,7 @@
-import fs from 'node:fs';
+﻿import fs from 'node:fs';
 import path from 'node:path';
 
-const courseId = '高等数学A';
+const courseId = '高等数学_测试';
 const subjectCategory = '数学';
 const sourceType = 'AI生成演示版';
 const version = 'v1.0';
@@ -280,9 +280,9 @@ function renderReconstruct(moduleId, moduleName, chapterId, classTitle, topics) 
 
 function writeOverviews() {
   write(
-    path.join(rootDir, '00-课程总览', `${courseId}-00课程总览-CH00整门课程-课程总览-高数A全景地图.md`),
+    path.join(rootDir, '00-课程总览', `${courseId}-00课程总览-CH00整门课程-课程总览-高数_测试全景地图.md`),
     doc(
-      `${courseId}-课程总览-高数A全景地图`,
+      `${courseId}-课程总览-高数_测试全景地图`,
       meta({
         moduleId: 'MALL',
         chapterId: 'CH00整门课程',
@@ -292,7 +292,7 @@ function writeOverviews() {
       }),
       [
         '## 这门课在学什么',
-        '高等数学A在训练学生理解变化、逼近、累积、空间表达和函数逼近的整套语言。',
+        '高等数学_测试在训练学生理解变化、逼近、累积、空间表达和函数逼近的整套语言。',
         '',
         '## 全课程模块',
         ...modules.map(([moduleId, moduleName]) => `- ${moduleId} ${moduleName}`),
@@ -426,3 +426,4 @@ function main() {
 }
 
 main();
+

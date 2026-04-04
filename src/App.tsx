@@ -12,38 +12,191 @@ import {
   writeAppearance
 } from './appearance';
 import {
+  COLLECTION_LABELS,
   catalogById,
   extractOutline,
-  featuredResources,
   getRelatedResources,
+  mathCatalog,
+  mathFeaturedResources,
   navigableCatalog,
-  searchCatalog,
-  topLevelLayers
+  platformCatalog,
+  platformFeaturedResources,
+  platformLayers,
+  searchCatalog
 } from './catalog';
 import { MarkdownArticle } from './components/MarkdownArticle';
 import { PdfViewer } from './components/PdfViewer';
 import { ZoomLightbox } from './components/ZoomLightbox';
-import type { CatalogItem, Layer, LightboxState } from './types';
+import type { CatalogItem, LightboxState, ResourceCollection, ResourceRole } from './types';
 
 const RECENT_KEY = 'doc-showcase-recent';
 const HEADER_FALLBACK_HEIGHT = 100;
+const MATH_PRIORITY_MODULES = new Set(['00', 'M00', 'M01', 'M02', 'M05']);
 type MobilePanel = 'closed' | 'catalog' | 'context' | 'appearance';
+type CollectionFilter = 'all' | ResourceCollection;
 
 type ShellStyle = CSSProperties & {
   [key: `--${string}`]: string;
 };
 
-function getVisibleLayers(items: CatalogItem[], layerFilter: Layer | '全部', search: string): Layer[] {
-  if (layerFilter !== '全部') {
-    return topLevelLayers.filter((layer) => layer === layerFilter);
+interface CatalogSection {
+  id: string;
+  label: string;
+  kicker: string;
+  count: number;
+  items: CatalogItem[];
+  defaultOpen: boolean;
+}
+
+interface LibraryBlock {
+  id: string;
+  kicker: string;
+  title: string;
+  description: string;
+  sections: CatalogSection[];
+}
+
+function getMathModuleSort(moduleKey: string | null): number {
+  if (!moduleKey) {
+    return 999;
   }
 
-  if (!search.trim()) {
-    return topLevelLayers;
+  if (moduleKey === '00') {
+    return 0;
   }
 
-  const visibleLayers = new Set(items.map((item) => item.layer));
-  return topLevelLayers.filter((layer) => visibleLayers.has(layer));
+  if (/^M\d+$/.test(moduleKey)) {
+    return Number(moduleKey.slice(1)) + 1;
+  }
+
+  if (moduleKey === 'R') {
+    return 90;
+  }
+
+  if (moduleKey === 'T') {
+    return 91;
+  }
+
+  return 999;
+}
+
+function getCollectionLabel(collection: CollectionFilter | ResourceCollection): string {
+  if (collection === 'all') {
+    return '全部公开资料';
+  }
+
+  return COLLECTION_LABELS[collection];
+}
+
+function getRoleLabel(role: ResourceRole): string {
+  if (role === 'student') {
+    return '学生向';
+  }
+  if (role === 'teacher') {
+    return '教师向';
+  }
+  return '通用';
+}
+
+function getItemMeta(item: CatalogItem): string {
+  if (item.collection === 'math-kb') {
+    return [item.moduleKey, item.resourceKind, item.role === 'unknown' ? null : getRoleLabel(item.role)].filter(Boolean).join(' · ');
+  }
+
+  return [item.layer, item.resourceKind].filter(Boolean).join(' · ');
+}
+
+function filterCatalogByCollection(items: CatalogItem[], collectionFilter: CollectionFilter): CatalogItem[] {
+  if (collectionFilter === 'all') {
+    return items;
+  }
+
+  return items.filter((item) => item.collection === collectionFilter);
+}
+
+function buildMathSections(items: CatalogItem[]): CatalogSection[] {
+  const groups = new Map<string, CatalogItem[]>();
+
+  items.forEach((item) => {
+    const key = item.moduleKey ?? item.group;
+    const current = groups.get(key) ?? [];
+    current.push(item);
+    groups.set(key, current);
+  });
+
+  return [...groups.entries()]
+    .map(([moduleKey, groupItems]) => ({
+      id: `math-${moduleKey}`,
+      label: groupItems[0]?.moduleLabel ?? groupItems[0]?.group ?? moduleKey,
+      kicker: groupItems[0]?.moduleKey ?? '课程模块',
+      count: groupItems.length,
+      items: groupItems.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN')),
+      defaultOpen: MATH_PRIORITY_MODULES.has(moduleKey)
+    }))
+    .sort((a, b) => getMathModuleSort(a.items[0]?.moduleKey ?? null) - getMathModuleSort(b.items[0]?.moduleKey ?? null));
+}
+
+function buildPlatformSections(items: CatalogItem[]): CatalogSection[] {
+  const sections: Array<CatalogSection | null> = platformLayers.map((layer) => {
+      const layerItems = items.filter((item) => item.layer === layer);
+      if (!layerItems.length) {
+        return null;
+      }
+
+      return {
+        id: `platform-${layer}`,
+        label: layer,
+        kicker: '平台分层',
+        count: layerItems.length,
+        items: layerItems,
+        defaultOpen: layer !== '归档' && layer !== '技术参考'
+      };
+    });
+
+  return sections.filter((section): section is CatalogSection => Boolean(section));
+}
+
+function buildCatalogSections(items: CatalogItem[], collectionFilter: CollectionFilter): CatalogSection[] {
+  const mathItems = items.filter((item) => item.collection === 'math-kb');
+  const platformItems = items.filter((item) => item.collection === 'platform-docs');
+
+  if (collectionFilter === 'math-kb') {
+    return buildMathSections(mathItems);
+  }
+
+  if (collectionFilter === 'platform-docs') {
+    return buildPlatformSections(platformItems);
+  }
+
+  return [...buildMathSections(mathItems), ...buildPlatformSections(platformItems)];
+}
+
+function buildLibraryBlocks(items: CatalogItem[], collectionFilter: CollectionFilter): LibraryBlock[] {
+  const blocks: LibraryBlock[] = [];
+  const mathItems = items.filter((item) => item.collection === 'math-kb');
+  const platformItems = items.filter((item) => item.collection === 'platform-docs');
+
+  if (collectionFilter !== 'platform-docs' && mathItems.length) {
+    blocks.push({
+      id: 'math-kb',
+      kicker: 'Math Knowledge Base',
+      title: COLLECTION_LABELS['math-kb'],
+      description: '按模块、资源类型和角色组织，适合课程地图展示、知识点查阅与样板演示。',
+      sections: buildMathSections(mathItems)
+    });
+  }
+
+  if (collectionFilter !== 'math-kb' && platformItems.length) {
+    blocks.push({
+      id: 'platform-docs',
+      kicker: 'Platform Documents',
+      title: COLLECTION_LABELS['platform-docs'],
+      description: '保留平台主文档、比赛资料和腾讯平台 PDF，作为公开说明与答辩补充入口。',
+      sections: buildPlatformSections(platformItems)
+    });
+  }
+
+  return blocks;
 }
 
 function readRecentIds(): string[] {
@@ -65,7 +218,7 @@ function writeRecentIds(ids: string[]) {
 
 function App() {
   const [search, setSearch] = useState('');
-  const [layerFilter, setLayerFilter] = useState<Layer | '全部'>('全部');
+  const [collectionFilter, setCollectionFilter] = useState<CollectionFilter>('all');
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>('closed');
   const [mobileQuickNavOpen, setMobileQuickNavOpen] = useState(false);
   const [lightbox, setLightbox] = useState<LightboxState | null>(null);
@@ -161,10 +314,12 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [mobileQuickNavOpen]);
 
-  const filteredCatalog = useMemo(
-    () => searchCatalog(navigableCatalog, search, layerFilter),
-    [search, layerFilter]
+  const collectionItems = useMemo(
+    () => filterCatalogByCollection(navigableCatalog, collectionFilter),
+    [collectionFilter]
   );
+
+  const filteredCatalog = useMemo(() => searchCatalog(collectionItems, search), [collectionItems, search]);
 
   const recentItems = useMemo(
     () =>
@@ -181,6 +336,12 @@ function App() {
       return next;
     });
   }, []);
+
+  const mathSections = useMemo(() => buildMathSections(mathCatalog), []);
+  const libraryBlocks = useMemo(
+    () => buildLibraryBlocks(filteredCatalog, collectionFilter),
+    [collectionFilter, filteredCatalog]
+  );
 
   const shellStyle: ShellStyle = useMemo(
     () => ({
@@ -202,8 +363,8 @@ function App() {
     setMobilePanel('closed');
   }, []);
 
-  const mobileContextButtonLabel = isReaderRoute ? '大纲' : isLibraryRoute ? '信息' : '精选';
-  const mobileContextPanelLabel = isReaderRoute ? '文档大纲' : isLibraryRoute ? '资料信息' : '推荐阅读';
+  const mobileContextButtonLabel = isReaderRoute ? '信息' : isLibraryRoute ? '统计' : '入口';
+  const mobileContextPanelLabel = isReaderRoute ? '文档信息' : isLibraryRoute ? '资料统计' : '公开入口';
   const mobileAppearancePanel = (
     <AppearanceControl
       renderVariant="panel"
@@ -217,8 +378,8 @@ function App() {
     <div className={`app-shell ${mobilePanel !== 'closed' ? 'has-mobile-panel' : ''}`.trim()} style={shellStyle}>
       <header ref={headerRef} className={`app-header ${headerCompressed ? 'is-scrolled' : ''}`.trim()}>
         <div className="header-brand">
-          <div className="section-kicker">Archive Showcase</div>
-          <h1>AI 主导学习平台文档展台</h1>
+          <div className="section-kicker">Public Knowledge Base</div>
+          <h1>高等数学_测试知识库展台</h1>
         </div>
         <div className="header-actions">
           <nav className="top-nav">
@@ -248,19 +409,31 @@ function App() {
                   activeId={undefined}
                   search={search}
                   onSearchChange={setSearch}
-                  layerFilter={layerFilter}
-                  onLayerChange={setLayerFilter}
+                  collectionFilter={collectionFilter}
+                  onCollectionChange={setCollectionFilter}
                   items={filteredCatalog}
                   onLinkSelect={closeMobilePanel}
                 />
               }
-              right={<HomeAside recentItems={recentItems} onLinkSelect={closeMobilePanel} />}
+              right={
+                <HomeAside
+                  recentItems={recentItems}
+                  mathItems={mathFeaturedResources}
+                  platformItems={platformFeaturedResources}
+                  onLinkSelect={closeMobilePanel}
+                />
+              }
               mobilePanel={mobilePanel}
               onCloseMobilePanel={closeMobilePanel}
               mobileAppearance={mobileAppearancePanel}
               mobileContextLabel={mobileContextPanelLabel}
             >
-              <HomePage recentItems={recentItems} onZoom={setLightbox} />
+              <HomePage
+                recentItems={recentItems}
+                mathSections={mathSections}
+                mathCount={mathCatalog.length}
+                platformCount={platformCatalog.length}
+              />
             </Frame>
           }
         />
@@ -273,19 +446,19 @@ function App() {
                   activeId={undefined}
                   search={search}
                   onSearchChange={setSearch}
-                  layerFilter={layerFilter}
-                  onLayerChange={setLayerFilter}
+                  collectionFilter={collectionFilter}
+                  onCollectionChange={setCollectionFilter}
                   items={filteredCatalog}
                   onLinkSelect={closeMobilePanel}
                 />
               }
-              right={<LibraryAside filteredCatalog={filteredCatalog} layerFilter={layerFilter} search={search} />}
+              right={<LibraryAside collectionFilter={collectionFilter} filteredCatalog={filteredCatalog} />}
               mobilePanel={mobilePanel}
               onCloseMobilePanel={closeMobilePanel}
               mobileAppearance={mobileAppearancePanel}
               mobileContextLabel={mobileContextPanelLabel}
             >
-              <LibraryPage items={filteredCatalog} onZoom={setLightbox} />
+              <LibraryPage collectionFilter={collectionFilter} search={search} blocks={libraryBlocks} />
             </Frame>
           }
         />
@@ -295,8 +468,8 @@ function App() {
             <ReaderRoute
               search={search}
               onSearchChange={setSearch}
-              layerFilter={layerFilter}
-              onLayerChange={setLayerFilter}
+              collectionFilter={collectionFilter}
+              onCollectionChange={setCollectionFilter}
               items={filteredCatalog}
               rememberResource={rememberResource}
               onZoom={setLightbox}
@@ -332,8 +505,8 @@ function App() {
         </button>
         <div className="mobile-actions-menu" aria-hidden={!mobileQuickNavOpen}>
           <div className="mobile-actions-brand">
-            <div className="section-kicker">Archive Showcase</div>
-            <strong>AI 主导学习平台文档展台</strong>
+            <div className="section-kicker">Public Knowledge Base</div>
+            <strong>高等数学_测试知识库展台</strong>
           </div>
           <nav className="mobile-actions-nav">
             <NavLink to="/" onClick={() => setMobileQuickNavOpen(false)}>
@@ -583,8 +756,8 @@ interface CatalogSidebarProps {
   activeId?: string;
   search: string;
   onSearchChange: (value: string) => void;
-  layerFilter: Layer | '全部';
-  onLayerChange: (value: Layer | '全部') => void;
+  collectionFilter: CollectionFilter;
+  onCollectionChange: (value: CollectionFilter) => void;
   items: CatalogItem[];
   onLinkSelect?: () => void;
 }
@@ -593,26 +766,18 @@ function CatalogSidebar({
   activeId,
   search,
   onSearchChange,
-  layerFilter,
-  onLayerChange,
+  collectionFilter,
+  onCollectionChange,
   items,
   onLinkSelect
 }: CatalogSidebarProps) {
-  const visibleLayers = useMemo(() => getVisibleLayers(items, layerFilter, search), [items, layerFilter, search]);
-  const shouldExpandVisibleLayers = layerFilter !== '全部' || Boolean(search.trim());
-  const grouped = useMemo(
-    () =>
-      visibleLayers.map((layer) => ({
-        layer,
-        items: items.filter((item) => item.layer === layer)
-      })),
-    [items, visibleLayers]
-  );
+  const grouped = useMemo(() => buildCatalogSections(items, collectionFilter), [items, collectionFilter]);
+  const shouldExpandAll = Boolean(search.trim());
 
   return (
     <div className="sidebar-panel">
       <div className="panel-header">
-        <div className="section-kicker">馆藏目录</div>
+        <div className="section-kicker">Public Catalog</div>
         <h2>资料导航</h2>
       </div>
       <label className="search-field">
@@ -620,73 +785,108 @@ function CatalogSidebar({
         <input
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="按标题、路径或正文搜索"
+          placeholder="按标题、模块、资源类型或正文搜索"
         />
       </label>
       <div className="filter-strip">
         <button
           type="button"
-          className={layerFilter === '全部' ? 'is-active' : ''}
-          onClick={() => onLayerChange('全部')}
+          className={collectionFilter === 'all' ? 'is-active' : ''}
+          onClick={() => onCollectionChange('all')}
         >
           全部
         </button>
-        {topLevelLayers.map((layer) => (
-          <button
-            key={layer}
-            type="button"
-            className={layerFilter === layer ? 'is-active' : ''}
-            onClick={() => onLayerChange(layer)}
-          >
-            {layer}
-          </button>
-        ))}
+        <button
+          type="button"
+          className={collectionFilter === 'math-kb' ? 'is-active' : ''}
+          onClick={() => onCollectionChange('math-kb')}
+        >
+          高数知识库
+        </button>
+        <button
+          type="button"
+          className={collectionFilter === 'platform-docs' ? 'is-active' : ''}
+          onClick={() => onCollectionChange('platform-docs')}
+        >
+          平台文档
+        </button>
       </div>
 
       <div className="layer-tree">
-        {grouped.map(({ layer, items: layerItems }) => (
-          <details key={layer} open={shouldExpandVisibleLayers || (layer !== '归档' && layer !== '技术参考')}>
-            <summary>
-              <span>{layer}</span>
-              <span>{layerItems.length}</span>
-            </summary>
-            <div className="tree-items">
-              {layerItems.map((item) => (
-                <Link
-                  key={item.id}
-                  className={`tree-item ${activeId === item.id ? 'is-active' : ''}`}
-                  to={`/read/${item.id}`}
-                  onClick={onLinkSelect}
-                >
-                  <span>{item.title}</span>
-                  <small>{item.group}</small>
-                </Link>
-              ))}
-            </div>
-          </details>
-        ))}
+        {grouped.length ? (
+          grouped.map((section) => (
+            <details key={section.id} open={shouldExpandAll || section.defaultOpen}>
+              <summary className="tree-summary">
+                <span className="tree-summary-copy">
+                  <small>{section.kicker}</small>
+                  <strong>{section.label}</strong>
+                </span>
+                <span>{section.count}</span>
+              </summary>
+              <div className="tree-items">
+                {section.items.map((item) => (
+                  <Link
+                    key={item.id}
+                    className={`tree-item ${activeId === item.id ? 'is-active' : ''}`}
+                    to={`/read/${item.id}`}
+                    onClick={onLinkSelect}
+                  >
+                    <span>{item.title}</span>
+                    <small>{getItemMeta(item)}</small>
+                  </Link>
+                ))}
+              </div>
+            </details>
+          ))
+        ) : (
+          <div className="empty-state">当前筛选下还没有命中内容，可以换一个集合或修改搜索词。</div>
+        )}
       </div>
     </div>
   );
 }
 
-function HomeAside({ recentItems, onLinkSelect }: { recentItems: CatalogItem[]; onLinkSelect?: () => void }) {
+function HomeAside({
+  recentItems,
+  mathItems,
+  platformItems,
+  onLinkSelect
+}: {
+  recentItems: CatalogItem[];
+  mathItems: CatalogItem[];
+  platformItems: CatalogItem[];
+  onLinkSelect?: () => void;
+}) {
   return (
     <div className="aside-panel">
       <div className="panel-header">
-        <div className="section-kicker">快速入口</div>
-        <h2>推荐阅读</h2>
+        <div className="section-kicker">Math Highlights</div>
+        <h2>高数主入口</h2>
       </div>
       <div className="aside-list">
-        {featuredResources.map((item) => (
+        {mathItems.slice(0, 3).map((item) => (
           <Link key={item.id} className="aside-link" to={`/read/${item.id}`} onClick={onLinkSelect}>
             <strong>{item.title}</strong>
-            <span>{item.layer}</span>
+            <span>{getItemMeta(item)}</span>
           </Link>
         ))}
       </div>
+
       <div className="panel-header panel-header--spaced">
-        <div className="section-kicker">最近查看</div>
+        <div className="section-kicker">Platform Docs</div>
+        <h2>平台入口</h2>
+      </div>
+      <div className="aside-list">
+        {platformItems.slice(0, 3).map((item) => (
+          <Link key={item.id} className="aside-link" to={`/read/${item.id}`} onClick={onLinkSelect}>
+            <strong>{item.title}</strong>
+            <span>{getItemMeta(item)}</span>
+          </Link>
+        ))}
+      </div>
+
+      <div className="panel-header panel-header--spaced">
+        <div className="section-kicker">Recent Reads</div>
         <h2>阅读轨迹</h2>
       </div>
       <div className="aside-list">
@@ -694,7 +894,7 @@ function HomeAside({ recentItems, onLinkSelect }: { recentItems: CatalogItem[]; 
           recentItems.map((item) => (
             <Link key={item.id} className="aside-link" to={`/read/${item.id}`} onClick={onLinkSelect}>
               <strong>{item.title}</strong>
-              <span>{item.relativePath}</span>
+              <span>{getItemMeta(item)}</span>
             </Link>
           ))
         ) : (
@@ -706,70 +906,116 @@ function HomeAside({ recentItems, onLinkSelect }: { recentItems: CatalogItem[]; 
 }
 
 function LibraryAside({
-  filteredCatalog,
-  layerFilter,
-  search
+  collectionFilter,
+  filteredCatalog
 }: {
+  collectionFilter: CollectionFilter;
   filteredCatalog: CatalogItem[];
-  layerFilter: Layer | '全部';
-  search: string;
 }) {
-  const visibleLayers = useMemo(
-    () => getVisibleLayers(filteredCatalog, layerFilter, search),
-    [filteredCatalog, layerFilter, search]
-  );
-  const counts = useMemo(
-    () =>
-      visibleLayers.map((layer) => ({
-        layer,
-        count: filteredCatalog.filter((item) => item.layer === layer).length
-      })),
-    [filteredCatalog, visibleLayers]
-  );
+  const counts = useMemo(() => {
+    if (collectionFilter === 'math-kb') {
+      return buildMathSections(filteredCatalog).map((section) => ({ label: `${section.kicker} ${section.label}`, count: section.count }));
+    }
+
+    if (collectionFilter === 'platform-docs') {
+      return buildPlatformSections(filteredCatalog).map((section) => ({ label: section.label, count: section.count }));
+    }
+
+    return [
+      { label: COLLECTION_LABELS['math-kb'], count: filteredCatalog.filter((item) => item.collection === 'math-kb').length },
+      { label: COLLECTION_LABELS['platform-docs'], count: filteredCatalog.filter((item) => item.collection === 'platform-docs').length }
+    ];
+  }, [collectionFilter, filteredCatalog]);
 
   return (
     <div className="aside-panel">
       <div className="panel-header">
-        <div className="section-kicker">资料分层</div>
-        <h2>当前筛选统计</h2>
+        <div className="section-kicker">Library Stats</div>
+        <h2>{getCollectionLabel(collectionFilter)}</h2>
       </div>
       <div className="count-list">
-        {counts.map(({ layer, count }) => (
-          <div key={layer} className="count-row">
-            <span>{layer}</span>
+        {counts.map(({ label, count }) => (
+          <div key={label} className="count-row">
+            <span>{label}</span>
             <strong>{count}</strong>
           </div>
         ))}
       </div>
       <p className="aside-note">
-        主文档层优先展示，技术参考和归档默认弱化。比赛 PDF 和腾讯平台资料继续保留在资料库中统一浏览。
+        当前资料库支持按集合切换浏览。高等数学_测试按模块组织，平台资料继续按层级和来源归档。
       </p>
     </div>
   );
 }
 
-function HomePage({ recentItems }: { recentItems: CatalogItem[]; onZoom: (lightbox: LightboxState) => void }) {
+function HomePage({
+  recentItems,
+  mathSections,
+  mathCount,
+  platformCount
+}: {
+  recentItems: CatalogItem[];
+  mathSections: CatalogSection[];
+  mathCount: number;
+  platformCount: number;
+}) {
+  const courseOverview = mathFeaturedResources[0];
+  const platformOverview = platformFeaturedResources[0];
+
   return (
     <div className="page-stack">
-      <section className="hero-panel">
+      <section className="hero-panel hero-panel--showcase">
         <div className="hero-copy">
-          <div className="section-kicker">Archive Reading Desk</div>
-          <h2>把平台主文档、技术参考和比赛资料放进同一个展示舞台。</h2>
+          <div className="section-kicker">Public Showcase</div>
+          <h2>高等数学_测试知识库已经接入站点，并与平台文档、比赛资料一起公开可见。</h2>
           <p>
-            这不是普通文档站，而是一套面向平台说明与比赛展示的阅读台：主线文档优先、技术参考补充、
-            归档后置、正文插图可放大查看、PDF 可分页浏览。
+            这里既是课程知识库的公开入口，也是平台说明与答辩资料的统一阅读台。高数内容按模块组织，
+            平台资料按层级归档，便于评审浏览，也方便直接进入具体知识点。
           </p>
           <div className="hero-actions">
-            <Link to="/library">进入资料库</Link>
-            {featuredResources[0] ? <Link to={`/read/${featuredResources[0].id}`}>从总索引开始</Link> : null}
+            <Link to="/library" className="accent-button">
+              进入资料库
+            </Link>
+            {courseOverview ? <Link to={`/read/${courseOverview.id}`}>查看课程地图</Link> : null}
           </div>
         </div>
-        <div className="hero-media hero-media--docs">
-          {featuredResources.map((item) => (
-            <Link key={item.id} to={`/read/${item.id}`} className="hero-doc">
-              <div className="section-kicker">{item.layer}</div>
-              <strong>{item.title}</strong>
-              <span>{item.group}</span>
+        <div className="hero-media hero-media--collections">
+          {courseOverview ? (
+            <Link to={`/read/${courseOverview.id}`} className="collection-card collection-card--math">
+              <div className="section-kicker">Primary Entrance</div>
+              <strong>高等数学_测试知识库</strong>
+              <p>优先展示课程总览、核心模块、课堂重构和教师运营样板。</p>
+              <div className="metric-row">
+                <span>{mathSections.length} 个模块分组</span>
+                <span>{mathCount} 份公开条目</span>
+              </div>
+            </Link>
+          ) : null}
+          {platformOverview ? (
+            <Link to={`/read/${platformOverview.id}`} className="collection-card collection-card--platform">
+              <div className="section-kicker">Supporting Docs</div>
+              <strong>平台文档与比赛资料</strong>
+              <p>保留产品总纲、统一对象契约、平台主线和比赛 PDF，作为公开补充入口。</p>
+              <div className="metric-row">
+                <span>{platformCount} 份平台资料</span>
+                <span>统一收口到同一站点</span>
+              </div>
+            </Link>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="shelf-section">
+        <div className="section-header">
+          <div className="section-kicker">Course Modules</div>
+          <h2>高数模块一览</h2>
+        </div>
+        <div className="module-chip-grid">
+          {mathSections.map((section) => (
+            <Link key={section.id} to={`/read/${section.items[0].id}`} className="module-chip">
+              <small>{section.kicker}</small>
+              <strong>{section.label}</strong>
+              <span>{section.count} 篇</span>
             </Link>
           ))}
         </div>
@@ -777,16 +1023,22 @@ function HomePage({ recentItems }: { recentItems: CatalogItem[]; onZoom: (lightb
 
       <section className="shelf-section">
         <div className="section-header">
-          <div className="section-kicker">策展入口</div>
-          <h2>建议从这几份资料进入</h2>
+          <div className="section-kicker">Recommended Routes</div>
+          <h2>公开站推荐入口</h2>
         </div>
-        <div className="shelf-list">
-          {featuredResources.map((item) => (
-            <Link key={item.id} to={`/read/${item.id}`} className="shelf-link">
+        <div className="spotlight-grid">
+          {mathFeaturedResources.slice(0, 3).map((item) => (
+            <Link key={item.id} to={`/read/${item.id}`} className="spotlight-card">
+              <div className="section-kicker">高数知识库</div>
               <strong>{item.title}</strong>
-              <span>
-                {item.layer} · {item.group}
-              </span>
+              <span>{getItemMeta(item)}</span>
+            </Link>
+          ))}
+          {platformFeaturedResources.slice(0, 3).map((item) => (
+            <Link key={item.id} to={`/read/${item.id}`} className="spotlight-card spotlight-card--platform">
+              <div className="section-kicker">平台文档</div>
+              <strong>{item.title}</strong>
+              <span>{getItemMeta(item)}</span>
             </Link>
           ))}
         </div>
@@ -794,7 +1046,7 @@ function HomePage({ recentItems }: { recentItems: CatalogItem[]; onZoom: (lightb
 
       <section className="shelf-section">
         <div className="section-header">
-          <div className="section-kicker">最近查看</div>
+          <div className="section-kicker">Recent Reads</div>
           <h2>继续你的阅读路径</h2>
         </div>
         <div className="shelf-list">
@@ -802,11 +1054,11 @@ function HomePage({ recentItems }: { recentItems: CatalogItem[]; onZoom: (lightb
             recentItems.map((item) => (
               <Link key={item.id} to={`/read/${item.id}`} className="shelf-link">
                 <strong>{item.title}</strong>
-                <span>{item.relativePath}</span>
+                <span>{getItemMeta(item)}</span>
               </Link>
             ))
           ) : (
-            <div className="empty-state">你还没有打开任何文档，可以先从总索引、角色主线或高等数学示范进入。</div>
+            <div className="empty-state">你还没有打开任何文档，可以先从课程地图、学习路径或平台总索引进入。</div>
           )}
         </div>
       </section>
@@ -814,46 +1066,61 @@ function HomePage({ recentItems }: { recentItems: CatalogItem[]; onZoom: (lightb
   );
 }
 
-function LibraryPage({ items }: { items: CatalogItem[]; onZoom: (lightbox: LightboxState) => void }) {
-  const grouped = useMemo(
-    () =>
-      topLevelLayers
-        .map((layer) => ({
-          layer,
-          items: items.filter((item) => item.layer === layer)
-        }))
-        .filter((group) => group.items.length > 0),
-    [items]
-  );
-
+function LibraryPage({
+  collectionFilter,
+  search,
+  blocks
+}: {
+  collectionFilter: CollectionFilter;
+  search: string;
+  blocks: LibraryBlock[];
+}) {
   return (
     <div className="page-stack">
       <section className="section-header section-header--page">
         <div className="section-kicker">Library</div>
-        <h2>全部资料</h2>
-        <p>主文档优先，技术参考弱化展示；归档、比赛 PDF 和腾讯平台资料统一收在同一资料库里浏览。</p>
+        <h2>{getCollectionLabel(collectionFilter)}</h2>
+        <p>
+          {search
+            ? `当前检索词为“${search}”，结果已经按集合和模块重新收口。`
+            : '这里统一展示高等数学_测试知识库、平台主文档和比赛资料，方便公开浏览与深链访问。'}
+        </p>
       </section>
 
-      {grouped.map(({ layer, items: layerItems }) => (
-        <section key={layer} className="library-section">
-          <div className="section-header">
-            <div className="section-kicker">{layer}</div>
-            <h2>{layer}</h2>
-          </div>
+      {blocks.length ? (
+        blocks.map((block) => (
+          <section key={block.id} className="library-block">
+            <div className="section-header">
+              <div className="section-kicker">{block.kicker}</div>
+              <h2>{block.title}</h2>
+              <p>{block.description}</p>
+            </div>
 
-          <div className="resource-list">
-            {layerItems.map((item) => (
-              <Link key={item.id} to={`/read/${item.id}`} className="resource-row">
-                <div>
-                  <div className="section-kicker">{item.group}</div>
-                  <strong>{item.title}</strong>
+            {block.sections.map((section) => (
+              <section key={section.id} className="library-section">
+                <div className="section-header section-header--compact">
+                  <div className="section-kicker">{section.kicker}</div>
+                  <h2>{section.label}</h2>
                 </div>
-                <span>{item.type.toUpperCase()}</span>
-              </Link>
+
+                <div className="resource-list">
+                  {section.items.map((item) => (
+                    <Link key={item.id} to={`/read/${item.id}`} className="resource-row">
+                      <div>
+                        <div className="section-kicker">{getItemMeta(item)}</div>
+                        <strong>{item.title}</strong>
+                      </div>
+                      <span>{item.type === 'markdown' ? item.resourceKind : item.type.toUpperCase()}</span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
             ))}
-          </div>
-        </section>
-      ))}
+          </section>
+        ))
+      ) : (
+        <div className="empty-state">当前筛选和检索下还没有结果，可以切回全部资料或换一个关键词。</div>
+      )}
     </div>
   );
 }
@@ -861,8 +1128,8 @@ function LibraryPage({ items }: { items: CatalogItem[]; onZoom: (lightbox: Light
 interface ReaderRouteProps {
   search: string;
   onSearchChange: (value: string) => void;
-  layerFilter: Layer | '全部';
-  onLayerChange: (value: Layer | '全部') => void;
+  collectionFilter: CollectionFilter;
+  onCollectionChange: (value: CollectionFilter) => void;
   items: CatalogItem[];
   rememberResource: (item: CatalogItem) => void;
   onZoom: (lightbox: LightboxState) => void;
@@ -877,6 +1144,17 @@ function ReaderRoute(props: ReaderRouteProps) {
   const { id } = useParams();
   const navigate = useNavigate();
   const item = id ? catalogById.get(id) : undefined;
+  const sidebarItems = useMemo(() => {
+    if (!item) {
+      return props.items;
+    }
+
+    if (props.items.some((candidate) => candidate.id === item.id)) {
+      return props.items;
+    }
+
+    return filterCatalogByCollection(navigableCatalog, item.collection);
+  }, [item, props.items]);
 
   useLayoutEffect(() => {
     if (!item) {
@@ -920,9 +1198,9 @@ function ReaderRoute(props: ReaderRouteProps) {
           activeId={item.id}
           search={props.search}
           onSearchChange={props.onSearchChange}
-          layerFilter={props.layerFilter}
-          onLayerChange={props.onLayerChange}
-          items={props.items}
+          collectionFilter={props.collectionFilter}
+          onCollectionChange={props.onCollectionChange}
+          items={sidebarItems}
           onLinkSelect={props.onCloseMobilePanel}
         />
       }
@@ -958,28 +1236,32 @@ function ReaderAside({
   return (
     <div className="aside-panel">
       <div className="panel-header">
-        <div className="section-kicker">当前文档</div>
+        <div className="section-kicker">Current Document</div>
         <h2>{item.title}</h2>
       </div>
       <div className="meta-stack">
         <div className="count-row">
-          <span>层级</span>
-          <strong>{item.layer}</strong>
+          <span>集合</span>
+          <strong>{COLLECTION_LABELS[item.collection]}</strong>
         </div>
         <div className="count-row">
-          <span>分组</span>
-          <strong>{item.group}</strong>
+          <span>{item.collection === 'math-kb' ? '模块' : '层级'}</span>
+          <strong>{item.collection === 'math-kb' ? `${item.moduleKey} · ${item.moduleLabel}` : item.layer}</strong>
         </div>
         <div className="count-row">
-          <span>类型</span>
-          <strong>{item.type}</strong>
+          <span>资源类型</span>
+          <strong>{item.resourceKind}</strong>
+        </div>
+        <div className="count-row">
+          <span>角色</span>
+          <strong>{getRoleLabel(item.role)}</strong>
         </div>
       </div>
 
       {outline.length ? (
         <>
           <div className="panel-header panel-header--spaced">
-            <div className="section-kicker">文档大纲</div>
+            <div className="section-kicker">Document Outline</div>
             <h2>快速跳转</h2>
           </div>
           <div className="outline-list">
@@ -1001,16 +1283,14 @@ function ReaderAside({
       ) : null}
 
       <div className="panel-header panel-header--spaced">
-        <div className="section-kicker">相关资源</div>
+        <div className="section-kicker">Related Resources</div>
         <h2>继续阅读</h2>
       </div>
       <div className="aside-list">
         {related.map((resource) => (
           <Link key={resource.id} className="aside-link" to={`/read/${resource.id}`} onClick={onLinkSelect}>
             <strong>{resource.title}</strong>
-            <span>
-              {resource.layer} · {resource.group}
-            </span>
+            <span>{getItemMeta(resource)}</span>
           </Link>
         ))}
       </div>
@@ -1034,7 +1314,9 @@ function ReaderPage({
       <section className="reader-header">
         <div>
           <div className="section-kicker">
-            {item.layer} · {item.group}
+            {item.collection === 'math-kb'
+              ? `${COLLECTION_LABELS[item.collection]} · ${item.moduleKey} · ${item.resourceKind}`
+              : `${item.layer} · ${item.resourceKind}`}
           </div>
           <h2>{item.title}</h2>
           <p>{item.relativePath}</p>

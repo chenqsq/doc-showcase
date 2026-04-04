@@ -1,6 +1,9 @@
 export type ResourceType = 'markdown' | 'pdf' | 'image';
+export type ResourceCollection = 'math-kb' | 'platform-docs';
+export type ResourceRole = 'student' | 'teacher' | 'unknown';
 
 export type Layer =
+  | '高等数学_测试知识库'
   | '平台层'
   | '子引擎层'
   | '学科层'
@@ -14,10 +17,15 @@ export type Layer =
 export interface CatalogItem {
   id: string;
   type: ResourceType;
+  collection: ResourceCollection;
   layer: Layer;
   title: string;
   relativePath: string;
   group: string;
+  moduleKey: string | null;
+  moduleLabel: string | null;
+  resourceKind: string;
+  role: ResourceRole;
   rawText?: string;
   assetUrl?: string;
 }
