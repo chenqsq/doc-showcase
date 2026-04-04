@@ -83,6 +83,7 @@ img {
 .top-nav {
   display: flex;
   gap: 18px;
+  flex-wrap: wrap;
 }
 
 .top-nav a {
@@ -408,6 +409,90 @@ img {
 .hero-image span {
   color: #28231d;
   font-weight: 600;
+}
+
+.landing-stage {
+  min-height: calc(100vh - 240px);
+  justify-content: center;
+}
+
+.landing-shell {
+  display: grid;
+  gap: 28px;
+  padding: clamp(34px, 4vw, 56px);
+  border: 1px solid var(--line-100);
+  border-radius: 34px;
+  background:
+    linear-gradient(145deg, rgba(177, 74, 61, 0.08), transparent 42%),
+    linear-gradient(180deg, #fffdf8, #f4ece0);
+  box-shadow: var(--shadow-crisp);
+}
+
+.landing-copy {
+  display: grid;
+  gap: 12px;
+  max-width: 42rem;
+}
+
+.landing-copy h2 {
+  margin: 0;
+  color: var(--heading-ink);
+  font-family: var(--font-serif);
+  font-size: clamp(2.2rem, 4vw, 3.6rem);
+  line-height: 1.05;
+}
+
+.landing-copy p {
+  margin: 0;
+  color: var(--muted-500);
+  line-height: 1.8;
+  max-width: 38rem;
+}
+
+.entry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.entry-card {
+  display: grid;
+  gap: 12px;
+  padding: 24px;
+  border: 1px solid var(--line-100);
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.72);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.entry-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-border);
+  box-shadow: var(--shadow-crisp);
+}
+
+.entry-card strong {
+  color: var(--heading-ink);
+  font-family: var(--font-serif);
+  font-size: 1.42rem;
+}
+
+.entry-card p,
+.entry-card span {
+  margin: 0;
+  color: var(--muted-500);
+}
+
+.entry-card--math {
+  background:
+    linear-gradient(160deg, rgba(179, 90, 64, 0.14), transparent 58%),
+    rgba(255, 255, 255, 0.84);
+}
+
+.entry-card--platform {
+  background:
+    linear-gradient(160deg, rgba(56, 82, 116, 0.08), transparent 58%),
+    rgba(255, 255, 255, 0.84);
 }
 
 .collection-card,
@@ -1013,7 +1098,8 @@ img {
 
   .hero-media--collections,
   .module-chip-grid,
-  .spotlight-grid {
+  .spotlight-grid,
+  .entry-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -2002,7 +2088,7 @@ body {
 
   .mobile-actions-nav {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 10px;
   }
 
@@ -2093,6 +2179,11 @@ body {
 
   .hero-panel {
     gap: 20px;
+    padding: 24px 20px;
+    border-radius: 28px;
+  }
+
+  .landing-shell {
     padding: 24px 20px;
     border-radius: 28px;
   }

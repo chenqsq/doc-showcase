@@ -1,5 +1,5 @@
 import { type CSSProperties, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   buildAppearanceVars,
   FONT_SCALE_PRESETS,
@@ -54,6 +54,40 @@ interface LibraryBlock {
   title: string;
   description: string;
   sections: CatalogSection[];
+}
+
+function getCollectionPath(collection: ResourceCollection): '/math' | '/platform' {
+  return collection === 'math-kb' ? '/math' : '/platform';
+}
+
+function getCollectionItems(collection: ResourceCollection): CatalogItem[] {
+  return collection === 'math-kb' ? mathCatalog : platformCatalog;
+}
+
+function getCollectionSections(items: CatalogItem[], collection: ResourceCollection): CatalogSection[] {
+  return collection === 'math-kb' ? buildMathSections(items) : buildPlatformSections(items);
+}
+
+function getCollectionSearchPlaceholder(collection: ResourceCollection): string {
+  return collection === 'math-kb' ? '搜索高数标题、模块或正文' : '搜索平台文档标题、层级或正文';
+}
+
+function getCollectionDescription(collection: ResourceCollection): string {
+  return collection === 'math-kb'
+    ? '按模块浏览高数知识点、例题、课堂重构与教师运营内容。'
+    : '按平台层级浏览产品文档、比赛资料与腾讯平台参考材料。';
+}
+
+function getCollectionHeroLabel(collection: ResourceCollection): string {
+  return collection === 'math-kb' ? 'Math Knowledge Base' : 'Platform Documents';
+}
+
+function buildCollectionCounts(items: CatalogItem[], collection: ResourceCollection): Array<{ label: string; count: number }> {
+  const sections = getCollectionSections(items, collection);
+  return sections.map((section) => ({
+    label: collection === 'math-kb' ? `${section.kicker} ${section.label}` : section.label,
+    count: section.count
+  }));
 }
 
 function getMathModuleSort(moduleKey: string | null): number {
@@ -218,7 +252,6 @@ function writeRecentIds(ids: string[]) {
 
 function App() {
   const [search, setSearch] = useState('');
-  const [collectionFilter, setCollectionFilter] = useState<CollectionFilter>('all');
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>('closed');
   const [mobileQuickNavOpen, setMobileQuickNavOpen] = useState(false);
   const [lightbox, setLightbox] = useState<LightboxState | null>(null);
@@ -228,10 +261,12 @@ function App() {
   const [headerCompressed, setHeaderCompressed] = useState(false);
   const headerRef = useRef<HTMLElement | null>(null);
   const location = useLocation();
+  const isHomeRoute = location.pathname === '/';
+  const isCollectionRoute = location.pathname === '/math' || location.pathname === '/platform';
   const isReaderRoute = location.pathname.startsWith('/read/');
-  const isLibraryRoute = location.pathname === '/library';
 
   useEffect(() => {
+    setSearch('');
     setMobilePanel('closed');
     setMobileQuickNavOpen(false);
   }, [location.pathname]);
@@ -314,13 +349,6 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [mobileQuickNavOpen]);
 
-  const collectionItems = useMemo(
-    () => filterCatalogByCollection(navigableCatalog, collectionFilter),
-    [collectionFilter]
-  );
-
-  const filteredCatalog = useMemo(() => searchCatalog(collectionItems, search), [collectionItems, search]);
-
   const recentItems = useMemo(
     () =>
       recentIds
@@ -336,12 +364,6 @@ function App() {
       return next;
     });
   }, []);
-
-  const mathSections = useMemo(() => buildMathSections(mathCatalog), []);
-  const libraryBlocks = useMemo(
-    () => buildLibraryBlocks(filteredCatalog, collectionFilter),
-    [collectionFilter, filteredCatalog]
-  );
 
   const shellStyle: ShellStyle = useMemo(
     () => ({
@@ -363,8 +385,9 @@ function App() {
     setMobilePanel('closed');
   }, []);
 
-  const mobileContextButtonLabel = isReaderRoute ? '信息' : isLibraryRoute ? '统计' : '入口';
-  const mobileContextPanelLabel = isReaderRoute ? '文档信息' : isLibraryRoute ? '资料统计' : '公开入口';
+  const mobileContextButtonLabel = isReaderRoute ? '信息' : isCollectionRoute ? '统计' : '入口';
+  const mobileContextPanelLabel = isReaderRoute ? '文档信息' : isCollectionRoute ? '资料统计' : '公开入口';
+  const showMobileCollectionShortcuts = !isHomeRoute;
   const mobileAppearancePanel = (
     <AppearanceControl
       renderVariant="panel"
@@ -383,8 +406,9 @@ function App() {
         </div>
         <div className="header-actions">
           <nav className="top-nav">
-            <NavLink to="/">总览</NavLink>
-            <NavLink to="/library">资料库</NavLink>
+            <NavLink to="/">首页</NavLink>
+            <NavLink to="/math">高数知识库</NavLink>
+            <NavLink to="/platform">平台文档</NavLink>
           </nav>
           <AppearanceControl
             className="appearance-control--desktop"
@@ -394,83 +418,54 @@ function App() {
           />
         </div>
         <nav className="mobile-top-nav">
-          <NavLink to="/">总览</NavLink>
-          <NavLink to="/library">资料库</NavLink>
+          <NavLink to="/">首页</NavLink>
+          <NavLink to="/math">高数</NavLink>
+          <NavLink to="/platform">平台</NavLink>
         </nav>
       </header>
 
       <Routes>
         <Route
           path="/"
+          element={<LandingPageV2 mathCount={mathCatalog.length} platformCount={platformCatalog.length} />}
+        />
+        <Route
+          path="/math"
           element={
-            <Frame
-              left={
-                <CatalogSidebar
-                  activeId={undefined}
-                  search={search}
-                  onSearchChange={setSearch}
-                  collectionFilter={collectionFilter}
-                  onCollectionChange={setCollectionFilter}
-                  items={filteredCatalog}
-                  onLinkSelect={closeMobilePanel}
-                />
-              }
-              right={
-                <HomeAside
-                  recentItems={recentItems}
-                  mathItems={mathFeaturedResources}
-                  platformItems={platformFeaturedResources}
-                  onLinkSelect={closeMobilePanel}
-                />
-              }
+            <CollectionRouteView
+              collection="math-kb"
+              search={search}
+              onSearchChange={setSearch}
+              recentItems={recentItems}
               mobilePanel={mobilePanel}
               onCloseMobilePanel={closeMobilePanel}
               mobileAppearance={mobileAppearancePanel}
               mobileContextLabel={mobileContextPanelLabel}
-            >
-              <HomePage
-                recentItems={recentItems}
-                mathSections={mathSections}
-                mathCount={mathCatalog.length}
-                platformCount={platformCatalog.length}
-              />
-            </Frame>
+            />
           }
         />
         <Route
-          path="/library"
+          path="/platform"
           element={
-            <Frame
-              left={
-                <CatalogSidebar
-                  activeId={undefined}
-                  search={search}
-                  onSearchChange={setSearch}
-                  collectionFilter={collectionFilter}
-                  onCollectionChange={setCollectionFilter}
-                  items={filteredCatalog}
-                  onLinkSelect={closeMobilePanel}
-                />
-              }
-              right={<LibraryAside collectionFilter={collectionFilter} filteredCatalog={filteredCatalog} />}
+            <CollectionRouteView
+              collection="platform-docs"
+              search={search}
+              onSearchChange={setSearch}
+              recentItems={recentItems}
               mobilePanel={mobilePanel}
               onCloseMobilePanel={closeMobilePanel}
               mobileAppearance={mobileAppearancePanel}
               mobileContextLabel={mobileContextPanelLabel}
-            >
-              <LibraryPage collectionFilter={collectionFilter} search={search} blocks={libraryBlocks} />
-            </Frame>
+            />
           }
         />
+        <Route path="/library" element={<Navigate to="/" replace />} />
         <Route
           path="/read/:id"
           element={
-            <ReaderRoute
+            <ReaderRouteView
               search={search}
               onSearchChange={setSearch}
-              collectionFilter={collectionFilter}
-              onCollectionChange={setCollectionFilter}
-              items={filteredCatalog}
               rememberResource={rememberResource}
               onZoom={setLightbox}
               mobilePanel={mobilePanel}
@@ -510,29 +505,36 @@ function App() {
           </div>
           <nav className="mobile-actions-nav">
             <NavLink to="/" onClick={() => setMobileQuickNavOpen(false)}>
-              总览
+              首页
             </NavLink>
-            <NavLink to="/library" onClick={() => setMobileQuickNavOpen(false)}>
-              资料库
+            <NavLink to="/math" onClick={() => setMobileQuickNavOpen(false)}>
+              高数知识库
+            </NavLink>
+            <NavLink to="/platform" onClick={() => setMobileQuickNavOpen(false)}>
+              平台文档
             </NavLink>
           </nav>
           <div className="mobile-actions-shortcuts">
-            <button
-              type="button"
-              className={mobilePanel === 'catalog' ? 'is-active' : ''}
-              aria-expanded={mobilePanel === 'catalog'}
-              onClick={() => toggleMobilePanel('catalog')}
-            >
-              目录
-            </button>
-            <button
-              type="button"
-              className={mobilePanel === 'context' ? 'is-active' : ''}
-              aria-expanded={mobilePanel === 'context'}
-              onClick={() => toggleMobilePanel('context')}
-            >
-              {mobileContextButtonLabel}
-            </button>
+            {showMobileCollectionShortcuts ? (
+              <>
+                <button
+                  type="button"
+                  className={mobilePanel === 'catalog' ? 'is-active' : ''}
+                  aria-expanded={mobilePanel === 'catalog'}
+                  onClick={() => toggleMobilePanel('catalog')}
+                >
+                  目录
+                </button>
+                <button
+                  type="button"
+                  className={mobilePanel === 'context' ? 'is-active' : ''}
+                  aria-expanded={mobilePanel === 'context'}
+                  onClick={() => toggleMobilePanel('context')}
+                >
+                  {mobileContextButtonLabel}
+                </button>
+              </>
+            ) : null}
             <button
               type="button"
               className={mobilePanel === 'appearance' ? 'is-active' : ''}
@@ -843,6 +845,358 @@ function CatalogSidebar({
         )}
       </div>
     </div>
+  );
+}
+
+interface CollectionSidebarV2Props {
+  activeId?: string;
+  collection: ResourceCollection;
+  search: string;
+  onSearchChange: (value: string) => void;
+  items: CatalogItem[];
+  onLinkSelect?: () => void;
+}
+
+function CollectionSidebarV2({
+  activeId,
+  collection,
+  search,
+  onSearchChange,
+  items,
+  onLinkSelect
+}: CollectionSidebarV2Props) {
+  const sections = useMemo(() => getCollectionSections(items, collection), [items, collection]);
+  const shouldExpandAll = Boolean(search.trim());
+
+  return (
+    <div className="sidebar-panel">
+      <div className="panel-header">
+        <div className="section-kicker">{getCollectionHeroLabel(collection)}</div>
+        <h2>{collection === 'math-kb' ? '高数目录' : '平台目录'}</h2>
+      </div>
+      <label className="search-field">
+        <span>搜索</span>
+        <input
+          value={search}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder={getCollectionSearchPlaceholder(collection)}
+        />
+      </label>
+      <div className="layer-tree">
+        {sections.length ? (
+          sections.map((section) => (
+            <details key={section.id} open={shouldExpandAll || section.defaultOpen}>
+              <summary className="tree-summary">
+                <span className="tree-summary-copy">
+                  <small>{section.kicker}</small>
+                  <strong>{section.label}</strong>
+                </span>
+                <span>{section.count}</span>
+              </summary>
+              <div className="tree-items">
+                {section.items.map((item) => (
+                  <Link
+                    key={item.id}
+                    className={`tree-item ${activeId === item.id ? 'is-active' : ''}`}
+                    to={`/read/${item.id}`}
+                    onClick={onLinkSelect}
+                  >
+                    <span>{item.title}</span>
+                    <small>{getItemMeta(item)}</small>
+                  </Link>
+                ))}
+              </div>
+            </details>
+          ))
+        ) : (
+          <div className="empty-state">
+            {collection === 'math-kb' ? '当前高数知识库下没有命中内容。' : '当前平台文档下没有命中内容。'}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LandingPageV2({ mathCount, platformCount }: { mathCount: number; platformCount: number }) {
+  return (
+    <div className="page-stack landing-stage">
+      <section className="landing-shell">
+        <div className="landing-copy">
+          <div className="section-kicker">Public Entrance</div>
+          <h2>选择你要进入的馆藏。</h2>
+          <p>首页只保留两个清楚入口：高数知识库用于课程内容浏览，平台文档用于产品说明与比赛材料查看。</p>
+        </div>
+        <div className="entry-grid">
+          <Link to="/math" className="entry-card entry-card--math">
+            <div className="section-kicker">Math Knowledge Base</div>
+            <strong>高数知识库</strong>
+            <p>按 `00 / M00-M10 / R / T` 浏览课程地图、知识点卡、课堂重构与教师运营内容。</p>
+            <span>{mathCount} 份内容</span>
+          </Link>
+          <Link to="/platform" className="entry-card entry-card--platform">
+            <div className="section-kicker">Platform Documents</div>
+            <strong>平台文档</strong>
+            <p>查看平台层、子引擎层、学科层、交付层与比赛资料，不混入高数知识库。</p>
+            <span>{platformCount} 份内容</span>
+          </Link>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function CollectionAsideV2({
+  collection,
+  items,
+  recentItems,
+  onLinkSelect
+}: {
+  collection: ResourceCollection;
+  items: CatalogItem[];
+  recentItems: CatalogItem[];
+  onLinkSelect?: () => void;
+}) {
+  const counts = useMemo(() => buildCollectionCounts(items, collection), [items, collection]);
+  const recentCollectionItems = useMemo(
+    () => recentItems.filter((item) => item.collection === collection).slice(0, 6),
+    [recentItems, collection]
+  );
+
+  return (
+    <div className="aside-panel">
+      <div className="panel-header">
+        <div className="section-kicker">{getCollectionHeroLabel(collection)}</div>
+        <h2>{COLLECTION_LABELS[collection]}</h2>
+      </div>
+      <p className="aside-note">{getCollectionDescription(collection)}</p>
+      <div className="count-list">
+        {counts.map(({ label, count }) => (
+          <div key={label} className="count-row">
+            <span>{label}</span>
+            <strong>{count}</strong>
+          </div>
+        ))}
+      </div>
+
+      {recentCollectionItems.length ? (
+        <>
+          <div className="panel-header panel-header--spaced">
+            <div className="section-kicker">Recent Reads</div>
+            <h2>继续阅读</h2>
+          </div>
+          <div className="aside-list">
+            {recentCollectionItems.map((item) => (
+              <Link key={item.id} className="aside-link" to={`/read/${item.id}`} onClick={onLinkSelect}>
+                <strong>{item.title}</strong>
+                <span>{getItemMeta(item)}</span>
+              </Link>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function CollectionPageV2({
+  collection,
+  search,
+  sections
+}: {
+  collection: ResourceCollection;
+  search: string;
+  sections: CatalogSection[];
+}) {
+  return (
+    <div className="page-stack">
+      <section className="section-header section-header--page">
+        <div className="section-kicker">{getCollectionHeroLabel(collection)}</div>
+        <h2>{COLLECTION_LABELS[collection]}</h2>
+        <p>
+          {search ? `当前检索词为“${search}”。` : getCollectionDescription(collection)}
+        </p>
+      </section>
+
+      {sections.length ? (
+        sections.map((section) => (
+          <section key={section.id} className="library-section">
+            <div className="section-header section-header--compact">
+              <div className="section-kicker">{section.kicker}</div>
+              <h2>{section.label}</h2>
+            </div>
+
+            <div className="resource-list">
+              {section.items.map((item) => (
+                <Link key={item.id} to={`/read/${item.id}`} className="resource-row">
+                  <div>
+                    <div className="section-kicker">{getItemMeta(item)}</div>
+                    <strong>{item.title}</strong>
+                  </div>
+                  <span>{item.type === 'markdown' ? item.resourceKind : item.type.toUpperCase()}</span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ))
+      ) : (
+        <div className="empty-state">
+          {collection === 'math-kb' ? '当前高数知识库下没有命中内容。' : '当前平台文档下没有命中内容。'}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CollectionRouteView({
+  collection,
+  search,
+  onSearchChange,
+  recentItems,
+  mobilePanel,
+  onCloseMobilePanel,
+  mobileAppearance,
+  mobileContextLabel
+}: {
+  collection: ResourceCollection;
+  search: string;
+  onSearchChange: (value: string) => void;
+  recentItems: CatalogItem[];
+  mobilePanel: MobilePanel;
+  onCloseMobilePanel: () => void;
+  mobileAppearance: ReactNode;
+  mobileContextLabel: string;
+}) {
+  const baseItems = useMemo(() => getCollectionItems(collection), [collection]);
+  const filteredItems = useMemo(() => searchCatalog(baseItems, search), [baseItems, search]);
+  const sections = useMemo(() => getCollectionSections(filteredItems, collection), [filteredItems, collection]);
+
+  return (
+    <Frame
+      left={
+        <CollectionSidebarV2
+          collection={collection}
+          search={search}
+          onSearchChange={onSearchChange}
+          items={filteredItems}
+          onLinkSelect={onCloseMobilePanel}
+        />
+      }
+      right={
+        <CollectionAsideV2
+          collection={collection}
+          items={filteredItems}
+          recentItems={recentItems}
+          onLinkSelect={onCloseMobilePanel}
+        />
+      }
+      mobilePanel={mobilePanel}
+      onCloseMobilePanel={onCloseMobilePanel}
+      mobileAppearance={mobileAppearance}
+      mobileContextLabel={mobileContextLabel}
+    >
+      <CollectionPageV2 collection={collection} search={search} sections={sections} />
+    </Frame>
+  );
+}
+
+function ReaderRouteView({
+  search,
+  onSearchChange,
+  rememberResource,
+  onZoom,
+  mobilePanel,
+  onCloseMobilePanel,
+  mobileAppearance,
+  mobileContextLabel,
+  themeId
+}: {
+  search: string;
+  onSearchChange: (value: string) => void;
+  rememberResource: (item: CatalogItem) => void;
+  onZoom: (lightbox: LightboxState) => void;
+  mobilePanel: MobilePanel;
+  onCloseMobilePanel: () => void;
+  mobileAppearance: ReactNode;
+  mobileContextLabel: string;
+  themeId: ThemeId;
+}) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const item = id ? catalogById.get(id) : undefined;
+
+  const collectionItems = useMemo(() => (item ? getCollectionItems(item.collection) : []), [item]);
+  const sidebarItems = useMemo(() => {
+    if (!item) {
+      return [];
+    }
+
+    const filteredItems = searchCatalog(collectionItems, search);
+    return filteredItems.some((candidate) => candidate.id === item.id) ? filteredItems : collectionItems;
+  }, [collectionItems, item, search]);
+
+  useLayoutEffect(() => {
+    if (!item) {
+      return;
+    }
+
+    const scrollingElement = document.scrollingElement;
+    if (scrollingElement) {
+      scrollingElement.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      return;
+    }
+
+    window.scrollTo(0, 0);
+  }, [item?.id]);
+
+  useEffect(() => {
+    if (!item) {
+      navigate('/');
+      return;
+    }
+    if (item.type === 'image') {
+      navigate(getCollectionPath(item.collection), { replace: true });
+      return;
+    }
+    rememberResource(item);
+  }, [item, navigate, rememberResource]);
+
+  if (!item || item.type === 'image') {
+    return null;
+  }
+
+  const outline = extractOutline(item.rawText);
+  const related = getRelatedResources(item);
+
+  return (
+    <Frame
+      mode="reader"
+      key={item.id}
+      left={
+        <CollectionSidebarV2
+          activeId={item.id}
+          collection={item.collection}
+          search={search}
+          onSearchChange={onSearchChange}
+          items={sidebarItems}
+          onLinkSelect={onCloseMobilePanel}
+        />
+      }
+      right={
+        <ReaderAside
+          item={item}
+          outline={outline}
+          related={related}
+          onLinkSelect={onCloseMobilePanel}
+        />
+      }
+      mobilePanel={mobilePanel}
+      onCloseMobilePanel={onCloseMobilePanel}
+      mobileAppearance={mobileAppearance}
+      mobileContextLabel={mobileContextLabel}
+    >
+      <ReaderPage key={item.id} item={item} outline={outline} onZoom={onZoom} themeId={themeId} />
+    </Frame>
   );
 }
 
