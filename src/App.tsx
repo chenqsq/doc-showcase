@@ -14,6 +14,7 @@ import {
 import {
   COLLECTION_LABELS,
   catalogById,
+  catalogByPath,
   extractOutline,
   getRelatedResources,
   mathCatalog,
@@ -55,6 +56,50 @@ interface LibraryBlock {
   description: string;
   sections: CatalogSection[];
 }
+
+interface LandingCardConfig {
+  path: string;
+  kicker: string;
+  title: string;
+  description: string;
+  metrics: [string, string];
+  className: string;
+}
+
+const LANDING_CORE_CARDS: LandingCardConfig[] = [
+  {
+    path: 'doc/智能体文档/平台层/AI主导学习平台-一期总览与团队分工.md',
+    kicker: 'Phase One Overview',
+    title: '一期总览与团队分工',
+    description: '看三条并行工作线、三人职责、交接点、验收标准和最终发布动作。',
+    metrics: ['3 条并行工作线', '3 位开发成员'],
+    className: 'entry-card--overview'
+  },
+  {
+    path: 'doc/智能体文档/学科层/高等数学-知识库接入与落库方案.md',
+    kicker: 'Knowledge Ingestion',
+    title: '高等数学-知识库接入与落库规范',
+    description: '看教材、试卷、讲义怎样做 OCR、拆卡、打标签、分批入库并完成抽样验收。',
+    metrics: ['OCR + 拆卡 + 标签', '学生 / 教师 / 课堂重构'],
+    className: 'entry-card--knowledge'
+  },
+  {
+    path: 'doc/智能体文档/子引擎层/AI教师子引擎-Agent工作流联调与验收手册.md',
+    kicker: 'Workflow QA',
+    title: 'Agent 工作流联调与验收手册',
+    description: '看多 Agent 路由、变量透传、检索绑定、回归样例和通过标准。',
+    metrics: ['6 个核心 Agent', '联调 + 回归 + 发布'],
+    className: 'entry-card--workflow'
+  },
+  {
+    path: 'doc/智能体文档/学科层/高等数学-Agent提示词模板与分层教学规范.md',
+    kicker: 'Prompt Patterns',
+    title: '高等数学-Agent 提示词模板与分层教学规范',
+    description: '看 0 基础补桥、常规提分、刷题纠错和教师摘要模板怎样统一收口。',
+    metrics: ['7 个状态槽位', '4 类固定模板'],
+    className: 'entry-card--prompt'
+  }
+];
 
 function getCollectionPath(collection: ResourceCollection): '/math' | '/platform' {
   return collection === 'math-kb' ? '/math' : '/platform';
@@ -919,27 +964,51 @@ function CollectionSidebarV2({
 }
 
 function LandingPageV2({ mathCount, platformCount }: { mathCount: number; platformCount: number }) {
+  const landingCards = LANDING_CORE_CARDS.map((card) => ({
+    ...card,
+    item: catalogByPath.get(card.path)
+  })).filter((card): card is LandingCardConfig & { item: CatalogItem } => Boolean(card.item));
+
   return (
     <div className="page-stack landing-stage">
       <section className="landing-shell">
         <div className="landing-copy">
-          <div className="section-kicker">Public Entrance</div>
-          <h2>选择你要进入的馆藏。</h2>
-          <p>首页只保留两个清楚入口：高数知识库用于课程内容浏览，平台文档用于产品说明与比赛材料查看。</p>
+          <div className="section-kicker">Phase One Console</div>
+          <h2>一期交付先从四个核心入口收口。</h2>
+          <p>
+            这个首页现在不再承担“推荐几份资料看看”的角色，而是作为本轮公开交付和团队执行的统一控制台。四张卡分别对应分工、知识库、工作流和提示词规范；完整馆藏仍然保留在
+            `/math` 和 `/platform`。
+          </p>
+          <div className="landing-meta-row">
+            <span>{mathCount} 份高数条目</span>
+            <span>{platformCount} 份平台资料</span>
+            <span>统一发布到 GitHub Pages</span>
+          </div>
+          <div className="landing-inline-nav">
+            <Link to="/math">浏览高数知识库</Link>
+            <Link to="/platform">浏览平台文档</Link>
+          </div>
         </div>
         <div className="entry-grid">
-          <Link to="/math" className="entry-card entry-card--math">
-            <div className="section-kicker">Math Knowledge Base</div>
-            <strong>高数知识库</strong>
-            <p>按 `00 / M00-M10 / R / T` 浏览课程地图、知识点卡、课堂重构与教师运营内容。</p>
-            <span>{mathCount} 份内容</span>
-          </Link>
-          <Link to="/platform" className="entry-card entry-card--platform">
-            <div className="section-kicker">Platform Documents</div>
-            <strong>平台文档</strong>
-            <p>查看平台层、子引擎层、学科层、交付层与比赛资料，不混入高数知识库。</p>
-            <span>{platformCount} 份内容</span>
-          </Link>
+          {landingCards.map((card, index) => (
+            <Link key={card.path} to={`/read/${card.item.id}`} className={`entry-card ${card.className}`.trim()}>
+              <div className="entry-card__top">
+                <div className="section-kicker">{card.kicker}</div>
+                <span className="entry-card__index">{String(index + 1).padStart(2, '0')}</span>
+              </div>
+              <strong>{card.title}</strong>
+              <p>{card.description}</p>
+              <div className="entry-card__metrics">
+                {card.metrics.map((metric) => (
+                  <span key={metric}>{metric}</span>
+                ))}
+              </div>
+              <div className="entry-card__footer">
+                <span>{card.item.layer}</span>
+                <span className="entry-card__arrow">进入文档</span>
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
     </div>
