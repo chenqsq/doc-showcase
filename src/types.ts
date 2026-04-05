@@ -1,6 +1,8 @@
 export type ResourceType = 'markdown' | 'pdf' | 'image';
 export type ResourceCollection = 'math-kb' | 'platform-docs';
 export type ResourceRole = 'student' | 'teacher' | 'unknown';
+export type DocumentPriority = 'main' | 'support' | 'appendix' | 'archive';
+export type NavigationScopeKey = 'team-delivery' | 'workflow' | 'platform-core' | 'subject-demo';
 
 export type Layer =
   | '高等数学_测试知识库'

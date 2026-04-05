@@ -27,7 +27,7 @@ import {
 import { MarkdownArticle } from './components/MarkdownArticle';
 import { PdfViewer } from './components/PdfViewer';
 import { ZoomLightbox } from './components/ZoomLightbox';
-import type { CatalogItem, LightboxState, ResourceCollection, ResourceRole } from './types';
+import type { CatalogItem, DocumentPriority, LightboxState, NavigationScopeKey, ResourceCollection, ResourceRole } from './types';
 
 const RECENT_KEY = 'doc-showcase-recent';
 const HEADER_FALLBACK_HEIGHT = 100;
@@ -61,9 +61,10 @@ interface LandingDocLinkConfig {
   label: string;
 }
 
-interface LandingDocGroupConfig {
-  title: string;
-  items: LandingDocLinkConfig[];
+interface LandingStatConfig {
+  label: string;
+  value: string;
+  detail: string;
 }
 
 interface LandingOverviewBlockConfig {
@@ -75,157 +76,538 @@ interface LandingOverviewBlockConfig {
   actionLabel: string;
   actionKind: 'route' | 'read';
   actionTarget: string;
-  groups: LandingDocGroupConfig[];
+  quickLinks?: LandingDocLinkConfig[];
+  stats?: LandingStatConfig[];
+  footnote?: string;
 }
 
 interface ResolvedLandingDocLinkConfig extends LandingDocLinkConfig {
   item: CatalogItem;
 }
 
-interface ResolvedLandingDocGroupConfig extends Omit<LandingDocGroupConfig, 'items'> {
-  items: ResolvedLandingDocLinkConfig[];
+interface ScopeGroupDefinition {
+  id: string;
+  label: string;
+  kicker: string;
+  paths: string[];
+  defaultOpen: boolean;
 }
 
-interface ResolvedLandingOverviewBlockConfig extends Omit<LandingOverviewBlockConfig, 'groups'> {
-  actionHref: string;
-  groups: ResolvedLandingDocGroupConfig[];
+interface SidebarBackLink {
+  label: string;
+  to: string;
 }
+
+interface ScopeGroupMeta {
+  id: string;
+  label: string;
+  kicker: string;
+  order: number;
+  defaultOpen: boolean;
+}
+
+interface NavigationScopeConfig {
+  key: NavigationScopeKey;
+  collection: ResourceCollection;
+  title: string;
+  kicker: string;
+  backLink: SidebarBackLink;
+  searchPlaceholder: string;
+  emptyState: string;
+  allPaths: string[];
+  visibleGroups: ScopeGroupDefinition[];
+  resolveGroup: (item: CatalogItem) => ScopeGroupMeta;
+}
+
+interface ResolvedLandingOverviewBlockConfig extends Omit<LandingOverviewBlockConfig, 'quickLinks'> {
+  actionHref: string;
+  quickLinks: ResolvedLandingDocLinkConfig[];
+}
+
+const TEAM_OVERVIEW_PATH = 'doc/智能体文档/平台层/AI主导学习平台-团队协作与分工.md';
+const TEAM_ROLE_PATHS = [
+  'doc/智能体文档/平台层/团队协作与分工/项目负责人-职责与执行手册.md',
+  'doc/智能体文档/平台层/团队协作与分工/OCR与资料电子化负责人-职责与执行手册.md',
+  'doc/智能体文档/平台层/团队协作与分工/工作流与联调负责人-职责与执行手册.md'
+] as const;
+const DELIVERY_MAIN_PATH = 'doc/智能体文档/交付层/比赛对齐说明.md';
+const DELIVERY_SUPPORT_PATH = 'doc/智能体文档/交付层/答辩口径与演示脚本.md';
+
+const WORKFLOW_MAIN_PATHS = [
+  'doc/智能体文档/子引擎层/AI教师子引擎-Agent工作流联调与验收手册.md',
+  'doc/智能体文档/子引擎层/AI教师子引擎-技术方案.md'
+] as const;
+const WORKFLOW_SUPPORT_PATHS = [
+  'doc/智能体文档/子引擎层/AI教师子引擎-教学策略设计.md',
+  'doc/智能体文档/子引擎层/AI教师子引擎-PRD.md'
+] as const;
+const WORKFLOW_APPENDIX_PATHS = [
+  'doc/智能体文档/子引擎层/实施附录/01-P0-Multi-Agent学生主闭环-架构设计.md',
+  'doc/智能体文档/子引擎层/实施附录/02-P1-可视化与教师运营-架构设计.md',
+  'doc/智能体文档/子引擎层/实施附录/03-P2-外部接入与产品后端-架构设计.md'
+] as const;
+
+const PLATFORM_MAIN_PATHS = [
+  'doc/智能体文档/平台层/AI主导学习平台-产品总纲.md',
+  'doc/智能体文档/平台层/AI主导学习平台-总体架构设计.md',
+  'doc/智能体文档/平台层/AI主导学习平台-平台需求与验收.md',
+  'doc/智能体文档/平台层/AI主导学习平台-知识库建设与提示词规范.md'
+] as const;
+const PLATFORM_SUPPORT_PATHS = [
+  'doc/智能体文档/平台层/AI主导学习平台-统一对象与接口契约.md',
+  'doc/智能体文档/平台层/AI主导学习平台-知识库结构与契约.md'
+] as const;
+const PLATFORM_APPENDIX_PATHS = [
+  'doc/智能体文档/平台层/AI主导学习平台-角色主线与阶段地图.md',
+  'doc/智能体文档/平台层/AI主导学习平台-学习生命周期与编排策略.md',
+  'doc/智能体文档/平台层/AI主导学习平台-学科大类与接入规范.md'
+] as const;
+
+const SUBJECT_MAIN_PATHS = [
+  'doc/智能体文档/学科层/高等数学-平台接入示范.md',
+  'doc/智能体文档/学科层/高等数学-知识库接入与落库方案.md'
+] as const;
+const SUBJECT_SUPPORT_PATHS = ['doc/智能体文档/学科层/高等数学-Agent提示词模板与分层教学规范.md'] as const;
+const SUBJECT_APPENDIX_PATHS = [
+  'doc/智能体文档/学科层/高等数学-ADP配置手册.md',
+  'doc/智能体文档/学科层/学科接入模板.md'
+] as const;
+
+const TEAM_DELIVERY_SCOPE_PATHS = [TEAM_OVERVIEW_PATH, ...TEAM_ROLE_PATHS, DELIVERY_MAIN_PATH, DELIVERY_SUPPORT_PATH] as const;
+const WORKFLOW_SCOPE_PATHS = [...WORKFLOW_MAIN_PATHS, ...WORKFLOW_SUPPORT_PATHS, ...WORKFLOW_APPENDIX_PATHS] as const;
+const PLATFORM_CORE_SCOPE_PATHS = [...PLATFORM_MAIN_PATHS, ...PLATFORM_SUPPORT_PATHS, ...PLATFORM_APPENDIX_PATHS] as const;
+const SUBJECT_SCOPE_PATHS = [...SUBJECT_MAIN_PATHS, ...SUBJECT_SUPPORT_PATHS, ...SUBJECT_APPENDIX_PATHS] as const;
+
+const MAIN_DOC_PATHS = new Set<string>([
+  TEAM_OVERVIEW_PATH,
+  DELIVERY_MAIN_PATH,
+  ...WORKFLOW_MAIN_PATHS,
+  ...PLATFORM_MAIN_PATHS,
+  ...SUBJECT_MAIN_PATHS
+]);
+const SUPPORT_DOC_PATHS = new Set<string>([
+  ...TEAM_ROLE_PATHS,
+  DELIVERY_SUPPORT_PATH,
+  ...WORKFLOW_SUPPORT_PATHS,
+  ...PLATFORM_SUPPORT_PATHS,
+  ...SUBJECT_SUPPORT_PATHS
+]);
+const APPENDIX_DOC_PATHS = new Set<string>([
+  ...WORKFLOW_APPENDIX_PATHS,
+  ...PLATFORM_APPENDIX_PATHS,
+  ...SUBJECT_APPENDIX_PATHS
+]);
+const TEAM_DELIVERY_PATH_SET = new Set<string>(TEAM_DELIVERY_SCOPE_PATHS);
+const WORKFLOW_PATH_SET = new Set<string>(WORKFLOW_SCOPE_PATHS);
+const PLATFORM_CORE_PATH_SET = new Set<string>(PLATFORM_CORE_SCOPE_PATHS);
+const SUBJECT_PATH_SET = new Set<string>(SUBJECT_SCOPE_PATHS);
 
 const LANDING_OVERVIEW_BLOCKS: LandingOverviewBlockConfig[] = [
   {
     id: 'team',
     kicker: '重点区块',
     title: '团队协作、分工与交付',
-    description: '先看谁负责什么、怎么交接，再看比赛收口、答辩口径和最终对外交付材料。',
+    description: '先看谁负责什么、怎么交接，再进入比赛收口、答辩口径和对外交付。',
     className: 'overview-panel--team',
     actionLabel: '查看团队总览',
     actionKind: 'read',
-    actionTarget: 'doc/智能体文档/平台层/AI主导学习平台-团队协作与分工.md',
-    groups: [
+    actionTarget: TEAM_OVERVIEW_PATH,
+    stats: [
       {
-        title: '岗位手册',
-        items: [
-          {
-            path: 'doc/智能体文档/平台层/AI主导学习平台-团队协作与分工.md',
-            label: '团队协作与分工总览'
-          },
-          {
-            path: 'doc/智能体文档/平台层/团队协作与分工/项目负责人-职责与执行手册.md',
-            label: '项目负责人手册'
-          },
-          {
-            path: 'doc/智能体文档/平台层/团队协作与分工/OCR与资料电子化负责人-职责与执行手册.md',
-            label: 'OCR 与资料电子化负责人手册'
-          },
-          {
-            path: 'doc/智能体文档/平台层/团队协作与分工/工作流与联调负责人-职责与执行手册.md',
-            label: '工作流与联调负责人手册'
-          }
-        ]
+        label: '岗位手册',
+        value: '4 篇',
+        detail: '总览 + 3 份岗位执行手册'
       },
       {
-        title: '交付材料',
-        items: [
-          {
-            path: 'doc/智能体文档/交付层/比赛对齐说明.md',
-            label: '比赛对齐说明'
-          },
-          {
-            path: 'doc/智能体文档/交付层/答辩口径与演示脚本.md',
-            label: '答辩口径与演示脚本'
-          }
-        ]
+        label: '交付材料',
+        value: '2 篇',
+        detail: '比赛对齐说明 + 答辩脚本'
       }
-    ]
-  },
-  {
-    id: 'platform',
-    kicker: '平台主文档',
-    title: '平台文档',
-    description: '从产品总纲、总体架构和平台需求切入，快速建立平台本体和统一口径。',
-    className: 'overview-panel--platform',
-    actionLabel: '浏览平台文档',
-    actionKind: 'route',
-    actionTarget: '/platform',
-    groups: [
-      {
-        title: '代表文档',
-        items: [
-          {
-            path: 'doc/智能体文档/平台层/AI主导学习平台-产品总纲.md',
-            label: '产品总纲'
-          },
-          {
-            path: 'doc/智能体文档/平台层/AI主导学习平台-总体架构设计.md',
-            label: '总体架构设计'
-          },
-          {
-            path: 'doc/智能体文档/平台层/AI主导学习平台-平台需求与验收.md',
-            label: '平台需求与验收'
-          }
-        ]
-      }
-    ]
+    ],
+    footnote: '具体文档收在团队总览页继续下钻。'
   },
   {
     id: 'workflow',
     kicker: '子引擎层',
     title: '子引擎与联调',
-    description: '把联调手册、技术方案和教学策略放在一起，便于开发、调试和验收直接对表。',
+    description: '先看联调手册和技术方案，教学策略与实施附录默认收在分类页。',
     className: 'overview-panel--workflow',
     actionLabel: '查看联调手册',
     actionKind: 'read',
-    actionTarget: 'doc/智能体文档/子引擎层/AI教师子引擎-Agent工作流联调与验收手册.md',
-    groups: [
+    actionTarget: WORKFLOW_MAIN_PATHS[0],
+    quickLinks: [
       {
-        title: '核心文档',
-        items: [
-          {
-            path: 'doc/智能体文档/子引擎层/AI教师子引擎-Agent工作流联调与验收手册.md',
-            label: 'Agent 工作流联调与验收手册'
-          },
-          {
-            path: 'doc/智能体文档/子引擎层/AI教师子引擎-技术方案.md',
-            label: 'AI 教师子引擎技术方案'
-          },
-          {
-            path: 'doc/智能体文档/子引擎层/AI教师子引擎-教学策略设计.md',
-            label: 'AI 教师子引擎教学策略设计'
-          }
-        ]
+        path: WORKFLOW_MAIN_PATHS[0],
+        label: 'Agent 工作流联调与验收手册'
+      },
+      {
+        path: WORKFLOW_MAIN_PATHS[1],
+        label: 'AI 教师子引擎技术方案'
       }
-    ]
+    ],
+    footnote: '补充文档保留在当前分类里继续阅读。'
+  },
+  {
+    id: 'platform',
+    kicker: '平台主文档',
+    title: '平台文档',
+    description: '优先看产品总纲、总体架构和平台需求，接口契约与平台策略默认收起。',
+    className: 'overview-panel--platform',
+    actionLabel: '浏览平台文档',
+    actionKind: 'route',
+    actionTarget: '/platform',
+    quickLinks: [
+      {
+        path: PLATFORM_MAIN_PATHS[0],
+        label: '产品总纲'
+      },
+      {
+        path: PLATFORM_MAIN_PATHS[1],
+        label: '总体架构设计'
+      }
+    ],
+    footnote: '平台需求与知识库规范放在平台分类里继续展开。'
   },
   {
     id: 'subject',
     kicker: '学科示例',
     title: '高等数学示例',
-    description: '用高等数学示范学科接入方式，串起平台接入、知识库落库和 Agent 提示词。',
+    description: '先看高数如何接入平台与落知识库，提示词规范和模板默认收在补充文档。',
     className: 'overview-panel--subject',
     actionLabel: '浏览知识库示例',
     actionKind: 'route',
     actionTarget: '/math',
-    groups: [
+    quickLinks: [
       {
-        title: '示例文档',
-        items: [
-          {
-            path: 'doc/智能体文档/学科层/高等数学-平台接入示范.md',
-            label: '高等数学平台接入示范'
-          },
-          {
-            path: 'doc/智能体文档/学科层/高等数学-知识库接入与落库方案.md',
-            label: '高等数学知识库落库方案'
-          },
-          {
-            path: 'doc/智能体文档/学科层/高等数学-Agent提示词模板与分层教学规范.md',
-            label: '高等数学 Agent 提示词规范'
-          }
-        ]
+        path: SUBJECT_MAIN_PATHS[0],
+        label: '高等数学平台接入示范'
+      },
+      {
+        path: SUBJECT_MAIN_PATHS[1],
+        label: '高等数学知识库落库方案'
       }
-    ]
+    ],
+    footnote: '高等数学提示词规范和学科模板继续保留在示例分类。'
   }
 ];
+
+const NAVIGATION_SCOPES: Record<NavigationScopeKey, NavigationScopeConfig> = {
+  'team-delivery': {
+    key: 'team-delivery',
+    collection: 'platform-docs',
+    title: '团队协作与分工',
+    kicker: '当前分类',
+    backLink: { label: '查看全部平台文档', to: '/platform' },
+    searchPlaceholder: '搜索团队总览、岗位手册或交付材料',
+    emptyState: '当前团队分类下没有命中内容。',
+    allPaths: [...TEAM_DELIVERY_SCOPE_PATHS],
+    visibleGroups: [
+      {
+        id: 'team-handbooks',
+        label: '岗位手册',
+        kicker: '团队分工',
+        paths: [TEAM_OVERVIEW_PATH, ...TEAM_ROLE_PATHS],
+        defaultOpen: true
+      },
+      {
+        id: 'team-delivery',
+        label: '交付材料',
+        kicker: '公开交付',
+        paths: [DELIVERY_MAIN_PATH, DELIVERY_SUPPORT_PATH],
+        defaultOpen: true
+      }
+    ],
+    resolveGroup: (item) =>
+      TEAM_DELIVERY_PATH_SET.has(item.relativePath) && item.relativePath.startsWith('doc/智能体文档/交付层/')
+        ? { id: 'team-delivery', label: '交付材料', kicker: '公开交付', order: 1, defaultOpen: true }
+        : { id: 'team-handbooks', label: '岗位手册', kicker: '团队分工', order: 0, defaultOpen: true }
+  },
+  workflow: {
+    key: 'workflow',
+    collection: 'platform-docs',
+    title: '子引擎与联调',
+    kicker: '当前分类',
+    backLink: { label: '查看全部平台文档', to: '/platform' },
+    searchPlaceholder: '搜索联调手册、技术方案或实施附录',
+    emptyState: '当前联调分类下没有命中内容。',
+    allPaths: [...WORKFLOW_SCOPE_PATHS],
+    visibleGroups: [
+      {
+        id: 'workflow-main',
+        label: '主文档',
+        kicker: '联调主线',
+        paths: [...WORKFLOW_MAIN_PATHS],
+        defaultOpen: true
+      },
+      {
+        id: 'workflow-support',
+        label: '补充文档',
+        kicker: '联调补充',
+        paths: [...WORKFLOW_SUPPORT_PATHS],
+        defaultOpen: true
+      }
+    ],
+    resolveGroup: (item) => {
+      if (WORKFLOW_PATH_SET.has(item.relativePath) && WORKFLOW_MAIN_PATHS.includes(item.relativePath as (typeof WORKFLOW_MAIN_PATHS)[number])) {
+        return { id: 'workflow-main', label: '主文档', kicker: '联调主线', order: 0, defaultOpen: true };
+      }
+      if (WORKFLOW_PATH_SET.has(item.relativePath) && WORKFLOW_SUPPORT_PATHS.includes(item.relativePath as (typeof WORKFLOW_SUPPORT_PATHS)[number])) {
+        return { id: 'workflow-support', label: '补充文档', kicker: '联调补充', order: 1, defaultOpen: true };
+      }
+      return { id: 'workflow-appendix', label: '实施附录', kicker: '阶段附录', order: 2, defaultOpen: false };
+    }
+  },
+  'platform-core': {
+    key: 'platform-core',
+    collection: 'platform-docs',
+    title: '平台文档',
+    kicker: '当前分类',
+    backLink: { label: '查看全部平台文档', to: '/platform' },
+    searchPlaceholder: '搜索产品总纲、架构、需求或接口契约',
+    emptyState: '当前平台核心分类下没有命中内容。',
+    allPaths: [...PLATFORM_CORE_SCOPE_PATHS],
+    visibleGroups: [
+      {
+        id: 'platform-main',
+        label: '主文档',
+        kicker: '平台核心',
+        paths: [...PLATFORM_MAIN_PATHS],
+        defaultOpen: true
+      },
+      {
+        id: 'platform-support',
+        label: '补充文档',
+        kicker: '接口与契约',
+        paths: [...PLATFORM_SUPPORT_PATHS],
+        defaultOpen: true
+      }
+    ],
+    resolveGroup: (item) => {
+      if (PLATFORM_CORE_PATH_SET.has(item.relativePath) && PLATFORM_MAIN_PATHS.includes(item.relativePath as (typeof PLATFORM_MAIN_PATHS)[number])) {
+        return { id: 'platform-main', label: '主文档', kicker: '平台核心', order: 0, defaultOpen: true };
+      }
+      if (PLATFORM_CORE_PATH_SET.has(item.relativePath) && PLATFORM_SUPPORT_PATHS.includes(item.relativePath as (typeof PLATFORM_SUPPORT_PATHS)[number])) {
+        return { id: 'platform-support', label: '补充文档', kicker: '接口与契约', order: 1, defaultOpen: true };
+      }
+      return { id: 'platform-appendix', label: '补充阅读', kicker: '平台补充', order: 2, defaultOpen: false };
+    }
+  },
+  'subject-demo': {
+    key: 'subject-demo',
+    collection: 'platform-docs',
+    title: '高等数学示例',
+    kicker: '当前分类',
+    backLink: { label: '查看全部知识库示例', to: '/math' },
+    searchPlaceholder: '搜索平台接入、落库方案或提示词规范',
+    emptyState: '当前学科示例分类下没有命中内容。',
+    allPaths: [...SUBJECT_SCOPE_PATHS],
+    visibleGroups: [
+      {
+        id: 'subject-main',
+        label: '主文档',
+        kicker: '学科示例',
+        paths: [...SUBJECT_MAIN_PATHS],
+        defaultOpen: true
+      },
+      {
+        id: 'subject-support',
+        label: '补充文档',
+        kicker: '提示词规范',
+        paths: [...SUBJECT_SUPPORT_PATHS],
+        defaultOpen: true
+      }
+    ],
+    resolveGroup: (item) => {
+      if (SUBJECT_PATH_SET.has(item.relativePath) && SUBJECT_MAIN_PATHS.includes(item.relativePath as (typeof SUBJECT_MAIN_PATHS)[number])) {
+        return { id: 'subject-main', label: '主文档', kicker: '学科示例', order: 0, defaultOpen: true };
+      }
+      if (SUBJECT_PATH_SET.has(item.relativePath) && SUBJECT_SUPPORT_PATHS.includes(item.relativePath as (typeof SUBJECT_SUPPORT_PATHS)[number])) {
+        return { id: 'subject-support', label: '补充文档', kicker: '提示词规范', order: 1, defaultOpen: true };
+      }
+      return { id: 'subject-appendix', label: '附录模板', kicker: '学科模板', order: 2, defaultOpen: false };
+    }
+  }
+};
+
+function uniqueCatalogItems(items: CatalogItem[]): CatalogItem[] {
+  const seen = new Set<string>();
+
+  return items.filter((item) => {
+    if (seen.has(item.id)) {
+      return false;
+    }
+
+    seen.add(item.id);
+    return true;
+  });
+}
+
+function getDocumentPriority(item: CatalogItem): DocumentPriority {
+  if (item.layer === '归档') {
+    return 'archive';
+  }
+
+  if (MAIN_DOC_PATHS.has(item.relativePath)) {
+    return 'main';
+  }
+
+  if (SUPPORT_DOC_PATHS.has(item.relativePath)) {
+    return 'support';
+  }
+
+  if (APPENDIX_DOC_PATHS.has(item.relativePath)) {
+    return 'appendix';
+  }
+
+  return 'support';
+}
+
+function getDocumentPriorityLabel(priority: DocumentPriority): string {
+  if (priority === 'main') {
+    return '主文档';
+  }
+  if (priority === 'support') {
+    return '补充文档';
+  }
+  if (priority === 'appendix') {
+    return '附录';
+  }
+  return '归档';
+}
+
+function getDocumentPriorityRank(priority: DocumentPriority): number {
+  if (priority === 'main') {
+    return 0;
+  }
+  if (priority === 'support') {
+    return 1;
+  }
+  if (priority === 'appendix') {
+    return 2;
+  }
+  return 3;
+}
+
+function compareByPriorityThenTitle(a: CatalogItem, b: CatalogItem): number {
+  const priorityDiff = getDocumentPriorityRank(getDocumentPriority(a)) - getDocumentPriorityRank(getDocumentPriority(b));
+  if (priorityDiff !== 0) {
+    return priorityDiff;
+  }
+
+  return a.title.localeCompare(b.title, 'zh-CN');
+}
+
+function getNavigationScope(item: CatalogItem): NavigationScopeKey | null {
+  if (item.collection !== 'platform-docs') {
+    return null;
+  }
+
+  if (TEAM_DELIVERY_PATH_SET.has(item.relativePath)) {
+    return 'team-delivery';
+  }
+
+  if (WORKFLOW_PATH_SET.has(item.relativePath) || item.relativePath.startsWith('doc/智能体文档/子引擎层/')) {
+    return 'workflow';
+  }
+
+  if (SUBJECT_PATH_SET.has(item.relativePath) || item.relativePath.startsWith('doc/智能体文档/学科层/')) {
+    return 'subject-demo';
+  }
+
+  return 'platform-core';
+}
+
+function getScopeConfig(scope: NavigationScopeKey): NavigationScopeConfig {
+  return NAVIGATION_SCOPES[scope];
+}
+
+function getScopeItems(scope: NavigationScopeKey): CatalogItem[] {
+  return getScopeConfig(scope).allPaths
+    .map((path) => catalogByPath.get(path))
+    .filter((item): item is CatalogItem => Boolean(item));
+}
+
+function getVisibleScopeItems(scope: NavigationScopeKey): CatalogItem[] {
+  return getScopeConfig(scope).visibleGroups
+    .flatMap((group) => group.paths)
+    .map((path) => catalogByPath.get(path))
+    .filter((item): item is CatalogItem => Boolean(item));
+}
+
+function buildScopeSections(
+  scope: NavigationScopeKey,
+  items: CatalogItem[],
+  activeItem: CatalogItem,
+  isSearching: boolean
+): CatalogSection[] {
+  const config = getScopeConfig(scope);
+
+  if (!isSearching) {
+    const sections = config.visibleGroups
+      .map((group) => ({
+        id: `${scope}-${group.id}`,
+        label: group.label,
+        kicker: group.kicker,
+        count: group.paths.length,
+        items: group.paths
+          .map((path) => catalogByPath.get(path))
+          .filter((item): item is CatalogItem => Boolean(item)),
+        defaultOpen: group.defaultOpen
+      }))
+      .filter((section) => section.items.length);
+
+    const visibleIds = new Set(sections.flatMap((section) => section.items.map((item) => item.id)));
+
+    if (!visibleIds.has(activeItem.id)) {
+      sections.unshift({
+        id: `${scope}-current`,
+        label: '当前文档',
+        kicker: '临时查看',
+        count: 1,
+        items: [activeItem],
+        defaultOpen: true
+      });
+    }
+
+    return sections;
+  }
+
+  const groups = new Map<string, { meta: ScopeGroupMeta; items: CatalogItem[] }>();
+
+  items.forEach((item) => {
+    const meta = config.resolveGroup(item);
+    const current = groups.get(meta.id) ?? { meta, items: [] };
+    current.items.push(item);
+    groups.set(meta.id, current);
+  });
+
+  return [...groups.values()]
+    .sort((a, b) => a.meta.order - b.meta.order)
+    .map(({ meta, items: groupItems }) => ({
+      id: `${scope}-${meta.id}`,
+      label: meta.label,
+      kicker: meta.kicker,
+      count: groupItems.length,
+      items: uniqueCatalogItems(groupItems).sort(compareByPriorityThenTitle),
+      defaultOpen: true
+    }));
+}
+
+function getScopedRelatedResources(item: CatalogItem, scope: NavigationScopeKey | null): CatalogItem[] {
+  if (!scope) {
+    return getRelatedResources(item).slice(0, 4);
+  }
+
+  const visibleIds = new Set(getVisibleScopeItems(scope).map((candidate) => candidate.id));
+  const preferred = getRelatedResources(item)
+    .filter((candidate) => visibleIds.has(candidate.id))
+    .sort(compareByPriorityThenTitle);
+  const fallback = getVisibleScopeItems(scope)
+    .filter((candidate) => candidate.id !== item.id)
+    .sort(compareByPriorityThenTitle);
+
+  return uniqueCatalogItems([...preferred, ...fallback]).slice(0, 4);
+}
 
 function getCollectionPath(collection: ResourceCollection): '/math' | '/platform' {
   return collection === 'math-kb' ? '/math' : '/platform';
@@ -1030,6 +1412,12 @@ interface CollectionSidebarV2Props {
   search: string;
   onSearchChange: (value: string) => void;
   items: CatalogItem[];
+  sections?: CatalogSection[];
+  kicker?: string;
+  title?: string;
+  searchPlaceholder?: string;
+  emptyState?: string;
+  backLink?: SidebarBackLink;
   onLinkSelect?: () => void;
 }
 
@@ -1039,28 +1427,40 @@ function CollectionSidebarV2({
   search,
   onSearchChange,
   items,
+  sections,
+  kicker,
+  title,
+  searchPlaceholder,
+  emptyState,
+  backLink,
   onLinkSelect
 }: CollectionSidebarV2Props) {
-  const sections = useMemo(() => getCollectionSections(items, collection), [items, collection]);
+  const fallbackSections = useMemo(() => getCollectionSections(items, collection), [items, collection]);
+  const resolvedSections = sections ?? fallbackSections;
   const shouldExpandAll = Boolean(search.trim());
 
   return (
     <div className="sidebar-panel">
       <div className="panel-header">
-        <div className="section-kicker">{getCollectionHeroLabel(collection)}</div>
-        <h2>{getCollectionDirectoryTitle(collection)}</h2>
+        <div className="section-kicker">{kicker ?? getCollectionHeroLabel(collection)}</div>
+        <h2>{title ?? getCollectionDirectoryTitle(collection)}</h2>
       </div>
+      {backLink ? (
+        <Link className="sidebar-back-link" to={backLink.to} onClick={onLinkSelect}>
+          {backLink.label}
+        </Link>
+      ) : null}
       <label className="search-field">
         <span>搜索</span>
         <input
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
-          placeholder={getCollectionSearchPlaceholder(collection)}
+          placeholder={searchPlaceholder ?? getCollectionSearchPlaceholder(collection)}
         />
       </label>
       <div className="layer-tree">
-        {sections.length ? (
-          sections.map((section) => (
+        {resolvedSections.length ? (
+          resolvedSections.map((section) => (
             <details key={section.id} open={shouldExpandAll || section.defaultOpen}>
               <summary className="tree-summary">
                 <span className="tree-summary-copy">
@@ -1086,7 +1486,7 @@ function CollectionSidebarV2({
           ))
         ) : (
           <div className="empty-state">
-            {collection === 'math-kb' ? '当前知识库示例下没有命中内容。' : '当前平台文档下没有命中内容。'}
+            {emptyState ?? (collection === 'math-kb' ? '当前知识库示例下没有命中内容。' : '当前平台文档下没有命中内容。')}
           </div>
         )}
       </div>
@@ -1098,17 +1498,12 @@ function LandingPageV2() {
   const overviewBlocks = useMemo<ResolvedLandingOverviewBlockConfig[]>(
     () =>
       LANDING_OVERVIEW_BLOCKS.map((block) => {
-        const groups: ResolvedLandingDocGroupConfig[] = block.groups
-          .map((group) => ({
-            ...group,
-            items: group.items
-              .map((entry) => {
-                const item = catalogByPath.get(entry.path);
-                return item ? { ...entry, item } : null;
-              })
-              .filter((entry): entry is ResolvedLandingDocLinkConfig => Boolean(entry))
-          }))
-          .filter((group) => group.items.length);
+        const quickLinks = (block.quickLinks ?? [])
+          .map((entry) => {
+            const item = catalogByPath.get(entry.path);
+            return item ? { ...entry, item } : null;
+          })
+          .filter((entry): entry is ResolvedLandingDocLinkConfig => Boolean(entry));
 
         const actionHref =
           block.actionKind === 'route'
@@ -1118,7 +1513,7 @@ function LandingPageV2() {
                 return actionItem ? `/read/${actionItem.id}` : null;
               })();
 
-        return actionHref && groups.length ? { ...block, groups, actionHref } : null;
+        return actionHref ? { ...block, quickLinks, actionHref } : null;
       }).filter((block): block is ResolvedLandingOverviewBlockConfig => Boolean(block)),
     []
   );
@@ -1129,7 +1524,7 @@ function LandingPageV2() {
         <div className="landing-overview-head">
           <div className="section-kicker">项目文档总览</div>
           <h2>AI主导学习平台</h2>
-          <p>集中浏览团队分工、交付材料、平台方案、子引擎联调与学科示例。</p>
+          <p>从团队分工、联调方案、平台文档和学科示例进入整个项目。</p>
         </div>
         <div className="overview-grid">
           {overviewBlocks.map((block) => (
@@ -1144,21 +1539,30 @@ function LandingPageV2() {
                 </Link>
               </div>
               <p>{block.description}</p>
-              <div className={`overview-panel__groups ${block.groups.length > 1 ? 'overview-panel__groups--split' : ''}`}>
-                {block.groups.map((group) => (
-                  <section key={`${block.id}-${group.title}`} className="overview-subgroup">
-                    <div className="overview-subgroup__title">{group.title}</div>
-                    <div className="overview-doc-list">
-                      {group.items.map((entry) => (
-                        <Link key={entry.path} to={`/read/${entry.item.id}`} className="overview-doc-link">
-                          <strong>{entry.label}</strong>
-                          <span>{entry.item.layer}</span>
-                        </Link>
-                      ))}
+              {block.stats?.length ? (
+                <div className="overview-stat-list">
+                  {block.stats.map((entry) => (
+                    <div key={`${block.id}-${entry.label}`} className="overview-stat-row">
+                      <div className="overview-stat-copy">
+                        <span>{entry.label}</span>
+                        <small>{entry.detail}</small>
+                      </div>
+                      <strong>{entry.value}</strong>
                     </div>
-                  </section>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : null}
+              {block.quickLinks.length ? (
+                <div className="overview-quick-list">
+                  {block.quickLinks.map((entry) => (
+                    <Link key={entry.path} to={`/read/${entry.item.id}`} className="overview-quick-link">
+                      <strong>{entry.label}</strong>
+                      <span>{getDocumentPriorityLabel(getDocumentPriority(entry.item))}</span>
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+              {block.footnote ? <div className="overview-panel__note">{block.footnote}</div> : null}
             </article>
           ))}
         </div>
@@ -1345,16 +1749,46 @@ function ReaderRouteView({
   const { id } = useParams();
   const navigate = useNavigate();
   const item = id ? catalogById.get(id) : undefined;
+  const scope = useMemo(() => (item ? getNavigationScope(item) : null), [item]);
+  const scopeConfig = useMemo(() => (scope ? getScopeConfig(scope) : null), [scope]);
+  const collectionItems = useMemo(() => {
+    if (!item) {
+      return [];
+    }
 
-  const collectionItems = useMemo(() => (item ? getCollectionItems(item.collection) : []), [item]);
+    if (scope) {
+      return getScopeItems(scope);
+    }
+
+    return getCollectionItems(item.collection);
+  }, [item, scope]);
   const sidebarItems = useMemo(() => {
     if (!item) {
       return [];
     }
 
     const filteredItems = searchCatalog(collectionItems, search);
-    return filteredItems.some((candidate) => candidate.id === item.id) ? filteredItems : collectionItems;
+    if (!search.trim()) {
+      return collectionItems;
+    }
+
+    if (filteredItems.some((candidate) => candidate.id === item.id)) {
+      return filteredItems;
+    }
+
+    return uniqueCatalogItems([item, ...filteredItems]);
   }, [collectionItems, item, search]);
+  const sidebarSections = useMemo(() => {
+    if (!item) {
+      return [];
+    }
+
+    if (scope) {
+      return buildScopeSections(scope, sidebarItems, item, Boolean(search.trim()));
+    }
+
+    return getCollectionSections(sidebarItems, item.collection);
+  }, [item, scope, sidebarItems, search]);
 
   useLayoutEffect(() => {
     if (!item) {
@@ -1387,7 +1821,7 @@ function ReaderRouteView({
   }
 
   const outline = extractOutline(item.rawText);
-  const related = getRelatedResources(item);
+  const related = getScopedRelatedResources(item, scope);
 
   return (
     <Frame
@@ -1400,6 +1834,12 @@ function ReaderRouteView({
           search={search}
           onSearchChange={onSearchChange}
           items={sidebarItems}
+          sections={sidebarSections}
+          kicker={scopeConfig?.kicker}
+          title={scopeConfig?.title}
+          searchPlaceholder={scopeConfig?.searchPlaceholder}
+          emptyState={scopeConfig?.emptyState}
+          backLink={scopeConfig?.backLink}
           onLinkSelect={onCloseMobilePanel}
         />
       }
