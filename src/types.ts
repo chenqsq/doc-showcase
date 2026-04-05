@@ -4,10 +4,11 @@ export type ResourceRole = 'student' | 'teacher' | 'unknown';
 export type DocumentPriority = 'main' | 'support' | 'appendix' | 'archive';
 export type NavigationScopeKey =
   | 'project-start'
-  | 'platform-design'
+  | 'platform-core'
+  | 'platform-specs'
   | 'engine-implementation'
   | 'subject-demo'
-  | 'competition-delivery'
+  | 'team-delivery'
   | 'archive';
 
 export type Layer =

@@ -38,7 +38,8 @@ const svgRawFiles = import.meta.glob('../doc/**/*.svg', {
 }) as Record<string, string>;
 
 const MATH_FEATURED_PATHS = [
-  'kb/高等数学_测试/00-课程总览/高等数学知识库总览.md',
+  'kb/高等数学_测试/00-课程总览/高等数学_测试-00课程总览-CH00整门课程-课程总览-高数_测试全景地图.md',
+  'kb/高等数学_测试/00-课程总览/高等数学_测试-00课程总览-CH00整门课程-章节导学-学习路径说明.md',
   'kb/高等数学_测试/M02-导数与微分/高等数学_测试-M02导数与微分-CH02导数与微分-知识点卡-瞬时变化率.md',
   'kb/高等数学_测试/R-课堂重构/高等数学_测试-R课堂重构-CHR整门课程-课堂重构笔记-总览.md',
   'kb/高等数学_测试/R-课堂重构/高等数学_测试-M02导数与微分-CH02导数与微分-课堂重构笔记-导数定义与求导法则入门课.md',
@@ -48,9 +49,9 @@ const MATH_FEATURED_PATHS = [
 const PLATFORM_FEATURED_PATHS = [
   'doc/智能体文档/00-项目阅读地图.md',
   'doc/智能体文档/平台层/平台总纲与架构.md',
-  'doc/智能体文档/平台层/平台对象、生命周期与验收.md',
   'doc/智能体文档/子引擎层/AI教师子引擎总览与设计.md',
-  'doc/智能体文档/学科层/高等数学接入与知识库总览.md'
+  'doc/智能体文档/学科层/高等数学接入与知识库总览.md',
+  'doc/智能体文档/交付层/比赛交付与答辩手册.md'
 ];
 
 export const COLLECTION_LABELS: Record<ResourceCollection, string> = {
@@ -123,7 +124,7 @@ function getLayer(relativePath: string, type: ResourceType): Layer {
   if (relativePath === 'CLAW_CODE_ANALYSIS_REPORT.md') {
     return '技术参考';
   }
-  if (relativePath === 'doc/智能体文档/00-项目阅读地图.md') {
+  if (relativePath.startsWith('doc/智能体文档/') && relativePath.split('/').length === 3) {
     return '平台层';
   }
   if (relativePath.startsWith('doc/智能体文档/平台层/')) {
@@ -167,7 +168,7 @@ function getPlatformGroup(relativePath: string, layer: Layer): string {
     return segments[3] || '归档';
   }
 
-  if (relativePath === 'doc/智能体文档/00-项目阅读地图.md') {
+  if (relativePath.startsWith('doc/智能体文档/') && relativePath.split('/').length === 3) {
     return '项目入口';
   }
 
