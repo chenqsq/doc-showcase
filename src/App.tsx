@@ -206,8 +206,8 @@ const LANDING_OVERVIEW_BLOCKS: LandingOverviewBlockConfig[] = [
   {
     id: 'team',
     kicker: '重点区块',
-    title: '团队协作、分工与交付',
-    description: '先看谁负责什么、怎么交接，再进入比赛收口、答辩口径和对外交付。',
+    title: '团队分工与交付',
+    description: '先看分工边界与交付收口，再进入岗位手册、答辩口径和对外交付。',
     className: 'overview-panel--team',
     actionLabel: '查看团队总览',
     actionKind: 'read',
@@ -224,13 +224,13 @@ const LANDING_OVERVIEW_BLOCKS: LandingOverviewBlockConfig[] = [
         detail: '比赛对齐说明 + 答辩脚本'
       }
     ],
-    footnote: '具体文档收在团队总览页继续下钻。'
+    footnote: '具体文档继续收在团队总览页。'
   },
   {
     id: 'workflow',
     kicker: '子引擎层',
     title: '子引擎与联调',
-    description: '先看联调手册和技术方案，教学策略与实施附录默认收在分类页。',
+    description: '先看联调手册和技术方案，补充策略与实施附录继续收在分类页。',
     className: 'overview-panel--workflow',
     actionLabel: '查看联调手册',
     actionKind: 'read',
@@ -251,7 +251,7 @@ const LANDING_OVERVIEW_BLOCKS: LandingOverviewBlockConfig[] = [
     id: 'platform',
     kicker: '平台主文档',
     title: '平台文档',
-    description: '优先看产品总纲、总体架构和平台需求，接口契约与平台策略默认收起。',
+    description: '优先看产品总纲、总体架构和平台需求，接口契约与平台策略留在分类页。',
     className: 'overview-panel--platform',
     actionLabel: '浏览平台文档',
     actionKind: 'route',
@@ -272,7 +272,7 @@ const LANDING_OVERVIEW_BLOCKS: LandingOverviewBlockConfig[] = [
     id: 'subject',
     kicker: '学科示例',
     title: '高等数学示例',
-    description: '先看高数如何接入平台与落知识库，提示词规范和模板默认收在补充文档。',
+    description: '先看高数如何接入平台与落知识库，提示词规范和模板继续收在补充文档。',
     className: 'overview-panel--subject',
     actionLabel: '浏览知识库示例',
     actionKind: 'route',
@@ -910,6 +910,29 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [mobileQuickNavOpen]);
 
+  useEffect(() => {
+    const syncResponsivePanels = () => {
+      const width = window.innerWidth;
+
+      setMobileQuickNavOpen((current) => (width < 960 ? current : false));
+      setMobilePanel((current) => {
+        if (current === 'closed') {
+          return current;
+        }
+
+        if (current === 'context') {
+          return width < 960 || (width >= 960 && width < 1280) ? current : 'closed';
+        }
+
+        return width < 960 ? current : 'closed';
+      });
+    };
+
+    syncResponsivePanels();
+    window.addEventListener('resize', syncResponsivePanels, { passive: true });
+    return () => window.removeEventListener('resize', syncResponsivePanels);
+  }, []);
+
   const recentItems = useMemo(
     () =>
       recentIds
@@ -948,6 +971,7 @@ function App() {
 
   const mobileContextButtonLabel = isReaderRoute ? '信息' : isCollectionRoute ? '统计' : '入口';
   const mobileContextPanelLabel = isReaderRoute ? '文档信息' : isCollectionRoute ? '资料统计' : '公开入口';
+  const showHeaderContextButton = isReaderRoute || isCollectionRoute;
   const showMobileCollectionShortcuts = !isHomeRoute;
   const mobileAppearancePanel = (
     <AppearanceControl
@@ -971,6 +995,16 @@ function App() {
             <NavLink to="/math">知识库示例</NavLink>
             <NavLink to="/platform">平台文档</NavLink>
           </nav>
+          {showHeaderContextButton ? (
+            <button
+              type="button"
+              className={`header-context-button ${mobilePanel === 'context' ? 'is-active' : ''}`.trim()}
+              aria-expanded={mobilePanel === 'context'}
+              onClick={() => toggleMobilePanel('context')}
+            >
+              信息
+            </button>
+          ) : null}
           <AppearanceControl
             className="appearance-control--desktop"
             appearance={appearance}
@@ -1267,7 +1301,7 @@ interface FrameProps {
   onCloseMobilePanel: () => void;
   mobileAppearance: ReactNode;
   mobileContextLabel: string;
-  mode?: 'default' | 'reader';
+  mode?: 'default' | 'reader' | 'collection';
 }
 
 function Frame({
@@ -1282,10 +1316,17 @@ function Frame({
 }: FrameProps) {
   const mobileContent =
     mobilePanel === 'catalog' ? left : mobilePanel === 'context' ? right : mobilePanel === 'appearance' ? mobileAppearance : null;
+  const frameClassName = [
+    'frame-grid',
+    mode === 'reader' ? 'frame-grid--reader' : '',
+    mode === 'collection' ? 'frame-grid--collection' : ''
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <>
-      <div className={`frame-grid ${mode === 'reader' ? 'frame-grid--reader' : ''}`.trim()}>
+      <div className={frameClassName}>
         <aside className="frame-left">{left}</aside>
         <main className="frame-main">{children}</main>
         <aside className="frame-right">{right}</aside>
@@ -1529,40 +1570,40 @@ function LandingPageV2() {
         <div className="overview-grid">
           {overviewBlocks.map((block) => (
             <article key={block.id} className={`overview-panel ${block.className}`.trim()}>
-              <div className="overview-panel__header">
-                <div className="overview-panel__heading">
-                  <div className="section-kicker">{block.kicker}</div>
-                  <h3>{block.title}</h3>
-                </div>
+              <div className="overview-panel__intro">
+                <div className="section-kicker">{block.kicker}</div>
+                <h3>{block.title}</h3>
+                <p>{block.description}</p>
+              </div>
+              <div className="overview-panel__footer">
                 <Link to={block.actionHref} className="overview-panel__action">
                   {block.actionLabel}
                 </Link>
-              </div>
-              <p>{block.description}</p>
-              {block.stats?.length ? (
-                <div className="overview-stat-list">
-                  {block.stats.map((entry) => (
-                    <div key={`${block.id}-${entry.label}`} className="overview-stat-row">
-                      <div className="overview-stat-copy">
-                        <span>{entry.label}</span>
-                        <small>{entry.detail}</small>
+                {block.stats?.length ? (
+                  <div className="overview-stat-list">
+                    {block.stats.map((entry) => (
+                      <div key={`${block.id}-${entry.label}`} className="overview-stat-row">
+                        <div className="overview-stat-copy">
+                          <span>{entry.label}</span>
+                          <small>{entry.detail}</small>
+                        </div>
+                        <strong>{entry.value}</strong>
                       </div>
-                      <strong>{entry.value}</strong>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-              {block.quickLinks.length ? (
-                <div className="overview-quick-list">
-                  {block.quickLinks.map((entry) => (
-                    <Link key={entry.path} to={`/read/${entry.item.id}`} className="overview-quick-link">
-                      <strong>{entry.label}</strong>
-                      <span>{getDocumentPriorityLabel(getDocumentPriority(entry.item))}</span>
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
-              {block.footnote ? <div className="overview-panel__note">{block.footnote}</div> : null}
+                    ))}
+                  </div>
+                ) : null}
+                {block.quickLinks.length ? (
+                  <div className="overview-quick-list">
+                    {block.quickLinks.map((entry) => (
+                      <Link key={entry.path} to={`/read/${entry.item.id}`} className="overview-quick-link">
+                        <strong>{entry.label}</strong>
+                        <span>{getDocumentPriorityLabel(getDocumentPriority(entry.item))}</span>
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
+                {block.footnote ? <div className="overview-panel__note">{block.footnote}</div> : null}
+              </div>
             </article>
           ))}
         </div>
@@ -1698,6 +1739,7 @@ function CollectionRouteView({
 
   return (
     <Frame
+      mode="collection"
       left={
         <CollectionSidebarV2
           collection={collection}
