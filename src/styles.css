@@ -2780,6 +2780,91 @@ body {
   line-height: 1.68;
 }
 
+.landing-route-grid,
+.landing-reference-grid,
+.collection-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.landing-route-card,
+.landing-reference-card,
+.collection-guide-card {
+  display: grid;
+  gap: 12px;
+  padding: 20px 22px;
+  border: 1px solid var(--line-strong);
+  border-radius: 26px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 26%),
+    var(--surface-raised);
+  box-shadow: var(--shadow-crisp);
+}
+
+.landing-route-card h3,
+.landing-reference-card h3 {
+  margin: 0;
+  color: var(--heading-ink);
+  font-family: var(--font-serif);
+  font-size: 1.28rem;
+  line-height: 1.15;
+}
+
+.landing-route-card p,
+.landing-reference-card p,
+.collection-guide-card p {
+  margin: 0;
+  color: var(--muted-700);
+  line-height: 1.68;
+}
+
+.landing-route-card__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--heading-ink);
+  font-weight: 600;
+}
+
+.landing-route-card__links,
+.landing-reference-card__links {
+  display: grid;
+  gap: 0;
+}
+
+.landing-route-card__links a,
+.landing-reference-card__links a {
+  padding: 10px 0;
+  border-top: 1px solid var(--line-100);
+  color: var(--heading-ink);
+  line-height: 1.55;
+}
+
+.overview-panel__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.overview-panel__chips span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line-100);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--heading-ink);
+  font-size: 0.84rem;
+}
+
 .overview-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -2923,6 +3008,32 @@ body {
 .overview-panel__note {
   color: var(--muted-500);
   font-size: 0.92rem;
+  line-height: 1.68;
+}
+
+.collection-guide-card {
+  color: inherit;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.collection-guide-card strong {
+  color: var(--heading-ink);
+  font-family: var(--font-serif);
+  font-size: 1.14rem;
+  line-height: 1.2;
+}
+
+.collection-guide-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-500);
+}
+
+.library-section-summary-note {
+  margin: 12px 0 0;
+  color: var(--muted-500);
   line-height: 1.68;
 }
 
@@ -3096,6 +3207,12 @@ body {
   }
 
   .overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-route-grid,
+  .landing-reference-grid,
+  .collection-guide-grid {
     grid-template-columns: 1fr;
   }
 

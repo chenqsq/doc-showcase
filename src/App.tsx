@@ -42,6 +42,7 @@ interface CatalogSection {
   id: string;
   label: string;
   kicker: string;
+  summary?: string;
   count: number;
   items: CatalogItem[];
   defaultOpen: boolean;
@@ -71,10 +72,12 @@ interface LandingOverviewBlockConfig {
   kicker: string;
   title: string;
   description: string;
+  audience: string;
   className: string;
   actionLabel: string;
   actionKind: 'route' | 'read';
   actionTarget: string;
+  paths: string[];
   quickLinks?: LandingDocLinkConfig[];
   stats?: LandingStatConfig[];
   footnote?: string;
@@ -82,6 +85,33 @@ interface LandingOverviewBlockConfig {
 
 interface ResolvedLandingDocLinkConfig extends LandingDocLinkConfig {
   item: CatalogItem;
+}
+
+interface LandingAudienceRouteConfig {
+  id: string;
+  kicker: string;
+  title: string;
+  description: string;
+  actionPath: string;
+  actionLabel: string;
+  relatedPaths: string[];
+}
+
+interface ResolvedLandingAudienceRouteConfig extends LandingAudienceRouteConfig {
+  actionItem: CatalogItem;
+  relatedItems: CatalogItem[];
+}
+
+interface LandingReferenceGroupConfig {
+  id: string;
+  kicker: string;
+  title: string;
+  description: string;
+  paths: string[];
+}
+
+interface ResolvedLandingReferenceGroupConfig extends LandingReferenceGroupConfig {
+  items: CatalogItem[];
 }
 
 interface ScopeGroupDefinition {
@@ -121,6 +151,7 @@ interface NavigationScopeConfig {
 interface ResolvedLandingOverviewBlockConfig extends Omit<LandingOverviewBlockConfig, 'quickLinks'> {
   actionHref: string;
   quickLinks: ResolvedLandingDocLinkConfig[];
+  docCount: number;
 }
 
 const READING_MAP_PATH = 'doc/智能体文档/00-项目阅读地图.md';
@@ -206,14 +237,17 @@ const TEAM_DELIVERY_REFERENCE_PATHS = [
   'doc/腾讯平台使用文档/应用接口文档.pdf',
   'CLAW_CODE_ANALYSIS_REPORT.md'
 ] as const;
-const TEAM_DELIVERY_PATHS = [
+const TEAM_DELIVERY_CORE_PATHS = [
   DELIVERY_GUIDE_PATH,
   TEAM_OVERVIEW_PATH,
   TEAM_PROJECT_LEAD_PATH,
   TEAM_KNOWLEDGE_LEAD_PATH,
   TEAM_WORKFLOW_LEAD_PATH,
   DELIVERY_ALIGNMENT_PATH,
-  DELIVERY_SCRIPT_PATH,
+  DELIVERY_SCRIPT_PATH
+] as const;
+const TEAM_DELIVERY_PATHS = [
+  ...TEAM_DELIVERY_CORE_PATHS,
   ...TEAM_DELIVERY_REFERENCE_PATHS
 ] as const;
 const ARCHIVE_PATHS = [
@@ -262,11 +296,13 @@ const LANDING_OVERVIEW_BLOCKS: LandingOverviewBlockConfig[] = [
     id: 'start',
     kicker: '项目入口',
     title: '先读项目',
-    description: '先看阅读地图和总索引，快速知道现在有哪些导读页，以及架构、需求、PRD、技术方案分别该去哪里看。',
+    description: '先把阅读路径和文档边界看清，再进入平台真源、子引擎实现和比赛收口材料。',
+    audience: '新成员 / 全体协作者',
     className: 'overview-panel--start',
     actionLabel: '打开阅读地图',
     actionKind: 'read',
     actionTarget: READING_MAP_PATH,
+    paths: [...PROJECT_START_PATHS],
     quickLinks: [
       {
         path: DOC_INDEX_PATH,
@@ -281,13 +317,15 @@ const LANDING_OVERVIEW_BLOCKS: LandingOverviewBlockConfig[] = [
   },
   {
     id: 'platform',
-    kicker: '平台设计',
-    title: '平台设计',
-    description: '先看平台导读，再进入产品总纲、总体架构设计、平台需求与验收和一整组平台规范文档。',
+    kicker: '平台核心与规范',
+    title: '平台真源',
+    description: '平台定位、总体架构、对象契约、知识库规则和生命周期编排都在这一组里收口。',
+    audience: '开发者 / 架构与产品负责人',
     className: 'overview-panel--platform',
     actionLabel: '查看平台总纲',
     actionKind: 'read',
     actionTarget: PLATFORM_GUIDE_PATH,
+    paths: [...PLATFORM_CORE_PATHS, ...PLATFORM_SPEC_PATHS],
     quickLinks: [
       {
         path: PLATFORM_PRODUCT_PATH,
@@ -302,34 +340,38 @@ const LANDING_OVERVIEW_BLOCKS: LandingOverviewBlockConfig[] = [
   },
   {
     id: 'workflow',
-    kicker: '实现主线',
-    title: '子引擎实现',
-    description: '导读页只告诉你怎么找路，真正开发还是回到 PRD、技术方案、联调手册和 P0-P2 实施附录。',
+    kicker: '子引擎与实施附录',
+    title: '实现主线',
+    description: '多智能体协作、学生主闭环、教师运营增强和产品接入附录都放在同一条实现链路里。',
+    audience: '工作流开发者 / 联调负责人',
     className: 'overview-panel--workflow',
     actionLabel: '查看子引擎总览',
     actionKind: 'read',
     actionTarget: ENGINE_GUIDE_PATH,
+    paths: [...ENGINE_IMPLEMENTATION_PATHS],
     quickLinks: [
       {
         path: ENGINE_PRD_PATH,
-        label: 'AI教师子引擎 PRD'
+        label: '子引擎产品需求文档'
       },
       {
         path: ENGINE_TECH_PATH,
-        label: 'AI教师子引擎技术方案'
+        label: '子引擎技术方案'
       }
     ],
     footnote: '联调手册和 3 份实施附录也都保留，适合实现者按真实开发链路推进。'
   },
   {
     id: 'subject',
-    kicker: '高数示例',
-    title: '高数示例',
-    description: '高数导读页负责告诉你怎么读；真正的接入示范、落库规范、提示词规范和 ADP 配置都继续保留。',
+    kicker: '学科接入与高数示例',
+    title: '高数示范',
+    description: '这里解释高等数学为什么能证明平台成立，以及高数如何接入、落库、配置和提示词分层。',
+    audience: '学科接入实施者 / 知识库负责人',
     className: 'overview-panel--subject',
     actionLabel: '查看高数接入',
     actionKind: 'read',
     actionTarget: SUBJECT_GUIDE_PATH,
+    paths: [...SUBJECT_DEMO_PATHS],
     quickLinks: [
       {
         path: SUBJECT_PLATFORM_DEMO_PATH,
@@ -345,12 +387,14 @@ const LANDING_OVERVIEW_BLOCKS: LandingOverviewBlockConfig[] = [
   {
     id: 'delivery',
     kicker: '团队与交付',
-    title: '比赛交付',
-    description: '比赛导读页负责收口展示路径，团队协作、岗位手册、对齐说明、答辩脚本和参考材料都并行保留。',
+    title: '比赛收口',
+    description: '团队分工、岗位交接、比赛对齐、答辩脚本和现场查阅资料都在这组里完成收口。',
+    audience: '评委答辩 / 项目负责人',
     className: 'overview-panel--delivery',
     actionLabel: '打开比赛手册',
     actionKind: 'read',
     actionTarget: DELIVERY_GUIDE_PATH,
+    paths: [...TEAM_DELIVERY_CORE_PATHS],
     quickLinks: [
       {
         path: TEAM_OVERVIEW_PATH,
@@ -362,6 +406,53 @@ const LANDING_OVERVIEW_BLOCKS: LandingOverviewBlockConfig[] = [
       }
     ],
     footnote: '赛题 PDF、腾讯平台资料和代码分析报告也都还在同一组里，方便临场查阅。'
+  }
+];
+
+const LANDING_AUDIENCE_ROUTES: LandingAudienceRouteConfig[] = [
+  {
+    id: 'newcomer',
+    kicker: '新成员入口',
+    title: '先读地图，再分流到真源',
+    description: '适合第一次打开仓库的人，先建立阅读路径，再决定去平台、子引擎还是比赛收口。',
+    actionPath: READING_MAP_PATH,
+    actionLabel: '从阅读地图开始',
+    relatedPaths: [DOC_INDEX_PATH, PLATFORM_GUIDE_PATH, DELIVERY_GUIDE_PATH]
+  },
+  {
+    id: 'developer',
+    kicker: '开发者入口',
+    title: '先抓平台真源，再下钻实现',
+    description: '适合直接做开发和联调的人，先锁平台口径，再进入子引擎技术方案与高数接入示范。',
+    actionPath: PLATFORM_PRODUCT_PATH,
+    actionLabel: '查看开发主线',
+    relatedPaths: [PLATFORM_OBJECT_CONTRACT_PATH, ENGINE_TECH_PATH, SUBJECT_PLATFORM_DEMO_PATH]
+  },
+  {
+    id: 'judge',
+    kicker: '评委答辩入口',
+    title: '先看作品定义，再看落地证明',
+    description: '适合彩排和答辩场景，先统一说法，再用高数示范和交付材料证明平台落地。',
+    actionPath: DELIVERY_GUIDE_PATH,
+    actionLabel: '查看答辩路线',
+    relatedPaths: [DELIVERY_ALIGNMENT_PATH, ENGINE_GUIDE_PATH, SUBJECT_GUIDE_PATH]
+  }
+];
+
+const LANDING_REFERENCE_GROUPS: LandingReferenceGroupConfig[] = [
+  {
+    id: 'reference',
+    kicker: '参考资料',
+    title: '比赛与平台补充材料',
+    description: '赛题 PDF、腾讯平台资料和代码分析报告统一放在次级入口，方便临场查阅，不干扰主入口阅读。',
+    paths: [...TEAM_DELIVERY_REFERENCE_PATHS]
+  },
+  {
+    id: 'archive',
+    kicker: '归档入口',
+    title: '历史版本对照',
+    description: '归档继续保留在站内，默认不进入主阅读路径，只在需要回看旧方案时打开。',
+    paths: [...ARCHIVE_PATHS]
   }
 ];
 
@@ -816,8 +907,8 @@ function getCollectionSearchPlaceholder(collection: ResourceCollection): string 
 
 function getCollectionDescription(collection: ResourceCollection): string {
   return collection === 'math-kb'
-    ? '先看课程总览与学习路径，再按模块进入知识资产；课堂重构和教师运营继续保留为高优先入口。'
-    : '按导读层和开发层一起浏览：先读项目，再看平台核心、平台规范、子引擎开发、学科示例、团队与交付。';
+    ? '先看课程地图和学习路径，再进入课堂重构、教师运营和各模块知识资产；导航层与资产层保持分开阅读。'
+    : '先用项目入口建立阅读路径，再依次进入平台真源、子引擎实现、高数示范、团队与交付，参考资料和归档下沉到次级入口。';
 }
 
 function getCollectionHeroLabel(collection: ResourceCollection): string {
@@ -905,12 +996,13 @@ function buildMathSections(items: CatalogItem[]): CatalogSection[] {
     {
       label: string;
       kicker: string;
+      summary: string;
       defaultOpen: boolean;
     }
   >([
-    ['00', { label: '课程总览', kicker: '导航层', defaultOpen: true }],
-    ['R', { label: '课堂重构', kicker: '导航层', defaultOpen: true }],
-    ['T', { label: '教师运营', kicker: '导航层', defaultOpen: true }]
+    ['00', { label: '课程总览', kicker: '导航层', summary: '先看课程地图和学习路径，先搞清这门课怎么组织，再进入具体资产。', defaultOpen: true }],
+    ['R', { label: '课堂重构', kicker: '导航层', summary: '从一节课如何重组为可复习、可检索、可讲解的知识资产切入。', defaultOpen: true }],
+    ['T', { label: '教师运营', kicker: '导航层', summary: '从教师视角看风险模块、补讲建议和课程运营摘要。', defaultOpen: true }]
   ]);
 
   items.forEach((item) => {
@@ -925,6 +1017,9 @@ function buildMathSections(items: CatalogItem[]): CatalogSection[] {
       id: `math-${moduleKey}`,
       label: navigationMeta.get(moduleKey)?.label ?? groupItems[0]?.moduleLabel ?? groupItems[0]?.group ?? moduleKey,
       kicker: navigationMeta.get(moduleKey)?.kicker ?? '知识资产',
+      summary:
+        navigationMeta.get(moduleKey)?.summary ??
+        `围绕${groupItems[0]?.moduleLabel ?? moduleKey}组织的正式知识资产，适合继续看知识点卡、例题讲解卡、练习与错题卡。`,
       count: groupItems.length,
       items: groupItems.sort((a, b) =>
         navigationMeta.has(moduleKey) ? compareByPriorityThenTitle(a, b) : a.title.localeCompare(b.title, 'zh-CN')
@@ -935,39 +1030,43 @@ function buildMathSections(items: CatalogItem[]): CatalogSection[] {
 }
 
 function buildPlatformSections(items: CatalogItem[]): CatalogSection[] {
-  const sectionDefinitions = [
+  const sectionDefinitions: Array<{
+    id: string;
+    label: string;
+    kicker: string;
+    summary?: string;
+    paths: string[];
+    defaultOpen: boolean;
+  }> = [
     {
       id: 'project-start',
-      label: '先看',
+      label: '项目入口',
       kicker: '导读层',
+      summary: '先用阅读地图和总索引建立全局视角，再决定下一步进平台、子引擎、学科还是比赛收口。',
       paths: [...PROJECT_START_PATHS],
       defaultOpen: true
     },
     {
-      id: 'platform-core',
-      label: '平台核心',
-      kicker: '导读 + 主文档',
-      paths: [...PLATFORM_CORE_PATHS],
-      defaultOpen: true
-    },
-    {
-      id: 'platform-specs',
-      label: '平台规范',
-      kicker: '开发层',
-      paths: [...PLATFORM_SPEC_PATHS],
+      id: 'platform-foundation',
+      label: '平台核心与规范',
+      kicker: '真源层',
+      summary: '平台定位、架构、对象契约、知识库规则和生命周期策略都在这里统一收口。',
+      paths: [...PLATFORM_CORE_PATHS, ...PLATFORM_SPEC_PATHS],
       defaultOpen: true
     },
     {
       id: 'engine-implementation',
-      label: '子引擎开发',
+      label: '子引擎与实施附录',
       kicker: '开发层',
+      summary: '从产品需求文档、技术方案到联调手册和 P0-P2 附录，完整覆盖实现和验收链路。',
       paths: [...ENGINE_IMPLEMENTATION_PATHS],
       defaultOpen: true
     },
     {
       id: 'subject-demo',
-      label: '学科示例',
-      kicker: '开发层',
+      label: '学科接入与高数示例',
+      kicker: '示范层',
+      summary: '解释高等数学如何验证平台成立，并给出接入、落库、提示词和配置的落地样板。',
       paths: [...SUBJECT_DEMO_PATHS],
       defaultOpen: true
     },
@@ -975,20 +1074,30 @@ function buildPlatformSections(items: CatalogItem[]): CatalogSection[] {
       id: 'team-delivery',
       label: '团队与交付',
       kicker: '收口区',
-      paths: [...TEAM_DELIVERY_PATHS],
+      summary: '把分工、岗位交接、比赛对齐和答辩脚本统一收在同一组，方便彩排和发布。',
+      paths: [...TEAM_DELIVERY_CORE_PATHS],
+      defaultOpen: true
+    },
+    {
+      id: 'reference',
+      label: '参考资料',
+      kicker: '补充材料',
+      summary: '赛题 PDF、腾讯平台资料和代码分析报告集中放这里，默认不抢主阅读入口。',
+      paths: [...TEAM_DELIVERY_REFERENCE_PATHS],
       defaultOpen: true
     },
     {
       id: 'archive',
       label: '归档',
       kicker: '历史版本',
+      summary: '只在需要对照旧方案时打开，默认不进入当前主阅读路径。',
       paths: [...ARCHIVE_PATHS],
       defaultOpen: false
     }
   ];
 
   return sectionDefinitions
-    .map((section) => {
+    .map<CatalogSection | null>((section) => {
       const pathOrder = new Map<string, number>((section.paths as string[]).map((path, index) => [path, index]));
       const sectionItems = items
         .filter((item) => pathOrder.has(item.relativePath))
@@ -1008,6 +1117,7 @@ function buildPlatformSections(items: CatalogItem[]): CatalogSection[] {
         id: `platform-${section.id}`,
         label: section.label,
         kicker: section.kicker,
+        summary: section.summary,
         count: sectionItems.length,
         items: sectionItems,
         defaultOpen: section.defaultOpen
@@ -1804,6 +1914,9 @@ function LandingPageV2() {
   const overviewBlocks = useMemo<ResolvedLandingOverviewBlockConfig[]>(
     () =>
       LANDING_OVERVIEW_BLOCKS.map((block) => {
+        const docCount = block.paths
+          .map((path) => catalogByPath.get(path))
+          .filter((item): item is CatalogItem => Boolean(item)).length;
         const quickLinks = (block.quickLinks ?? [])
           .map((entry) => {
             const item = catalogByPath.get(entry.path);
@@ -1819,8 +1932,37 @@ function LandingPageV2() {
                 return actionItem ? `/read/${actionItem.id}` : null;
               })();
 
-        return actionHref ? { ...block, quickLinks, actionHref } : null;
+        return actionHref ? { ...block, quickLinks, actionHref, docCount } : null;
       }).filter((block): block is ResolvedLandingOverviewBlockConfig => Boolean(block)),
+    []
+  );
+  const audienceRoutes = useMemo<ResolvedLandingAudienceRouteConfig[]>(
+    () =>
+      LANDING_AUDIENCE_ROUTES.map((route) => {
+        const actionItem = catalogByPath.get(route.actionPath);
+        if (!actionItem) {
+          return null;
+        }
+
+        return {
+          ...route,
+          actionItem,
+          relatedItems: route.relatedPaths
+            .map((path) => catalogByPath.get(path))
+            .filter((item): item is CatalogItem => Boolean(item))
+        };
+      }).filter((route): route is ResolvedLandingAudienceRouteConfig => Boolean(route)),
+    []
+  );
+  const referenceGroups = useMemo<ResolvedLandingReferenceGroupConfig[]>(
+    () =>
+      LANDING_REFERENCE_GROUPS.map((group) => ({
+        ...group,
+        items: group.paths
+          .map((path) => catalogByPath.get(path))
+          .filter((item): item is CatalogItem => Boolean(item))
+          .slice(0, 5)
+      })).filter((group) => group.items.length),
     []
   );
 
@@ -1830,8 +1972,34 @@ function LandingPageV2() {
         <div className="landing-overview-head">
           <div className="section-kicker">项目文档总览</div>
           <h2>AI主导学习平台</h2>
-          <p>先看导读，再进入恢复后的架构、需求、PRD、技术方案、学科接入和比赛交付真源文档。</p>
+          <p>先看导读，再进入平台真源、实现主线、高数示范和比赛收口。首页只负责干净分类，不把 33 篇现行文档一次性堆满首屏。</p>
+          <div className="landing-meta-row">
+            <span>33 篇现行文档</span>
+            <span>7 篇归档保留对照</span>
+            <span>首页 / 项目文档 / 高数示例 三个主入口</span>
+          </div>
         </div>
+
+        <div className="landing-route-grid">
+          {audienceRoutes.map((route) => (
+            <article key={route.id} className="landing-route-card">
+              <div className="section-kicker">{route.kicker}</div>
+              <h3>{route.title}</h3>
+              <p>{route.description}</p>
+              <Link to={`/read/${route.actionItem.id}`} className="landing-route-card__action">
+                {route.actionLabel}
+              </Link>
+              <div className="landing-route-card__links">
+                {route.relatedItems.map((item) => (
+                  <Link key={item.id} to={`/read/${item.id}`}>
+                    {item.title}
+                  </Link>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+
         <div className="overview-grid">
           {overviewBlocks.map((block) => (
             <article key={block.id} className={`overview-panel ${block.className}`.trim()}>
@@ -1839,24 +2007,15 @@ function LandingPageV2() {
                 <div className="section-kicker">{block.kicker}</div>
                 <h3>{block.title}</h3>
                 <p>{block.description}</p>
+                <div className="overview-panel__chips">
+                  <span>{block.docCount} 篇现行文档</span>
+                  <span>{block.audience}</span>
+                </div>
               </div>
               <div className="overview-panel__footer">
                 <Link to={block.actionHref} className="overview-panel__action">
                   {block.actionLabel}
                 </Link>
-                {block.stats?.length ? (
-                  <div className="overview-stat-list">
-                    {block.stats.map((entry) => (
-                      <div key={`${block.id}-${entry.label}`} className="overview-stat-row">
-                        <div className="overview-stat-copy">
-                          <span>{entry.label}</span>
-                          <small>{entry.detail}</small>
-                        </div>
-                        <strong>{entry.value}</strong>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
                 {block.quickLinks.length ? (
                   <div className="overview-quick-list">
                     {block.quickLinks.map((entry) => (
@@ -1868,6 +2027,23 @@ function LandingPageV2() {
                   </div>
                 ) : null}
                 {block.footnote ? <div className="overview-panel__note">{block.footnote}</div> : null}
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="landing-reference-grid">
+          {referenceGroups.map((group) => (
+            <article key={group.id} className="landing-reference-card">
+              <div className="section-kicker">{group.kicker}</div>
+              <h3>{group.title}</h3>
+              <p>{group.description}</p>
+              <div className="landing-reference-card__links">
+                {group.items.map((item) => (
+                  <Link key={item.id} to={`/read/${item.id}`}>
+                    {item.title}
+                  </Link>
+                ))}
               </div>
             </article>
           ))}
@@ -1939,6 +2115,57 @@ function CollectionPageV2({
   search: string;
   sections: CatalogSection[];
 }) {
+  const guideCards = useMemo(
+    () =>
+      (collection === 'math-kb'
+        ? [
+            {
+              kicker: '先看课程地图',
+              title: '课程总览与学习路径',
+              description: '先从课程地图和学习路径进入，知道导航层、课堂重构、教师运营和模块资产如何接起来。',
+              path: MATH_COURSE_MAP_PATH
+            },
+            {
+              kicker: '再看导航层',
+              title: '课堂重构与教师运营',
+              description: '课堂重构负责把课讲清，教师运营负责把风险和补讲建议收给教师侧。',
+              path: catalogByPath.get('doc/智能体文档/学科层/高等数学接入与知识库总览.md')?.relativePath ?? SUBJECT_GUIDE_PATH
+            },
+            {
+              kicker: '最后进资产层',
+              title: '按 M00 到 M10 深入',
+              description: '真正的知识点卡、例题讲解卡、练习和错题资产统一放在各模块里按需查看。',
+              path: MATH_ROADMAP_PATH
+            }
+          ]
+        : [
+            {
+              kicker: '项目入口',
+              title: '先建立阅读路径',
+              description: '先用阅读地图和总索引搞清楚全站结构，再决定进入平台真源、实现主线还是比赛收口。',
+              path: READING_MAP_PATH
+            },
+            {
+              kicker: '平台真源',
+              title: '平台核心与规范',
+              description: '平台定位、对象契约、知识库规则和生命周期策略统一在这一组里定义。',
+              path: PLATFORM_GUIDE_PATH
+            },
+            {
+              kicker: '实现主线',
+              title: '子引擎与高数示范',
+              description: '把多智能体实现、高数接入示范和实施附录连起来看，能最快理解落地链路。',
+              path: ENGINE_GUIDE_PATH
+            }
+          ])
+        .map((entry) => {
+          const item = catalogByPath.get(entry.path);
+          return item ? { ...entry, item } : null;
+        })
+        .filter((entry): entry is { kicker: string; title: string; description: string; path: string; item: CatalogItem } => Boolean(entry)),
+    [collection]
+  );
+
   return (
     <div className="page-stack">
       <section className="section-header section-header--page">
@@ -1947,6 +2174,16 @@ function CollectionPageV2({
         <p>
           {search ? `当前检索词为“${search}”。` : getCollectionDescription(collection)}
         </p>
+      </section>
+
+      <section className="collection-guide-grid">
+        {guideCards.map((entry) => (
+          <Link key={entry.path} to={`/read/${entry.item.id}`} className="collection-guide-card">
+            <div className="section-kicker">{entry.kicker}</div>
+            <strong>{entry.title}</strong>
+            <p>{entry.description}</p>
+          </Link>
+        ))}
       </section>
 
       {sections.length ? (
@@ -1963,6 +2200,8 @@ function CollectionPageV2({
               </span>
               <span>{section.count}</span>
             </summary>
+
+            {section.summary ? <p className="library-section-summary-note">{section.summary}</p> : null}
 
             <div className="resource-list">
               {section.items.map((item) => (
