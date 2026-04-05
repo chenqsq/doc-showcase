@@ -56,39 +56,174 @@ interface LibraryBlock {
   sections: CatalogSection[];
 }
 
-interface LandingCardConfig {
+interface LandingDocLinkConfig {
   path: string;
+  label: string;
+}
+
+interface LandingDocGroupConfig {
+  title: string;
+  items: LandingDocLinkConfig[];
+}
+
+interface LandingOverviewBlockConfig {
+  id: string;
   kicker: string;
   title: string;
   description: string;
-  actionLabel: string;
   className: string;
+  actionLabel: string;
+  actionKind: 'route' | 'read';
+  actionTarget: string;
+  groups: LandingDocGroupConfig[];
 }
 
-const LANDING_CORE_CARDS: LandingCardConfig[] = [
+interface ResolvedLandingDocLinkConfig extends LandingDocLinkConfig {
+  item: CatalogItem;
+}
+
+interface ResolvedLandingDocGroupConfig extends Omit<LandingDocGroupConfig, 'items'> {
+  items: ResolvedLandingDocLinkConfig[];
+}
+
+interface ResolvedLandingOverviewBlockConfig extends Omit<LandingOverviewBlockConfig, 'groups'> {
+  actionHref: string;
+  groups: ResolvedLandingDocGroupConfig[];
+}
+
+const LANDING_OVERVIEW_BLOCKS: LandingOverviewBlockConfig[] = [
   {
-    path: 'doc/智能体文档/平台层/AI主导学习平台-团队协作与分工.md',
-    kicker: '团队协作',
-    title: '团队协作与分工',
-    description: '从分类页进入三个岗位手册，直接看每个人做什么、怎么做、和谁交接，以及最后怎样收口发布。',
-    actionLabel: '查看分工入口',
-    className: 'entry-card--team'
+    id: 'team',
+    kicker: '重点区块',
+    title: '团队协作、分工与交付',
+    description: '先看谁负责什么、怎么交接，再看比赛收口、答辩口径和最终对外交付材料。',
+    className: 'overview-panel--team',
+    actionLabel: '查看团队总览',
+    actionKind: 'read',
+    actionTarget: 'doc/智能体文档/平台层/AI主导学习平台-团队协作与分工.md',
+    groups: [
+      {
+        title: '岗位手册',
+        items: [
+          {
+            path: 'doc/智能体文档/平台层/AI主导学习平台-团队协作与分工.md',
+            label: '团队协作与分工总览'
+          },
+          {
+            path: 'doc/智能体文档/平台层/团队协作与分工/项目负责人-职责与执行手册.md',
+            label: '项目负责人手册'
+          },
+          {
+            path: 'doc/智能体文档/平台层/团队协作与分工/OCR与资料电子化负责人-职责与执行手册.md',
+            label: 'OCR 与资料电子化负责人手册'
+          },
+          {
+            path: 'doc/智能体文档/平台层/团队协作与分工/工作流与联调负责人-职责与执行手册.md',
+            label: '工作流与联调负责人手册'
+          }
+        ]
+      },
+      {
+        title: '交付材料',
+        items: [
+          {
+            path: 'doc/智能体文档/交付层/比赛对齐说明.md',
+            label: '比赛对齐说明'
+          },
+          {
+            path: 'doc/智能体文档/交付层/答辩口径与演示脚本.md',
+            label: '答辩口径与演示脚本'
+          }
+        ]
+      }
+    ]
   },
   {
-    path: 'doc/智能体文档/平台层/AI主导学习平台-知识库建设与提示词规范.md',
-    kicker: '知识库示例',
-    title: '知识库建设与提示词规范',
-    description: '先看通用知识库建设、OCR 与拆卡规范，再进入高等数学示例，理解提示词怎样跟资料结构一起落地。',
-    actionLabel: '查看规范入口',
-    className: 'entry-card--knowledge'
+    id: 'platform',
+    kicker: '平台主文档',
+    title: '平台文档',
+    description: '从产品总纲、总体架构和平台需求切入，快速建立平台本体和统一口径。',
+    className: 'overview-panel--platform',
+    actionLabel: '浏览平台文档',
+    actionKind: 'route',
+    actionTarget: '/platform',
+    groups: [
+      {
+        title: '代表文档',
+        items: [
+          {
+            path: 'doc/智能体文档/平台层/AI主导学习平台-产品总纲.md',
+            label: '产品总纲'
+          },
+          {
+            path: 'doc/智能体文档/平台层/AI主导学习平台-总体架构设计.md',
+            label: '总体架构设计'
+          },
+          {
+            path: 'doc/智能体文档/平台层/AI主导学习平台-平台需求与验收.md',
+            label: '平台需求与验收'
+          }
+        ]
+      }
+    ]
   },
   {
-    path: 'doc/智能体文档/子引擎层/AI教师子引擎-Agent工作流联调与验收手册.md',
-    kicker: '工作流联调',
-    title: 'Agent 工作流联调',
-    description: '集中查看路由职责、变量透传、检索绑定、回归样例和联调通过标准，方便开发和验收直接对表。',
+    id: 'workflow',
+    kicker: '子引擎层',
+    title: '子引擎与联调',
+    description: '把联调手册、技术方案和教学策略放在一起，便于开发、调试和验收直接对表。',
+    className: 'overview-panel--workflow',
     actionLabel: '查看联调手册',
-    className: 'entry-card--workflow'
+    actionKind: 'read',
+    actionTarget: 'doc/智能体文档/子引擎层/AI教师子引擎-Agent工作流联调与验收手册.md',
+    groups: [
+      {
+        title: '核心文档',
+        items: [
+          {
+            path: 'doc/智能体文档/子引擎层/AI教师子引擎-Agent工作流联调与验收手册.md',
+            label: 'Agent 工作流联调与验收手册'
+          },
+          {
+            path: 'doc/智能体文档/子引擎层/AI教师子引擎-技术方案.md',
+            label: 'AI 教师子引擎技术方案'
+          },
+          {
+            path: 'doc/智能体文档/子引擎层/AI教师子引擎-教学策略设计.md',
+            label: 'AI 教师子引擎教学策略设计'
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'subject',
+    kicker: '学科示例',
+    title: '高等数学示例',
+    description: '用高等数学示范学科接入方式，串起平台接入、知识库落库和 Agent 提示词。',
+    className: 'overview-panel--subject',
+    actionLabel: '浏览知识库示例',
+    actionKind: 'route',
+    actionTarget: '/math',
+    groups: [
+      {
+        title: '示例文档',
+        items: [
+          {
+            path: 'doc/智能体文档/学科层/高等数学-平台接入示范.md',
+            label: '高等数学平台接入示范'
+          },
+          {
+            path: 'doc/智能体文档/学科层/高等数学-知识库接入与落库方案.md',
+            label: '高等数学知识库落库方案'
+          },
+          {
+            path: 'doc/智能体文档/学科层/高等数学-Agent提示词模板与分层教学规范.md',
+            label: '高等数学 Agent 提示词规范'
+          }
+        ]
+      }
+    ]
   }
 ];
 
@@ -446,7 +581,7 @@ function App() {
       <header ref={headerRef} className={`app-header ${headerCompressed ? 'is-scrolled' : ''}`.trim()}>
         <div className="header-brand">
           <div className="section-kicker">公开项目入口</div>
-          <h1>AI主导学习平台项目总览</h1>
+          <h1>AI主导学习平台</h1>
         </div>
         <div className="header-actions">
           <nav className="top-nav">
@@ -542,7 +677,7 @@ function App() {
         <div className="mobile-actions-menu" aria-hidden={!mobileQuickNavOpen}>
           <div className="mobile-actions-brand">
             <div className="section-kicker">公开项目入口</div>
-            <strong>AI主导学习平台项目总览</strong>
+            <strong>AI主导学习平台</strong>
           </div>
           <nav className="mobile-actions-nav">
             <NavLink to="/" onClick={() => setMobileQuickNavOpen(false)}>
@@ -960,38 +1095,71 @@ function CollectionSidebarV2({
 }
 
 function LandingPageV2() {
-  const landingCards = LANDING_CORE_CARDS.map((card) => ({
-    ...card,
-    item: catalogByPath.get(card.path)
-  })).filter((card): card is LandingCardConfig & { item: CatalogItem } => Boolean(card.item));
+  const overviewBlocks = useMemo<ResolvedLandingOverviewBlockConfig[]>(
+    () =>
+      LANDING_OVERVIEW_BLOCKS.map((block) => {
+        const groups: ResolvedLandingDocGroupConfig[] = block.groups
+          .map((group) => ({
+            ...group,
+            items: group.items
+              .map((entry) => {
+                const item = catalogByPath.get(entry.path);
+                return item ? { ...entry, item } : null;
+              })
+              .filter((entry): entry is ResolvedLandingDocLinkConfig => Boolean(entry))
+          }))
+          .filter((group) => group.items.length);
+
+        const actionHref =
+          block.actionKind === 'route'
+            ? block.actionTarget
+            : (() => {
+                const actionItem = catalogByPath.get(block.actionTarget);
+                return actionItem ? `/read/${actionItem.id}` : null;
+              })();
+
+        return actionHref && groups.length ? { ...block, groups, actionHref } : null;
+      }).filter((block): block is ResolvedLandingOverviewBlockConfig => Boolean(block)),
+    []
+  );
 
   return (
     <div className="page-stack landing-stage">
-      <section className="landing-shell">
-        <div className="landing-intro">
-          <div className="landing-copy">
-            <div className="section-kicker">项目总览</div>
-            <h2>把团队分工、知识库建设和 Agent 联调放进同一张交付地图里。</h2>
-            <p>
-              这里保留本轮公开交付最常用的三个入口：先看团队怎么协作，再看知识库怎样建设，最后看工作流如何联调验收。高等数学作为示例学科继续保留在知识库示例页，完整平台资料仍然放在平台文档页。
-            </p>
-          </div>
-          <div className="landing-quick-links">
-            <Link to="/platform">浏览平台文档</Link>
-            <Link to="/math">查看知识库示例</Link>
-          </div>
+      <section className="landing-shell landing-shell--overview">
+        <div className="landing-overview-head">
+          <div className="section-kicker">项目文档总览</div>
+          <h2>AI主导学习平台</h2>
+          <p>集中浏览团队分工、交付材料、平台方案、子引擎联调与学科示例。</p>
         </div>
-        <div className="entry-grid entry-grid--trio">
-          {landingCards.map((card) => (
-            <Link key={card.path} to={`/read/${card.item.id}`} className={`entry-card ${card.className}`.trim()}>
-              <div className="entry-card__eyebrow">
-                <div className="section-kicker">{card.kicker}</div>
-                <span>{card.item.layer}</span>
+        <div className="overview-grid">
+          {overviewBlocks.map((block) => (
+            <article key={block.id} className={`overview-panel ${block.className}`.trim()}>
+              <div className="overview-panel__header">
+                <div className="overview-panel__heading">
+                  <div className="section-kicker">{block.kicker}</div>
+                  <h3>{block.title}</h3>
+                </div>
+                <Link to={block.actionHref} className="overview-panel__action">
+                  {block.actionLabel}
+                </Link>
               </div>
-              <strong>{card.title}</strong>
-              <p>{card.description}</p>
-              <span className="entry-card__action">{card.actionLabel}</span>
-            </Link>
+              <p>{block.description}</p>
+              <div className={`overview-panel__groups ${block.groups.length > 1 ? 'overview-panel__groups--split' : ''}`}>
+                {block.groups.map((group) => (
+                  <section key={`${block.id}-${group.title}`} className="overview-subgroup">
+                    <div className="overview-subgroup__title">{group.title}</div>
+                    <div className="overview-doc-list">
+                      {group.items.map((entry) => (
+                        <Link key={entry.path} to={`/read/${entry.item.id}`} className="overview-doc-link">
+                          <strong>{entry.label}</strong>
+                          <span>{entry.item.layer}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            </article>
           ))}
         </div>
       </section>

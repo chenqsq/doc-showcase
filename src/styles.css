@@ -2657,8 +2657,8 @@ body {
 }
 
 .landing-shell {
-  gap: 26px;
-  padding: clamp(28px, 3vw, 42px);
+  gap: 22px;
+  padding: clamp(26px, 2.8vw, 38px);
   border-radius: 36px;
   background:
     radial-gradient(circle at top left, var(--accent-soft), transparent 34%),
@@ -2666,47 +2666,55 @@ body {
   box-shadow: var(--shadow-crisp);
 }
 
-.landing-intro {
+.landing-shell--overview {
+  gap: 20px;
+}
+
+.landing-overview-head {
   display: grid;
-  grid-template-columns: minmax(0, 1.16fr) minmax(250px, 0.84fr);
-  gap: 22px;
-  align-items: end;
+  gap: 8px;
+  max-width: 54rem;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line-strong);
 }
 
-.landing-copy {
-  gap: 12px;
-  max-width: 46rem;
-}
-
-.landing-copy h2 {
+.landing-overview-head h2 {
+  margin: 0;
   color: var(--heading-ink);
-  max-width: 11.5ch;
-  font-size: clamp(2.4rem, 4.8vw, 4.2rem);
-  line-height: 1.02;
+  max-inline-size: none;
+  font-size: clamp(2rem, 3.4vw, 3.1rem);
+  line-height: 1.04;
+  text-wrap: balance;
 }
 
-.landing-copy p {
+.landing-overview-head p {
+  margin: 0;
   color: var(--muted-700);
-  max-width: 44rem;
-  line-height: 1.86;
+  max-width: 42rem;
+  line-height: 1.76;
 }
 
-.landing-quick-links {
+.overview-grid {
   display: grid;
-  gap: 12px;
-  align-content: end;
-  justify-items: start;
+  grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.92fr);
+  grid-template-areas:
+    "team platform"
+    "team workflow"
+    "team subject";
+  gap: 18px;
+  align-items: start;
 }
 
-.landing-quick-links a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 48px;
-  padding: 0 18px;
-  border: 1px solid var(--accent-border);
-  border-radius: 18px;
-  background: var(--surface-soft);
-  color: var(--heading-ink);
+.overview-panel {
+  display: grid;
+  gap: 16px;
+  min-height: 230px;
+  padding: clamp(22px, 2vw, 30px);
+  border: 1px solid var(--line-strong);
+  border-radius: 30px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 22%),
+    var(--surface-raised);
   box-shadow: var(--shadow-crisp);
   transition:
     transform 180ms ease,
@@ -2714,100 +2722,141 @@ body {
     background-color 180ms ease;
 }
 
-.landing-quick-links a:hover {
+.overview-panel:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-500);
+}
+
+.overview-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.overview-panel__heading {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.overview-panel__heading h3 {
+  margin: 0;
+  color: var(--heading-ink);
+  max-inline-size: 11ch;
+  font-size: clamp(1.68rem, 2vw, 2.38rem);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.overview-panel p {
+  margin: 0;
+  color: var(--muted-700);
+  line-height: 1.78;
+  max-width: 34rem;
+}
+
+.overview-panel__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 42px;
+  padding: 0 15px;
+  border: 1px solid var(--accent-border);
+  border-radius: 15px;
+  background: var(--accent-soft);
+  color: var(--heading-ink);
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: var(--shadow-crisp);
+}
+
+.overview-panel__groups {
+  display: grid;
+  gap: 16px;
+}
+
+.overview-panel__groups--split {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.overview-subgroup {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.overview-subgroup__title {
+  color: var(--muted-500);
+  font-size: 0.88rem;
+  letter-spacing: 0.08em;
+}
+
+.overview-doc-list {
+  display: grid;
+  gap: 10px;
+}
+
+.overview-doc-link {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 1px solid var(--line-100);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface-soft) 88%, transparent);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.overview-doc-link:hover {
   transform: translateY(-1px);
   border-color: var(--accent-500);
   background: var(--accent-soft);
 }
 
-.entry-grid--trio {
-  grid-template-columns: minmax(0, 1.12fr) minmax(300px, 0.88fr);
-  grid-template-areas:
-    "team knowledge"
-    "team workflow";
-  gap: 18px;
-}
-
-.entry-card {
-  gap: 16px;
-  min-height: 238px;
-  padding: clamp(24px, 2vw, 34px);
-  border-radius: 30px;
-  border-color: var(--line-strong);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 22%),
-    var(--surface-raised);
-  box-shadow: var(--shadow-crisp);
-}
-
-.entry-card:hover {
-  transform: translateY(-3px);
-  border-color: var(--accent-500);
-}
-
-.entry-card__eyebrow {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.entry-card__eyebrow span {
-  color: var(--muted-500);
-  font-size: 0.88rem;
-}
-
-.entry-card strong {
+.overview-doc-link strong {
   color: var(--heading-ink);
-  max-width: 13ch;
-  font-size: clamp(1.68rem, 2vw, 2.26rem);
-  line-height: 1.08;
+  font-size: 0.98rem;
+  line-height: 1.46;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
-.entry-card p {
-  color: var(--muted-700);
-  line-height: 1.82;
-  max-width: 28rem;
+.overview-doc-link span {
+  color: var(--muted-500);
+  font-size: 0.82rem;
+  white-space: nowrap;
 }
 
-.entry-card__action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: fit-content;
-  min-height: 44px;
-  margin-top: auto;
-  padding: 0 16px;
-  border: 1px solid var(--accent-border);
-  border-radius: 16px;
-  background: var(--accent-soft);
-  color: var(--heading-ink) !important;
-  font-weight: 600;
-}
-
-.entry-card--team {
+.overview-panel--team {
   grid-area: team;
   background:
-    radial-gradient(circle at top right, rgba(185, 104, 77, 0.18), transparent 34%),
-    linear-gradient(155deg, rgba(179, 90, 64, 0.1), transparent 58%),
+    radial-gradient(circle at top right, rgba(185, 104, 77, 0.18), transparent 36%),
+    linear-gradient(155deg, rgba(179, 90, 64, 0.12), transparent 58%),
     var(--surface-raised);
 }
 
-.entry-card--team strong {
-  max-width: 10ch;
-  font-size: clamp(2rem, 2.8vw, 2.95rem);
+.overview-panel--team .overview-panel__heading h3 {
+  max-inline-size: 9ch;
+  font-size: clamp(2rem, 2.7vw, 3rem);
 }
 
-.entry-card--knowledge {
-  grid-area: knowledge;
+.overview-panel--platform {
+  grid-area: platform;
   background:
-    radial-gradient(circle at top right, rgba(145, 122, 81, 0.16), transparent 36%),
-    linear-gradient(160deg, rgba(161, 126, 70, 0.1), transparent 62%),
+    radial-gradient(circle at top right, rgba(96, 112, 142, 0.14), transparent 38%),
+    linear-gradient(160deg, rgba(87, 96, 138, 0.08), transparent 62%),
     var(--surface-raised);
 }
 
-.entry-card--workflow {
+.overview-panel--workflow {
   grid-area: workflow;
   background:
     radial-gradient(circle at top right, rgba(78, 109, 136, 0.16), transparent 34%),
@@ -2815,10 +2864,18 @@ body {
     var(--surface-raised);
 }
 
+.overview-panel--subject {
+  grid-area: subject;
+  background:
+    radial-gradient(circle at top right, rgba(145, 122, 81, 0.16), transparent 36%),
+    linear-gradient(160deg, rgba(161, 126, 70, 0.1), transparent 62%),
+    var(--surface-raised);
+}
+
 .reader-header p,
 .aside-note,
-.entry-card p,
-.landing-copy p {
+.landing-overview-head p,
+.overview-panel p {
   color: var(--muted-700);
 }
 
@@ -2831,66 +2888,71 @@ body {
     grid-template-columns: minmax(236px, 22vw) minmax(0, 1fr) minmax(248px, 24vw);
   }
 
-  .landing-intro {
-    grid-template-columns: 1fr;
-    align-items: start;
-  }
-
-  .landing-quick-links {
+  .overview-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "team team"
+      "platform workflow"
+      "subject subject";
   }
 }
 
 @media (max-width: 1080px) and (min-width: 901px) {
-  .entry-grid--trio {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-areas:
-      "team team"
-      "knowledge workflow";
+  .overview-panel--team .overview-panel__heading h3 {
+    max-inline-size: none;
   }
 }
 
 @media (max-width: 900px) {
   .landing-shell {
-    gap: 20px;
+    gap: 18px;
     padding: 24px 20px;
   }
 
-  .landing-intro {
-    grid-template-columns: 1fr;
-    gap: 16px;
+  .landing-overview-head {
+    padding-bottom: 10px;
   }
 
-  .landing-copy h2 {
-    max-width: none;
-    font-size: clamp(2.1rem, 10vw, 3.1rem);
+  .landing-overview-head h2 {
+    max-inline-size: none;
+    font-size: clamp(1.95rem, 10vw, 2.8rem);
   }
 
-  .landing-quick-links {
-    grid-template-columns: 1fr;
-  }
-
-  .landing-quick-links a {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .entry-grid--trio {
+  .overview-grid {
     grid-template-columns: 1fr;
     grid-template-areas: none;
   }
 
-  .entry-card,
-  .entry-card--team,
-  .entry-card--knowledge,
-  .entry-card--workflow {
+  .overview-panel,
+  .overview-panel--team,
+  .overview-panel--platform,
+  .overview-panel--workflow,
+  .overview-panel--subject {
     grid-area: auto;
     min-height: auto;
   }
 
-  .entry-card strong,
-  .entry-card--team strong {
-    max-width: none;
+  .overview-panel__header {
+    display: grid;
+    gap: 12px;
+  }
+
+  .overview-panel__heading h3,
+  .overview-panel--team .overview-panel__heading h3 {
+    max-inline-size: none;
+  }
+
+  .overview-panel__groups--split {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-doc-link {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .overview-doc-link span {
+    white-space: normal;
   }
 
   .app-header h1,
