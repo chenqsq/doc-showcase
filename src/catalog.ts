@@ -38,24 +38,24 @@ const svgRawFiles = import.meta.glob('../doc/**/*.svg', {
 }) as Record<string, string>;
 
 const MATH_FEATURED_PATHS = [
-  'kb/高等数学_测试/00-课程总览/高等数学_测试-00课程总览-CH00整门课程-课程总览-高数_测试全景地图.md',
-  'kb/高等数学_测试/00-课程总览/高等数学_测试-00课程总览-CH00整门课程-章节导学-学习路径说明.md',
+  'kb/高等数学_测试/00-课程总览/高等数学知识库总览.md',
   'kb/高等数学_测试/M02-导数与微分/高等数学_测试-M02导数与微分-CH02导数与微分-知识点卡-瞬时变化率.md',
-  'kb/高等数学_测试/R-课堂重构/高等数学_测试-M05定积分及其应用-CH05定积分及其应用-课堂重构笔记-定积分意义与面积应用课.md',
+  'kb/高等数学_测试/R-课堂重构/高等数学_测试-R课堂重构-CHR整门课程-课堂重构笔记-总览.md',
+  'kb/高等数学_测试/R-课堂重构/高等数学_测试-M02导数与微分-CH02导数与微分-课堂重构笔记-导数定义与求导法则入门课.md',
   'kb/高等数学_测试/T-教师运营/高等数学_测试-T教师运营-CHT整门课程-教师运营摘要-总览.md'
 ];
 
 const PLATFORM_FEATURED_PATHS = [
-  'doc/智能体文档/00-文档总索引.md',
-  'doc/智能体文档/平台层/AI主导学习平台-角色主线与阶段地图.md',
-  'doc/智能体文档/平台层/AI主导学习平台-统一对象与接口契约.md',
-  'doc/智能体文档/平台层/AI主导学习平台-产品总纲.md',
-  'doc/智能体文档/学科层/高等数学-平台接入示范.md'
+  'doc/智能体文档/00-项目阅读地图.md',
+  'doc/智能体文档/平台层/平台总纲与架构.md',
+  'doc/智能体文档/平台层/平台对象、生命周期与验收.md',
+  'doc/智能体文档/子引擎层/AI教师子引擎总览与设计.md',
+  'doc/智能体文档/学科层/高等数学接入与知识库总览.md'
 ];
 
 export const COLLECTION_LABELS: Record<ResourceCollection, string> = {
-  'math-kb': '高等数学_测试知识库',
-  'platform-docs': '平台文档与比赛资料'
+  'math-kb': '高等数学知识库',
+  'platform-docs': '项目文档体系'
 };
 
 export const platformLayers: Layer[] = [
@@ -64,9 +64,10 @@ export const platformLayers: Layer[] = [
   '学科层',
   '交付层',
   '技术参考',
-  '归档',
   '比赛资料',
-  '腾讯平台资料'
+  '腾讯平台资料',
+  '归档',
+  '图像资源'
 ];
 
 function normalizeImportPath(path: string): string {
@@ -122,7 +123,7 @@ function getLayer(relativePath: string, type: ResourceType): Layer {
   if (relativePath === 'CLAW_CODE_ANALYSIS_REPORT.md') {
     return '技术参考';
   }
-  if (relativePath === 'doc/智能体文档/00-文档总索引.md') {
+  if (relativePath === 'doc/智能体文档/00-项目阅读地图.md') {
     return '平台层';
   }
   if (relativePath.startsWith('doc/智能体文档/平台层/')) {
@@ -148,27 +149,28 @@ function getLayer(relativePath: string, type: ResourceType): Layer {
 
 function getPlatformGroup(relativePath: string, layer: Layer): string {
   const segments = relativePath.split('/');
-  const last = filenameWithoutExt(relativePath);
 
   if (layer === '图像资源') {
     const index = segments.findIndex((part) => part === '高等数学');
     return index >= 0 ? segments[index] : '图像资源';
   }
+
   if (layer === '技术参考') {
-    return '方法参考';
+    return '技术参考';
   }
+
   if (layer === '比赛资料' || layer === '腾讯平台资料') {
     return layer;
   }
+
   if (layer === '归档') {
     return segments[3] || '归档';
   }
-  if (segments.includes('实施附录')) {
-    return '实施附录';
+
+  if (relativePath === 'doc/智能体文档/00-项目阅读地图.md') {
+    return '项目入口';
   }
-  if (layer === '学科层') {
-    return last.split('-')[0] || '学科层';
-  }
+
   return layer;
 }
 
@@ -203,7 +205,7 @@ function getMetaValue(rawText: string | undefined, label: string): string | null
     return null;
   }
 
-  const match = rawText.match(new RegExp(`^>\\s*${escapeRegExp(label)}[:：]\\s*(.+?)\\s*$`, 'm'));
+  const match = rawText.match(new RegExp(`^>\\s*${escapeRegExp(label)}[:：\\s]*(.+?)\\s*$`, 'm'));
   return match?.[1]?.trim() ?? null;
 }
 

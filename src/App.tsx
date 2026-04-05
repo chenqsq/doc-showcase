@@ -21,7 +21,6 @@ import {
   navigableCatalog,
   platformCatalog,
   platformFeaturedResources,
-  platformLayers,
   searchCatalog
 } from './catalog';
 import { MarkdownArticle } from './components/MarkdownArticle';
@@ -31,7 +30,7 @@ import type { CatalogItem, DocumentPriority, LightboxState, NavigationScopeKey, 
 
 const RECENT_KEY = 'doc-showcase-recent';
 const HEADER_FALLBACK_HEIGHT = 100;
-const MATH_PRIORITY_MODULES = new Set(['00', 'M00', 'M01', 'M02', 'M05']);
+const MATH_PRIORITY_MODULES = new Set(['00', 'R', 'T']);
 type MobilePanel = 'closed' | 'catalog' | 'context' | 'appearance';
 type CollectionFilter = 'all' | ResourceCollection;
 
@@ -124,308 +123,311 @@ interface ResolvedLandingOverviewBlockConfig extends Omit<LandingOverviewBlockCo
   quickLinks: ResolvedLandingDocLinkConfig[];
 }
 
-const TEAM_OVERVIEW_PATH = 'doc/智能体文档/平台层/AI主导学习平台-团队协作与分工.md';
-const TEAM_ROLE_PATHS = [
-  'doc/智能体文档/平台层/团队协作与分工/项目负责人-职责与执行手册.md',
-  'doc/智能体文档/平台层/团队协作与分工/OCR与资料电子化负责人-职责与执行手册.md',
-  'doc/智能体文档/平台层/团队协作与分工/工作流与联调负责人-职责与执行手册.md'
-] as const;
-const DELIVERY_MAIN_PATH = 'doc/智能体文档/交付层/比赛对齐说明.md';
-const DELIVERY_SUPPORT_PATH = 'doc/智能体文档/交付层/答辩口径与演示脚本.md';
+const READING_MAP_PATH = 'doc/智能体文档/00-项目阅读地图.md';
+const TEAM_EXECUTION_PATH = 'doc/智能体文档/平台层/团队协作与执行分工.md';
+const PLATFORM_ARCHITECTURE_PATH = 'doc/智能体文档/平台层/平台总纲与架构.md';
+const PLATFORM_OBJECTS_PATH = 'doc/智能体文档/平台层/平台对象、生命周期与验收.md';
+const KNOWLEDGE_SPEC_PATH = 'doc/智能体文档/平台层/知识库与学科接入规范.md';
+const ENGINE_OVERVIEW_PATH = 'doc/智能体文档/子引擎层/AI教师子引擎总览与设计.md';
+const ENGINE_WORKFLOW_PATH = 'doc/智能体文档/子引擎层/AI教师子引擎工作流联调与验收手册.md';
+const ENGINE_APPENDIX_PATH = 'doc/智能体文档/子引擎层/AI教师子引擎实施附录-P0-P2.md';
+const MATH_OVERVIEW_PATH = 'doc/智能体文档/学科层/高等数学接入与知识库总览.md';
+const MATH_IMPLEMENTATION_PATH = 'doc/智能体文档/学科层/高等数学提示词与ADP实施.md';
+const DELIVERY_HANDBOOK_PATH = 'doc/智能体文档/交付层/比赛交付与答辩手册.md';
+const KB_OVERVIEW_PATH = 'kb/高等数学_测试/00-课程总览/高等数学知识库总览.md';
 
-const WORKFLOW_MAIN_PATHS = [
-  'doc/智能体文档/子引擎层/AI教师子引擎-Agent工作流联调与验收手册.md',
-  'doc/智能体文档/子引擎层/AI教师子引擎-技术方案.md'
+const PROJECT_START_PATHS = [READING_MAP_PATH, TEAM_EXECUTION_PATH] as const;
+const PLATFORM_DESIGN_PATHS = [PLATFORM_ARCHITECTURE_PATH, PLATFORM_OBJECTS_PATH, KNOWLEDGE_SPEC_PATH] as const;
+const ENGINE_IMPLEMENTATION_PATHS = [ENGINE_OVERVIEW_PATH, ENGINE_WORKFLOW_PATH, ENGINE_APPENDIX_PATH] as const;
+const SUBJECT_DEMO_PATHS = [MATH_OVERVIEW_PATH, MATH_IMPLEMENTATION_PATH] as const;
+const COMPETITION_REFERENCE_PATHS = [
+  'doc/比赛资料/2026年广东省大学生计算机设计大赛-教育智能体应用创新赛.pdf',
+  'doc/比赛资料/2026年广东省大学生计算机设计大赛教育智能体应用创新赛指南 .pdf',
+  'doc/比赛资料/比赛.txt',
+  'doc/腾讯平台使用文档/腾讯云ADP-Multi-Agent版AI教师智能体从0到1新手闭环指南.md',
+  'doc/腾讯平台使用文档/腾讯云ADP-Multi-Agent版AI教师智能体从0到1新手闭环指南.pdf',
+  'doc/腾讯平台使用文档/快速入门.pdf',
+  'doc/腾讯平台使用文档/产品文档.pdf',
+  'doc/腾讯平台使用文档/常见问题.pdf',
+  'doc/腾讯平台使用文档/应用接口文档.pdf',
+  'CLAW_CODE_ANALYSIS_REPORT.md'
 ] as const;
-const WORKFLOW_SUPPORT_PATHS = [
-  'doc/智能体文档/子引擎层/AI教师子引擎-教学策略设计.md',
-  'doc/智能体文档/子引擎层/AI教师子引擎-PRD.md'
+const ARCHIVE_PATHS = [
+  'doc/智能体文档/归档/2026-03-31-平台主导重构前/00-架构总览-AI教师版.md',
+  'doc/智能体文档/归档/2026-03-31-精简重构前/AI教师prd.md',
+  'doc/智能体文档/归档/2026-03-31-精简重构前/技术方案-AI教师版.md',
+  'doc/智能体文档/归档/2026-03-31-精简重构前/架构设计/00-架构总览-AI教师版.md',
+  'doc/智能体文档/归档/2026-03-31-精简重构前/架构设计/01-P0-Multi-Agent学生主闭环-架构设计.md',
+  'doc/智能体文档/归档/2026-03-31-精简重构前/架构设计/02-P1-可视化与教师运营-架构设计.md',
+  'doc/智能体文档/归档/2026-03-31-精简重构前/架构设计/03-P2-外部接入与产品后端-架构设计.md'
 ] as const;
-const WORKFLOW_APPENDIX_PATHS = [
-  'doc/智能体文档/子引擎层/实施附录/01-P0-Multi-Agent学生主闭环-架构设计.md',
-  'doc/智能体文档/子引擎层/实施附录/02-P1-可视化与教师运营-架构设计.md',
-  'doc/智能体文档/子引擎层/实施附录/03-P2-外部接入与产品后端-架构设计.md'
-] as const;
-
-const PLATFORM_MAIN_PATHS = [
-  'doc/智能体文档/平台层/AI主导学习平台-产品总纲.md',
-  'doc/智能体文档/平台层/AI主导学习平台-总体架构设计.md',
-  'doc/智能体文档/平台层/AI主导学习平台-平台需求与验收.md',
-  'doc/智能体文档/平台层/AI主导学习平台-知识库建设与提示词规范.md'
-] as const;
-const PLATFORM_SUPPORT_PATHS = [
-  'doc/智能体文档/平台层/AI主导学习平台-统一对象与接口契约.md',
-  'doc/智能体文档/平台层/AI主导学习平台-知识库结构与契约.md'
-] as const;
-const PLATFORM_APPENDIX_PATHS = [
-  'doc/智能体文档/平台层/AI主导学习平台-角色主线与阶段地图.md',
-  'doc/智能体文档/平台层/AI主导学习平台-学习生命周期与编排策略.md',
-  'doc/智能体文档/平台层/AI主导学习平台-学科大类与接入规范.md'
-] as const;
-
-const SUBJECT_MAIN_PATHS = [
-  'doc/智能体文档/学科层/高等数学-平台接入示范.md',
-  'doc/智能体文档/学科层/高等数学-知识库接入与落库方案.md'
-] as const;
-const SUBJECT_SUPPORT_PATHS = ['doc/智能体文档/学科层/高等数学-Agent提示词模板与分层教学规范.md'] as const;
-const SUBJECT_APPENDIX_PATHS = [
-  'doc/智能体文档/学科层/高等数学-ADP配置手册.md',
-  'doc/智能体文档/学科层/学科接入模板.md'
-] as const;
-
-const TEAM_DELIVERY_SCOPE_PATHS = [TEAM_OVERVIEW_PATH, ...TEAM_ROLE_PATHS, DELIVERY_MAIN_PATH, DELIVERY_SUPPORT_PATH] as const;
-const WORKFLOW_SCOPE_PATHS = [...WORKFLOW_MAIN_PATHS, ...WORKFLOW_SUPPORT_PATHS, ...WORKFLOW_APPENDIX_PATHS] as const;
-const PLATFORM_CORE_SCOPE_PATHS = [...PLATFORM_MAIN_PATHS, ...PLATFORM_SUPPORT_PATHS, ...PLATFORM_APPENDIX_PATHS] as const;
-const SUBJECT_SCOPE_PATHS = [...SUBJECT_MAIN_PATHS, ...SUBJECT_SUPPORT_PATHS, ...SUBJECT_APPENDIX_PATHS] as const;
+const COMPETITION_DELIVERY_PATHS = [DELIVERY_HANDBOOK_PATH, ...COMPETITION_REFERENCE_PATHS] as const;
 
 const MAIN_DOC_PATHS = new Set<string>([
-  TEAM_OVERVIEW_PATH,
-  DELIVERY_MAIN_PATH,
-  ...WORKFLOW_MAIN_PATHS,
-  ...PLATFORM_MAIN_PATHS,
-  ...SUBJECT_MAIN_PATHS
+  ...PROJECT_START_PATHS,
+  ...PLATFORM_DESIGN_PATHS,
+  ENGINE_OVERVIEW_PATH,
+  ENGINE_WORKFLOW_PATH,
+  ...SUBJECT_DEMO_PATHS,
+  DELIVERY_HANDBOOK_PATH
 ]);
-const SUPPORT_DOC_PATHS = new Set<string>([
-  ...TEAM_ROLE_PATHS,
-  DELIVERY_SUPPORT_PATH,
-  ...WORKFLOW_SUPPORT_PATHS,
-  ...PLATFORM_SUPPORT_PATHS,
-  ...SUBJECT_SUPPORT_PATHS
-]);
-const APPENDIX_DOC_PATHS = new Set<string>([
-  ...WORKFLOW_APPENDIX_PATHS,
-  ...PLATFORM_APPENDIX_PATHS,
-  ...SUBJECT_APPENDIX_PATHS
-]);
-const TEAM_DELIVERY_PATH_SET = new Set<string>(TEAM_DELIVERY_SCOPE_PATHS);
-const WORKFLOW_PATH_SET = new Set<string>(WORKFLOW_SCOPE_PATHS);
-const PLATFORM_CORE_PATH_SET = new Set<string>(PLATFORM_CORE_SCOPE_PATHS);
-const SUBJECT_PATH_SET = new Set<string>(SUBJECT_SCOPE_PATHS);
+const SUPPORT_DOC_PATHS = new Set<string>([...COMPETITION_REFERENCE_PATHS, KB_OVERVIEW_PATH]);
+const APPENDIX_DOC_PATHS = new Set<string>([ENGINE_APPENDIX_PATH]);
+const PROJECT_START_PATH_SET = new Set<string>(PROJECT_START_PATHS);
+const PLATFORM_DESIGN_PATH_SET = new Set<string>(PLATFORM_DESIGN_PATHS);
+const ENGINE_IMPLEMENTATION_PATH_SET = new Set<string>(ENGINE_IMPLEMENTATION_PATHS);
+const SUBJECT_DEMO_PATH_SET = new Set<string>(SUBJECT_DEMO_PATHS);
+const COMPETITION_REFERENCE_PATH_SET = new Set<string>(COMPETITION_REFERENCE_PATHS);
+const ARCHIVE_PATH_SET = new Set<string>(ARCHIVE_PATHS);
 
 const LANDING_OVERVIEW_BLOCKS: LandingOverviewBlockConfig[] = [
   {
-    id: 'team',
-    kicker: '重点区块',
-    title: '团队分工与交付',
-    description: '先看分工边界与交付收口，再进入岗位手册、答辩口径和对外交付。',
-    className: 'overview-panel--team',
-    actionLabel: '查看团队总览',
+    id: 'start',
+    kicker: '项目入口',
+    title: '先读项目',
+    description: '先把项目目标、阅读顺序和团队分工读通，十分钟内就能抓住整套方案。',
+    className: 'overview-panel--start',
+    actionLabel: '打开阅读地图',
     actionKind: 'read',
-    actionTarget: TEAM_OVERVIEW_PATH,
-    stats: [
-      {
-        label: '岗位手册',
-        value: '4 篇',
-        detail: '总览 + 3 份岗位执行手册'
-      },
-      {
-        label: '交付材料',
-        value: '2 篇',
-        detail: '比赛对齐说明 + 答辩脚本'
-      }
-    ],
-    footnote: '具体文档继续收在团队总览页。'
-  },
-  {
-    id: 'workflow',
-    kicker: '子引擎层',
-    title: '子引擎与联调',
-    description: '先看联调手册和技术方案，补充策略与实施附录继续收在分类页。',
-    className: 'overview-panel--workflow',
-    actionLabel: '查看联调手册',
-    actionKind: 'read',
-    actionTarget: WORKFLOW_MAIN_PATHS[0],
+    actionTarget: READING_MAP_PATH,
     quickLinks: [
       {
-        path: WORKFLOW_MAIN_PATHS[0],
-        label: 'Agent 工作流联调与验收手册'
+        path: TEAM_EXECUTION_PATH,
+        label: '团队协作与执行分工'
       },
       {
-        path: WORKFLOW_MAIN_PATHS[1],
-        label: 'AI 教师子引擎技术方案'
+        path: DELIVERY_HANDBOOK_PATH,
+        label: '比赛交付与答辩手册'
       }
     ],
-    footnote: '补充文档保留在当前分类里继续阅读。'
+    footnote: '适合第一次进入项目时按顺序扫读。'
   },
   {
     id: 'platform',
-    kicker: '平台主文档',
-    title: '平台文档',
-    description: '优先看产品总纲、总体架构和平台需求，接口契约与平台策略留在分类页。',
+    kicker: '平台核心',
+    title: '平台设计',
+    description: '集中看平台总纲、对象生命周期和学科接入规范，不再在多篇文档里来回跳转。',
     className: 'overview-panel--platform',
-    actionLabel: '浏览平台文档',
-    actionKind: 'route',
-    actionTarget: '/platform',
+    actionLabel: '查看平台总纲',
+    actionKind: 'read',
+    actionTarget: PLATFORM_ARCHITECTURE_PATH,
     quickLinks: [
       {
-        path: PLATFORM_MAIN_PATHS[0],
-        label: '产品总纲'
+        path: PLATFORM_OBJECTS_PATH,
+        label: '平台对象、生命周期与验收'
       },
       {
-        path: PLATFORM_MAIN_PATHS[1],
-        label: '总体架构设计'
+        path: KNOWLEDGE_SPEC_PATH,
+        label: '知识库与学科接入规范'
       }
     ],
-    footnote: '平台需求与知识库规范放在平台分类里继续展开。'
+    footnote: '适合产品设计、架构梳理和比赛讲解前统一口径。'
+  },
+  {
+    id: 'workflow',
+    kicker: '实现主线',
+    title: '子引擎实现',
+    description: '把子引擎总览、联调手册和阶段附录收成一条实现主线，方便开发和验收。',
+    className: 'overview-panel--workflow',
+    actionLabel: '查看子引擎总览',
+    actionKind: 'read',
+    actionTarget: ENGINE_OVERVIEW_PATH,
+    quickLinks: [
+      {
+        path: ENGINE_WORKFLOW_PATH,
+        label: '工作流联调与验收手册'
+      },
+      {
+        path: ENGINE_APPENDIX_PATH,
+        label: '实施附录 P0-P2'
+      }
+    ],
+    footnote: '适合实现者按主线推进，再用附录查阶段细节。'
   },
   {
     id: 'subject',
-    kicker: '学科示例',
-    title: '高等数学示例',
-    description: '先看高数如何接入平台与落知识库，提示词规范和模板继续收在补充文档。',
+    kicker: '高数示例',
+    title: '高数示例',
+    description: '用高等数学示范接入、提示词和 ADP 实施，再下钻到知识库导航和资产层。',
     className: 'overview-panel--subject',
-    actionLabel: '浏览知识库示例',
-    actionKind: 'route',
-    actionTarget: '/math',
+    actionLabel: '查看高数接入',
+    actionKind: 'read',
+    actionTarget: MATH_OVERVIEW_PATH,
     quickLinks: [
       {
-        path: SUBJECT_MAIN_PATHS[0],
-        label: '高等数学平台接入示范'
+        path: MATH_IMPLEMENTATION_PATH,
+        label: '高等数学提示词与 ADP 实施'
       },
       {
-        path: SUBJECT_MAIN_PATHS[1],
-        label: '高等数学知识库落库方案'
+        path: KB_OVERVIEW_PATH,
+        label: '高等数学知识库总览'
       }
     ],
-    footnote: '高等数学提示词规范和学科模板继续保留在示例分类。'
+    footnote: '适合展示“一个学科如何真正落到平台里”。'
+  },
+  {
+    id: 'delivery',
+    kicker: '答辩与参考',
+    title: '比赛交付',
+    description: '把比赛手册、赛题资料、腾讯平台材料和代码分析收在同一入口，便于收口展示。',
+    className: 'overview-panel--delivery',
+    actionLabel: '打开比赛手册',
+    actionKind: 'read',
+    actionTarget: DELIVERY_HANDBOOK_PATH,
+    quickLinks: [
+      {
+        path: 'doc/比赛资料/2026年广东省大学生计算机设计大赛-教育智能体应用创新赛.pdf',
+        label: '比赛赛题 PDF'
+      },
+      {
+        path: 'doc/腾讯平台使用文档/腾讯云ADP-Multi-Agent版AI教师智能体从0到1新手闭环指南.md',
+        label: '腾讯平台闭环指南'
+      }
+    ],
+    footnote: '适合赛前对齐、彩排和现场答辩快速查阅。'
   }
 ];
 
 const NAVIGATION_SCOPES: Record<NavigationScopeKey, NavigationScopeConfig> = {
-  'team-delivery': {
-    key: 'team-delivery',
+  'project-start': {
+    key: 'project-start',
     collection: 'platform-docs',
-    title: '团队协作与分工',
+    title: '先看',
     kicker: '当前分类',
-    backLink: { label: '查看全部平台文档', to: '/platform' },
-    searchPlaceholder: '搜索团队总览、岗位手册或交付材料',
-    emptyState: '当前团队分类下没有命中内容。',
-    allPaths: [...TEAM_DELIVERY_SCOPE_PATHS],
+    backLink: { label: '查看全部项目文档', to: '/platform' },
+    searchPlaceholder: '搜索阅读地图、团队分工或比赛总览',
+    emptyState: '当前先看分类下没有命中内容。',
+    allPaths: [...PROJECT_START_PATHS],
     visibleGroups: [
       {
-        id: 'team-handbooks',
-        label: '岗位手册',
-        kicker: '团队分工',
-        paths: [TEAM_OVERVIEW_PATH, ...TEAM_ROLE_PATHS],
+        id: 'project-start',
+        label: '项目入口',
+        kicker: '先看',
+        paths: [...PROJECT_START_PATHS],
+        defaultOpen: true
+      }
+    ],
+    resolveGroup: () => ({ id: 'project-start', label: '项目入口', kicker: '先看', order: 0, defaultOpen: true })
+  },
+  'platform-design': {
+    key: 'platform-design',
+    collection: 'platform-docs',
+    title: '平台核心',
+    kicker: '当前分类',
+    backLink: { label: '查看全部项目文档', to: '/platform' },
+    searchPlaceholder: '搜索平台总纲、生命周期或接入规范',
+    emptyState: '当前平台核心分类下没有命中内容。',
+    allPaths: [...PLATFORM_DESIGN_PATHS],
+    visibleGroups: [
+      {
+        id: 'platform-design',
+        label: '平台设计',
+        kicker: '平台核心',
+        paths: [...PLATFORM_DESIGN_PATHS],
+        defaultOpen: true
+      }
+    ],
+    resolveGroup: () => ({ id: 'platform-design', label: '平台设计', kicker: '平台核心', order: 0, defaultOpen: true })
+  },
+  'engine-implementation': {
+    key: 'engine-implementation',
+    collection: 'platform-docs',
+    title: '子引擎',
+    kicker: '当前分类',
+    backLink: { label: '查看全部项目文档', to: '/platform' },
+    searchPlaceholder: '搜索总览、联调手册或实施附录',
+    emptyState: '当前子引擎分类下没有命中内容。',
+    allPaths: [...ENGINE_IMPLEMENTATION_PATHS],
+    visibleGroups: [
+      {
+        id: 'engine-main',
+        label: '实现主线',
+        kicker: '子引擎',
+        paths: [ENGINE_OVERVIEW_PATH, ENGINE_WORKFLOW_PATH],
         defaultOpen: true
       },
       {
-        id: 'team-delivery',
-        label: '交付材料',
-        kicker: '公开交付',
-        paths: [DELIVERY_MAIN_PATH, DELIVERY_SUPPORT_PATH],
+        id: 'engine-appendix',
+        label: '实施附录',
+        kicker: '阶段补充',
+        paths: [ENGINE_APPENDIX_PATH],
         defaultOpen: true
       }
     ],
     resolveGroup: (item) =>
-      TEAM_DELIVERY_PATH_SET.has(item.relativePath) && item.relativePath.startsWith('doc/智能体文档/交付层/')
-        ? { id: 'team-delivery', label: '交付材料', kicker: '公开交付', order: 1, defaultOpen: true }
-        : { id: 'team-handbooks', label: '岗位手册', kicker: '团队分工', order: 0, defaultOpen: true }
-  },
-  workflow: {
-    key: 'workflow',
-    collection: 'platform-docs',
-    title: '子引擎与联调',
-    kicker: '当前分类',
-    backLink: { label: '查看全部平台文档', to: '/platform' },
-    searchPlaceholder: '搜索联调手册、技术方案或实施附录',
-    emptyState: '当前联调分类下没有命中内容。',
-    allPaths: [...WORKFLOW_SCOPE_PATHS],
-    visibleGroups: [
-      {
-        id: 'workflow-main',
-        label: '主文档',
-        kicker: '联调主线',
-        paths: [...WORKFLOW_MAIN_PATHS],
-        defaultOpen: true
-      },
-      {
-        id: 'workflow-support',
-        label: '补充文档',
-        kicker: '联调补充',
-        paths: [...WORKFLOW_SUPPORT_PATHS],
-        defaultOpen: true
-      }
-    ],
-    resolveGroup: (item) => {
-      if (WORKFLOW_PATH_SET.has(item.relativePath) && WORKFLOW_MAIN_PATHS.includes(item.relativePath as (typeof WORKFLOW_MAIN_PATHS)[number])) {
-        return { id: 'workflow-main', label: '主文档', kicker: '联调主线', order: 0, defaultOpen: true };
-      }
-      if (WORKFLOW_PATH_SET.has(item.relativePath) && WORKFLOW_SUPPORT_PATHS.includes(item.relativePath as (typeof WORKFLOW_SUPPORT_PATHS)[number])) {
-        return { id: 'workflow-support', label: '补充文档', kicker: '联调补充', order: 1, defaultOpen: true };
-      }
-      return { id: 'workflow-appendix', label: '实施附录', kicker: '阶段附录', order: 2, defaultOpen: false };
-    }
-  },
-  'platform-core': {
-    key: 'platform-core',
-    collection: 'platform-docs',
-    title: '平台文档',
-    kicker: '当前分类',
-    backLink: { label: '查看全部平台文档', to: '/platform' },
-    searchPlaceholder: '搜索产品总纲、架构、需求或接口契约',
-    emptyState: '当前平台核心分类下没有命中内容。',
-    allPaths: [...PLATFORM_CORE_SCOPE_PATHS],
-    visibleGroups: [
-      {
-        id: 'platform-main',
-        label: '主文档',
-        kicker: '平台核心',
-        paths: [...PLATFORM_MAIN_PATHS],
-        defaultOpen: true
-      },
-      {
-        id: 'platform-support',
-        label: '补充文档',
-        kicker: '接口与契约',
-        paths: [...PLATFORM_SUPPORT_PATHS],
-        defaultOpen: true
-      }
-    ],
-    resolveGroup: (item) => {
-      if (PLATFORM_CORE_PATH_SET.has(item.relativePath) && PLATFORM_MAIN_PATHS.includes(item.relativePath as (typeof PLATFORM_MAIN_PATHS)[number])) {
-        return { id: 'platform-main', label: '主文档', kicker: '平台核心', order: 0, defaultOpen: true };
-      }
-      if (PLATFORM_CORE_PATH_SET.has(item.relativePath) && PLATFORM_SUPPORT_PATHS.includes(item.relativePath as (typeof PLATFORM_SUPPORT_PATHS)[number])) {
-        return { id: 'platform-support', label: '补充文档', kicker: '接口与契约', order: 1, defaultOpen: true };
-      }
-      return { id: 'platform-appendix', label: '补充阅读', kicker: '平台补充', order: 2, defaultOpen: false };
-    }
+      item.relativePath === ENGINE_APPENDIX_PATH
+        ? { id: 'engine-appendix', label: '实施附录', kicker: '阶段补充', order: 1, defaultOpen: true }
+        : { id: 'engine-main', label: '实现主线', kicker: '子引擎', order: 0, defaultOpen: true }
   },
   'subject-demo': {
     key: 'subject-demo',
     collection: 'platform-docs',
-    title: '高等数学示例',
+    title: '高数示例',
     kicker: '当前分类',
-    backLink: { label: '查看全部知识库示例', to: '/math' },
-    searchPlaceholder: '搜索平台接入、落库方案或提示词规范',
+    backLink: { label: '查看高等数学知识库', to: '/math' },
+    searchPlaceholder: '搜索接入总览、提示词或 ADP 实施',
     emptyState: '当前学科示例分类下没有命中内容。',
-    allPaths: [...SUBJECT_SCOPE_PATHS],
+    allPaths: [...SUBJECT_DEMO_PATHS],
     visibleGroups: [
       {
-        id: 'subject-main',
-        label: '主文档',
+        id: 'subject-demo',
+        label: '高数示例',
         kicker: '学科示例',
-        paths: [...SUBJECT_MAIN_PATHS],
-        defaultOpen: true
-      },
-      {
-        id: 'subject-support',
-        label: '补充文档',
-        kicker: '提示词规范',
-        paths: [...SUBJECT_SUPPORT_PATHS],
+        paths: [...SUBJECT_DEMO_PATHS],
         defaultOpen: true
       }
     ],
-    resolveGroup: (item) => {
-      if (SUBJECT_PATH_SET.has(item.relativePath) && SUBJECT_MAIN_PATHS.includes(item.relativePath as (typeof SUBJECT_MAIN_PATHS)[number])) {
-        return { id: 'subject-main', label: '主文档', kicker: '学科示例', order: 0, defaultOpen: true };
+    resolveGroup: () => ({ id: 'subject-demo', label: '高数示例', kicker: '学科示例', order: 0, defaultOpen: true })
+  },
+  'competition-delivery': {
+    key: 'competition-delivery',
+    collection: 'platform-docs',
+    title: '比赛交付',
+    kicker: '当前分类',
+    backLink: { label: '查看全部项目文档', to: '/platform' },
+    searchPlaceholder: '搜索比赛手册、赛题材料或平台参考',
+    emptyState: '当前比赛交付分类下没有命中内容。',
+    allPaths: [...COMPETITION_DELIVERY_PATHS],
+    visibleGroups: [
+      {
+        id: 'delivery-main',
+        label: '比赛手册',
+        kicker: '交付主线',
+        paths: [DELIVERY_HANDBOOK_PATH],
+        defaultOpen: true
+      },
+      {
+        id: 'delivery-references',
+        label: '参考资料',
+        kicker: '答辩与参考',
+        paths: [...COMPETITION_REFERENCE_PATHS],
+        defaultOpen: true
       }
-      if (SUBJECT_PATH_SET.has(item.relativePath) && SUBJECT_SUPPORT_PATHS.includes(item.relativePath as (typeof SUBJECT_SUPPORT_PATHS)[number])) {
-        return { id: 'subject-support', label: '补充文档', kicker: '提示词规范', order: 1, defaultOpen: true };
+    ],
+    resolveGroup: (item) =>
+      item.relativePath === DELIVERY_HANDBOOK_PATH
+        ? { id: 'delivery-main', label: '比赛手册', kicker: '交付主线', order: 0, defaultOpen: true }
+        : { id: 'delivery-references', label: '参考资料', kicker: '答辩与参考', order: 1, defaultOpen: true }
+  },
+  archive: {
+    key: 'archive',
+    collection: 'platform-docs',
+    title: '归档',
+    kicker: '当前分类',
+    backLink: { label: '返回项目文档', to: '/platform' },
+    searchPlaceholder: '搜索历史版本或旧架构稿',
+    emptyState: '当前归档分类下没有命中内容。',
+    allPaths: [...ARCHIVE_PATHS],
+    visibleGroups: [
+      {
+        id: 'archive',
+        label: '历史版本',
+        kicker: '归档',
+        paths: [...ARCHIVE_PATHS],
+        defaultOpen: false
       }
-      return { id: 'subject-appendix', label: '附录模板', kicker: '学科模板', order: 2, defaultOpen: false };
-    }
+    ],
+    resolveGroup: () => ({ id: 'archive', label: '历史版本', kicker: '归档', order: 0, defaultOpen: false })
   }
 };
 
@@ -502,19 +504,33 @@ function getNavigationScope(item: CatalogItem): NavigationScopeKey | null {
     return null;
   }
 
-  if (TEAM_DELIVERY_PATH_SET.has(item.relativePath)) {
-    return 'team-delivery';
+  if (item.layer === '归档' || ARCHIVE_PATH_SET.has(item.relativePath)) {
+    return 'archive';
   }
 
-  if (WORKFLOW_PATH_SET.has(item.relativePath) || item.relativePath.startsWith('doc/智能体文档/子引擎层/')) {
-    return 'workflow';
+  if (PROJECT_START_PATH_SET.has(item.relativePath)) {
+    return 'project-start';
   }
 
-  if (SUBJECT_PATH_SET.has(item.relativePath) || item.relativePath.startsWith('doc/智能体文档/学科层/')) {
+  if (ENGINE_IMPLEMENTATION_PATH_SET.has(item.relativePath) || item.relativePath.startsWith('doc/智能体文档/子引擎层/')) {
+    return 'engine-implementation';
+  }
+
+  if (SUBJECT_DEMO_PATH_SET.has(item.relativePath) || item.relativePath.startsWith('doc/智能体文档/学科层/')) {
     return 'subject-demo';
   }
 
-  return 'platform-core';
+  if (
+    COMPETITION_REFERENCE_PATH_SET.has(item.relativePath) ||
+    item.layer === '交付层' ||
+    item.layer === '比赛资料' ||
+    item.layer === '腾讯平台资料' ||
+    item.layer === '技术参考'
+  ) {
+    return 'competition-delivery';
+  }
+
+  return 'platform-design';
 }
 
 function getScopeConfig(scope: NavigationScopeKey): NavigationScopeConfig {
@@ -622,25 +638,25 @@ function getCollectionSections(items: CatalogItem[], collection: ResourceCollect
 }
 
 function getCollectionSearchPlaceholder(collection: ResourceCollection): string {
-  return collection === 'math-kb' ? '搜索示例知识点、模块或正文' : '搜索平台文档标题、层级或正文';
+  return collection === 'math-kb' ? '搜索导航文档、模块或知识资产' : '搜索主文档、参考资料或归档';
 }
 
 function getCollectionDescription(collection: ResourceCollection): string {
   return collection === 'math-kb'
-    ? '以高等数学为示例学科，集中展示 OCR、拆卡、标签标注、课堂重构和教师运营资产。'
-    : '按平台层级浏览产品文档、比赛资料与腾讯平台参考材料。';
+    ? '先看导航层，再按模块进入知识资产；课堂重构和教师运营保留为高优先入口。'
+    : '按先看、平台核心、子引擎、高数示例、比赛交付和归档浏览整个项目文档体系。';
 }
 
 function getCollectionHeroLabel(collection: ResourceCollection): string {
-  return collection === 'math-kb' ? '示例学科' : '平台文档';
+  return collection === 'math-kb' ? '高数示例' : '项目文档';
 }
 
 function getCollectionDisplayName(collection: ResourceCollection): string {
-  return collection === 'math-kb' ? '知识库示例（高等数学）' : '平台文档';
+  return collection === 'math-kb' ? '高等数学知识库' : '项目文档体系';
 }
 
 function getCollectionDirectoryTitle(collection: ResourceCollection): string {
-  return collection === 'math-kb' ? '示例目录' : '平台目录';
+  return collection === 'math-kb' ? '知识库目录' : '阅读目录';
 }
 
 function buildCollectionCounts(items: CatalogItem[], collection: ResourceCollection): Array<{ label: string; count: number }> {
@@ -711,6 +727,18 @@ function filterCatalogByCollection(items: CatalogItem[], collectionFilter: Colle
 
 function buildMathSections(items: CatalogItem[]): CatalogSection[] {
   const groups = new Map<string, CatalogItem[]>();
+  const navigationMeta = new Map<
+    string,
+    {
+      label: string;
+      kicker: string;
+      defaultOpen: boolean;
+    }
+  >([
+    ['00', { label: '课程总览', kicker: '导航层', defaultOpen: true }],
+    ['R', { label: '课堂重构', kicker: '导航层', defaultOpen: true }],
+    ['T', { label: '教师运营', kicker: '导航层', defaultOpen: true }]
+  ]);
 
   items.forEach((item) => {
     const key = item.moduleKey ?? item.group;
@@ -722,33 +750,90 @@ function buildMathSections(items: CatalogItem[]): CatalogSection[] {
   return [...groups.entries()]
     .map(([moduleKey, groupItems]) => ({
       id: `math-${moduleKey}`,
-      label: groupItems[0]?.moduleLabel ?? groupItems[0]?.group ?? moduleKey,
-      kicker: groupItems[0]?.moduleKey ?? '课程模块',
+      label: navigationMeta.get(moduleKey)?.label ?? groupItems[0]?.moduleLabel ?? groupItems[0]?.group ?? moduleKey,
+      kicker: navigationMeta.get(moduleKey)?.kicker ?? '知识资产',
       count: groupItems.length,
-      items: groupItems.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN')),
-      defaultOpen: MATH_PRIORITY_MODULES.has(moduleKey)
+      items: groupItems.sort((a, b) =>
+        navigationMeta.has(moduleKey) ? compareByPriorityThenTitle(a, b) : a.title.localeCompare(b.title, 'zh-CN')
+      ),
+      defaultOpen: navigationMeta.get(moduleKey)?.defaultOpen ?? MATH_PRIORITY_MODULES.has(moduleKey)
     }))
     .sort((a, b) => getMathModuleSort(a.items[0]?.moduleKey ?? null) - getMathModuleSort(b.items[0]?.moduleKey ?? null));
 }
 
 function buildPlatformSections(items: CatalogItem[]): CatalogSection[] {
-  const sections: Array<CatalogSection | null> = platformLayers.map((layer) => {
-      const layerItems = items.filter((item) => item.layer === layer);
-      if (!layerItems.length) {
+  const sectionDefinitions = [
+    {
+      id: 'project-start',
+      label: '先看',
+      kicker: '项目入口',
+      paths: [...PROJECT_START_PATHS],
+      defaultOpen: true
+    },
+    {
+      id: 'platform-design',
+      label: '平台核心',
+      kicker: '平台设计',
+      paths: [...PLATFORM_DESIGN_PATHS],
+      defaultOpen: true
+    },
+    {
+      id: 'engine-implementation',
+      label: '子引擎',
+      kicker: '实现主线',
+      paths: [...ENGINE_IMPLEMENTATION_PATHS],
+      defaultOpen: true
+    },
+    {
+      id: 'subject-demo',
+      label: '学科示例',
+      kicker: '高数示例',
+      paths: [...SUBJECT_DEMO_PATHS],
+      defaultOpen: true
+    },
+    {
+      id: 'competition-delivery',
+      label: '比赛交付',
+      kicker: '答辩与参考',
+      paths: [...COMPETITION_DELIVERY_PATHS],
+      defaultOpen: true
+    },
+    {
+      id: 'archive',
+      label: '归档',
+      kicker: '历史版本',
+      paths: [...ARCHIVE_PATHS],
+      defaultOpen: false
+    }
+  ];
+
+  return sectionDefinitions
+    .map((section) => {
+      const pathOrder = new Map<string, number>((section.paths as string[]).map((path, index) => [path, index]));
+      const sectionItems = items
+        .filter((item) => pathOrder.has(item.relativePath))
+        .sort((a, b) => {
+          const orderDiff = (pathOrder.get(a.relativePath) ?? Number.MAX_SAFE_INTEGER) - (pathOrder.get(b.relativePath) ?? Number.MAX_SAFE_INTEGER);
+          if (orderDiff !== 0) {
+            return orderDiff;
+          }
+          return compareByPriorityThenTitle(a, b);
+        });
+
+      if (!sectionItems.length) {
         return null;
       }
 
       return {
-        id: `platform-${layer}`,
-        label: layer,
-        kicker: '平台分层',
-        count: layerItems.length,
-        items: layerItems,
-        defaultOpen: layer !== '归档' && layer !== '技术参考'
+        id: `platform-${section.id}`,
+        label: section.label,
+        kicker: section.kicker,
+        count: sectionItems.length,
+        items: sectionItems,
+        defaultOpen: section.defaultOpen
       };
-    });
-
-  return sections.filter((section): section is CatalogSection => Boolean(section));
+    })
+    .filter((section): section is CatalogSection => Boolean(section));
 }
 
 function buildCatalogSections(items: CatalogItem[], collectionFilter: CollectionFilter): CatalogSection[] {
@@ -992,8 +1077,8 @@ function App() {
         <div className="header-actions">
           <nav className="top-nav">
             <NavLink to="/">首页</NavLink>
-            <NavLink to="/math">知识库示例</NavLink>
-            <NavLink to="/platform">平台文档</NavLink>
+            <NavLink to="/math">高数示例</NavLink>
+            <NavLink to="/platform">项目文档</NavLink>
           </nav>
           {showHeaderContextButton ? (
             <button
@@ -1014,8 +1099,8 @@ function App() {
         </div>
         <nav className="mobile-top-nav">
           <NavLink to="/">首页</NavLink>
-          <NavLink to="/math">示例</NavLink>
-          <NavLink to="/platform">平台</NavLink>
+          <NavLink to="/math">高数</NavLink>
+          <NavLink to="/platform">文档</NavLink>
         </nav>
       </header>
 
@@ -1100,10 +1185,10 @@ function App() {
               首页
             </NavLink>
             <NavLink to="/math" onClick={() => setMobileQuickNavOpen(false)}>
-              知识库示例
+              高数示例
             </NavLink>
             <NavLink to="/platform" onClick={() => setMobileQuickNavOpen(false)}>
-              平台文档
+              项目文档
             </NavLink>
           </nav>
           <div className="mobile-actions-shortcuts">
@@ -1565,7 +1650,7 @@ function LandingPageV2() {
         <div className="landing-overview-head">
           <div className="section-kicker">项目文档总览</div>
           <h2>AI主导学习平台</h2>
-          <p>从团队分工、联调方案、平台文档和学科示例进入整个项目。</p>
+          <p>从先读项目、平台设计、子引擎实现、高数示例和比赛交付进入整个项目。</p>
         </div>
         <div className="overview-grid">
           {overviewBlocks.map((block) => (
@@ -1686,11 +1771,18 @@ function CollectionPageV2({
 
       {sections.length ? (
         sections.map((section) => (
-          <section key={section.id} className="library-section">
-            <div className="section-header section-header--compact">
-              <div className="section-kicker">{section.kicker}</div>
-              <h2>{section.label}</h2>
-            </div>
+          <details
+            key={section.id}
+            className="library-section library-section--collapsible"
+            open={Boolean(search.trim()) || section.defaultOpen}
+          >
+            <summary className="library-section-summary">
+              <span className="tree-summary-copy">
+                <small>{section.kicker}</small>
+                <strong>{section.label}</strong>
+              </span>
+              <span>{section.count}</span>
+            </summary>
 
             <div className="resource-list">
               {section.items.map((item) => (
@@ -1703,11 +1795,11 @@ function CollectionPageV2({
                 </Link>
               ))}
             </div>
-          </section>
+          </details>
         ))
       ) : (
         <div className="empty-state">
-          {collection === 'math-kb' ? '当前知识库示例下没有命中内容。' : '当前平台文档下没有命中内容。'}
+          {collection === 'math-kb' ? '当前高数示例下没有命中内容。' : '当前项目文档下没有命中内容。'}
         </div>
       )}
     </div>
