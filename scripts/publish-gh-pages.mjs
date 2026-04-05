@@ -126,7 +126,7 @@ try {
   }
 
   const shortSha = runGit(['rev-parse', '--short', 'HEAD']);
-  runGit(['commit', '-m', `Publish site for ${shortSha}`], {
+  runGit(['commit', '-m', `发布站点：${shortSha}`], {
     cwd: worktreeDir,
     stdio: 'inherit',
     encoding: 'buffer'
