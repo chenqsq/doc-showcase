@@ -12,7 +12,6 @@ import {
   writeAppearance
 } from './appearance';
 import {
-  COLLECTION_LABELS,
   catalogById,
   catalogByPath,
   extractOutline,
@@ -62,42 +61,34 @@ interface LandingCardConfig {
   kicker: string;
   title: string;
   description: string;
-  metrics: [string, string];
+  actionLabel: string;
   className: string;
 }
 
 const LANDING_CORE_CARDS: LandingCardConfig[] = [
   {
-    path: 'doc/智能体文档/平台层/AI主导学习平台-一期总览与团队分工.md',
-    kicker: 'Phase One Overview',
-    title: '一期总览与团队分工',
-    description: '看三条并行工作线、三人职责、交接点、验收标准和最终发布动作。',
-    metrics: ['3 条并行工作线', '3 位开发成员'],
-    className: 'entry-card--overview'
+    path: 'doc/智能体文档/平台层/AI主导学习平台-团队协作与分工.md',
+    kicker: '团队协作',
+    title: '团队协作与分工',
+    description: '从分类页进入三个岗位手册，直接看每个人做什么、怎么做、和谁交接，以及最后怎样收口发布。',
+    actionLabel: '查看分工入口',
+    className: 'entry-card--team'
   },
   {
-    path: 'doc/智能体文档/学科层/高等数学-知识库接入与落库方案.md',
-    kicker: 'Knowledge Ingestion',
-    title: '高等数学-知识库接入与落库规范',
-    description: '看教材、试卷、讲义怎样做 OCR、拆卡、打标签、分批入库并完成抽样验收。',
-    metrics: ['OCR + 拆卡 + 标签', '学生 / 教师 / 课堂重构'],
+    path: 'doc/智能体文档/平台层/AI主导学习平台-知识库建设与提示词规范.md',
+    kicker: '知识库示例',
+    title: '知识库建设与提示词规范',
+    description: '先看通用知识库建设、OCR 与拆卡规范，再进入高等数学示例，理解提示词怎样跟资料结构一起落地。',
+    actionLabel: '查看规范入口',
     className: 'entry-card--knowledge'
   },
   {
     path: 'doc/智能体文档/子引擎层/AI教师子引擎-Agent工作流联调与验收手册.md',
-    kicker: 'Workflow QA',
-    title: 'Agent 工作流联调与验收手册',
-    description: '看多 Agent 路由、变量透传、检索绑定、回归样例和通过标准。',
-    metrics: ['6 个核心 Agent', '联调 + 回归 + 发布'],
+    kicker: '工作流联调',
+    title: 'Agent 工作流联调',
+    description: '集中查看路由职责、变量透传、检索绑定、回归样例和联调通过标准，方便开发和验收直接对表。',
+    actionLabel: '查看联调手册',
     className: 'entry-card--workflow'
-  },
-  {
-    path: 'doc/智能体文档/学科层/高等数学-Agent提示词模板与分层教学规范.md',
-    kicker: 'Prompt Patterns',
-    title: '高等数学-Agent 提示词模板与分层教学规范',
-    description: '看 0 基础补桥、常规提分、刷题纠错和教师摘要模板怎样统一收口。',
-    metrics: ['7 个状态槽位', '4 类固定模板'],
-    className: 'entry-card--prompt'
   }
 ];
 
@@ -114,17 +105,25 @@ function getCollectionSections(items: CatalogItem[], collection: ResourceCollect
 }
 
 function getCollectionSearchPlaceholder(collection: ResourceCollection): string {
-  return collection === 'math-kb' ? '搜索高数标题、模块或正文' : '搜索平台文档标题、层级或正文';
+  return collection === 'math-kb' ? '搜索示例知识点、模块或正文' : '搜索平台文档标题、层级或正文';
 }
 
 function getCollectionDescription(collection: ResourceCollection): string {
   return collection === 'math-kb'
-    ? '按模块浏览高数知识点、例题、课堂重构与教师运营内容。'
+    ? '以高等数学为示例学科，集中展示 OCR、拆卡、标签标注、课堂重构和教师运营资产。'
     : '按平台层级浏览产品文档、比赛资料与腾讯平台参考材料。';
 }
 
 function getCollectionHeroLabel(collection: ResourceCollection): string {
-  return collection === 'math-kb' ? 'Math Knowledge Base' : 'Platform Documents';
+  return collection === 'math-kb' ? '示例学科' : '平台文档';
+}
+
+function getCollectionDisplayName(collection: ResourceCollection): string {
+  return collection === 'math-kb' ? '知识库示例（高等数学）' : '平台文档';
+}
+
+function getCollectionDirectoryTitle(collection: ResourceCollection): string {
+  return collection === 'math-kb' ? '示例目录' : '平台目录';
 }
 
 function buildCollectionCounts(items: CatalogItem[], collection: ResourceCollection): Array<{ label: string; count: number }> {
@@ -164,7 +163,7 @@ function getCollectionLabel(collection: CollectionFilter | ResourceCollection): 
     return '全部公开资料';
   }
 
-  return COLLECTION_LABELS[collection];
+  return getCollectionDisplayName(collection);
 }
 
 function getRoleLabel(role: ResourceRole): string {
@@ -258,8 +257,8 @@ function buildLibraryBlocks(items: CatalogItem[], collectionFilter: CollectionFi
   if (collectionFilter !== 'platform-docs' && mathItems.length) {
     blocks.push({
       id: 'math-kb',
-      kicker: 'Math Knowledge Base',
-      title: COLLECTION_LABELS['math-kb'],
+      kicker: '知识库示例',
+      title: getCollectionDisplayName('math-kb'),
       description: '按模块、资源类型和角色组织，适合课程地图展示、知识点查阅与样板演示。',
       sections: buildMathSections(mathItems)
     });
@@ -268,8 +267,8 @@ function buildLibraryBlocks(items: CatalogItem[], collectionFilter: CollectionFi
   if (collectionFilter !== 'math-kb' && platformItems.length) {
     blocks.push({
       id: 'platform-docs',
-      kicker: 'Platform Documents',
-      title: COLLECTION_LABELS['platform-docs'],
+      kicker: '平台文档',
+      title: getCollectionDisplayName('platform-docs'),
       description: '保留平台主文档、比赛资料和腾讯平台 PDF，作为公开说明与答辩补充入口。',
       sections: buildPlatformSections(platformItems)
     });
@@ -446,13 +445,13 @@ function App() {
     <div className={`app-shell ${mobilePanel !== 'closed' ? 'has-mobile-panel' : ''}`.trim()} style={shellStyle}>
       <header ref={headerRef} className={`app-header ${headerCompressed ? 'is-scrolled' : ''}`.trim()}>
         <div className="header-brand">
-          <div className="section-kicker">Public Knowledge Base</div>
-          <h1>高等数学_测试知识库展台</h1>
+          <div className="section-kicker">公开项目入口</div>
+          <h1>AI主导学习平台项目总览</h1>
         </div>
         <div className="header-actions">
           <nav className="top-nav">
             <NavLink to="/">首页</NavLink>
-            <NavLink to="/math">高数知识库</NavLink>
+            <NavLink to="/math">知识库示例</NavLink>
             <NavLink to="/platform">平台文档</NavLink>
           </nav>
           <AppearanceControl
@@ -464,16 +463,13 @@ function App() {
         </div>
         <nav className="mobile-top-nav">
           <NavLink to="/">首页</NavLink>
-          <NavLink to="/math">高数</NavLink>
+          <NavLink to="/math">示例</NavLink>
           <NavLink to="/platform">平台</NavLink>
         </nav>
       </header>
 
       <Routes>
-        <Route
-          path="/"
-          element={<LandingPageV2 mathCount={mathCatalog.length} platformCount={platformCatalog.length} />}
-        />
+        <Route path="/" element={<LandingPageV2 />} />
         <Route
           path="/math"
           element={
@@ -545,15 +541,15 @@ function App() {
         </button>
         <div className="mobile-actions-menu" aria-hidden={!mobileQuickNavOpen}>
           <div className="mobile-actions-brand">
-            <div className="section-kicker">Public Knowledge Base</div>
-            <strong>高等数学_测试知识库展台</strong>
+            <div className="section-kicker">公开项目入口</div>
+            <strong>AI主导学习平台项目总览</strong>
           </div>
           <nav className="mobile-actions-nav">
             <NavLink to="/" onClick={() => setMobileQuickNavOpen(false)}>
               首页
             </NavLink>
             <NavLink to="/math" onClick={() => setMobileQuickNavOpen(false)}>
-              高数知识库
+              知识库示例
             </NavLink>
             <NavLink to="/platform" onClick={() => setMobileQuickNavOpen(false)}>
               平台文档
@@ -824,7 +820,7 @@ function CatalogSidebar({
   return (
     <div className="sidebar-panel">
       <div className="panel-header">
-        <div className="section-kicker">Public Catalog</div>
+        <div className="section-kicker">资料目录</div>
         <h2>资料导航</h2>
       </div>
       <label className="search-field">
@@ -848,7 +844,7 @@ function CatalogSidebar({
           className={collectionFilter === 'math-kb' ? 'is-active' : ''}
           onClick={() => onCollectionChange('math-kb')}
         >
-          高数知识库
+          知识库示例
         </button>
         <button
           type="button"
@@ -917,7 +913,7 @@ function CollectionSidebarV2({
     <div className="sidebar-panel">
       <div className="panel-header">
         <div className="section-kicker">{getCollectionHeroLabel(collection)}</div>
-        <h2>{collection === 'math-kb' ? '高数目录' : '平台目录'}</h2>
+        <h2>{getCollectionDirectoryTitle(collection)}</h2>
       </div>
       <label className="search-field">
         <span>搜索</span>
@@ -955,7 +951,7 @@ function CollectionSidebarV2({
           ))
         ) : (
           <div className="empty-state">
-            {collection === 'math-kb' ? '当前高数知识库下没有命中内容。' : '当前平台文档下没有命中内容。'}
+            {collection === 'math-kb' ? '当前知识库示例下没有命中内容。' : '当前平台文档下没有命中内容。'}
           </div>
         )}
       </div>
@@ -963,7 +959,7 @@ function CollectionSidebarV2({
   );
 }
 
-function LandingPageV2({ mathCount, platformCount }: { mathCount: number; platformCount: number }) {
+function LandingPageV2() {
   const landingCards = LANDING_CORE_CARDS.map((card) => ({
     ...card,
     item: catalogByPath.get(card.path)
@@ -972,41 +968,29 @@ function LandingPageV2({ mathCount, platformCount }: { mathCount: number; platfo
   return (
     <div className="page-stack landing-stage">
       <section className="landing-shell">
-        <div className="landing-copy">
-          <div className="section-kicker">Phase One Console</div>
-          <h2>一期交付先从四个核心入口收口。</h2>
-          <p>
-            这个首页现在不再承担“推荐几份资料看看”的角色，而是作为本轮公开交付和团队执行的统一控制台。四张卡分别对应分工、知识库、工作流和提示词规范；完整馆藏仍然保留在
-            `/math` 和 `/platform`。
-          </p>
-          <div className="landing-meta-row">
-            <span>{mathCount} 份高数条目</span>
-            <span>{platformCount} 份平台资料</span>
-            <span>统一发布到 GitHub Pages</span>
+        <div className="landing-intro">
+          <div className="landing-copy">
+            <div className="section-kicker">项目总览</div>
+            <h2>把团队分工、知识库建设和 Agent 联调放进同一张交付地图里。</h2>
+            <p>
+              这里保留本轮公开交付最常用的三个入口：先看团队怎么协作，再看知识库怎样建设，最后看工作流如何联调验收。高等数学作为示例学科继续保留在知识库示例页，完整平台资料仍然放在平台文档页。
+            </p>
           </div>
-          <div className="landing-inline-nav">
-            <Link to="/math">浏览高数知识库</Link>
+          <div className="landing-quick-links">
             <Link to="/platform">浏览平台文档</Link>
+            <Link to="/math">查看知识库示例</Link>
           </div>
         </div>
-        <div className="entry-grid">
-          {landingCards.map((card, index) => (
+        <div className="entry-grid entry-grid--trio">
+          {landingCards.map((card) => (
             <Link key={card.path} to={`/read/${card.item.id}`} className={`entry-card ${card.className}`.trim()}>
-              <div className="entry-card__top">
+              <div className="entry-card__eyebrow">
                 <div className="section-kicker">{card.kicker}</div>
-                <span className="entry-card__index">{String(index + 1).padStart(2, '0')}</span>
+                <span>{card.item.layer}</span>
               </div>
               <strong>{card.title}</strong>
               <p>{card.description}</p>
-              <div className="entry-card__metrics">
-                {card.metrics.map((metric) => (
-                  <span key={metric}>{metric}</span>
-                ))}
-              </div>
-              <div className="entry-card__footer">
-                <span>{card.item.layer}</span>
-                <span className="entry-card__arrow">进入文档</span>
-              </div>
+              <span className="entry-card__action">{card.actionLabel}</span>
             </Link>
           ))}
         </div>
@@ -1036,7 +1020,7 @@ function CollectionAsideV2({
     <div className="aside-panel">
       <div className="panel-header">
         <div className="section-kicker">{getCollectionHeroLabel(collection)}</div>
-        <h2>{COLLECTION_LABELS[collection]}</h2>
+        <h2>{getCollectionDisplayName(collection)}</h2>
       </div>
       <p className="aside-note">{getCollectionDescription(collection)}</p>
       <div className="count-list">
@@ -1051,7 +1035,7 @@ function CollectionAsideV2({
       {recentCollectionItems.length ? (
         <>
           <div className="panel-header panel-header--spaced">
-            <div className="section-kicker">Recent Reads</div>
+            <div className="section-kicker">最近阅读</div>
             <h2>继续阅读</h2>
           </div>
           <div className="aside-list">
@@ -1081,7 +1065,7 @@ function CollectionPageV2({
     <div className="page-stack">
       <section className="section-header section-header--page">
         <div className="section-kicker">{getCollectionHeroLabel(collection)}</div>
-        <h2>{COLLECTION_LABELS[collection]}</h2>
+        <h2>{getCollectionDisplayName(collection)}</h2>
         <p>
           {search ? `当前检索词为“${search}”。` : getCollectionDescription(collection)}
         </p>
@@ -1110,7 +1094,7 @@ function CollectionPageV2({
         ))
       ) : (
         <div className="empty-state">
-          {collection === 'math-kb' ? '当前高数知识库下没有命中内容。' : '当前平台文档下没有命中内容。'}
+          {collection === 'math-kb' ? '当前知识库示例下没有命中内容。' : '当前平台文档下没有命中内容。'}
         </div>
       )}
     </div>
@@ -1345,8 +1329,8 @@ function LibraryAside({
     }
 
     return [
-      { label: COLLECTION_LABELS['math-kb'], count: filteredCatalog.filter((item) => item.collection === 'math-kb').length },
-      { label: COLLECTION_LABELS['platform-docs'], count: filteredCatalog.filter((item) => item.collection === 'platform-docs').length }
+      { label: getCollectionDisplayName('math-kb'), count: filteredCatalog.filter((item) => item.collection === 'math-kb').length },
+      { label: getCollectionDisplayName('platform-docs'), count: filteredCatalog.filter((item) => item.collection === 'platform-docs').length }
     ];
   }, [collectionFilter, filteredCatalog]);
 
@@ -1452,7 +1436,7 @@ function HomePage({
         <div className="spotlight-grid">
           {mathFeaturedResources.slice(0, 3).map((item) => (
             <Link key={item.id} to={`/read/${item.id}`} className="spotlight-card">
-              <div className="section-kicker">高数知识库</div>
+              <div className="section-kicker">知识库示例</div>
               <strong>{item.title}</strong>
               <span>{getItemMeta(item)}</span>
             </Link>
@@ -1659,13 +1643,13 @@ function ReaderAside({
   return (
     <div className="aside-panel">
       <div className="panel-header">
-        <div className="section-kicker">Current Document</div>
+        <div className="section-kicker">当前文档</div>
         <h2>{item.title}</h2>
       </div>
       <div className="meta-stack">
         <div className="count-row">
           <span>集合</span>
-          <strong>{COLLECTION_LABELS[item.collection]}</strong>
+          <strong>{getCollectionDisplayName(item.collection)}</strong>
         </div>
         <div className="count-row">
           <span>{item.collection === 'math-kb' ? '模块' : '层级'}</span>
@@ -1684,7 +1668,7 @@ function ReaderAside({
       {outline.length ? (
         <>
           <div className="panel-header panel-header--spaced">
-            <div className="section-kicker">Document Outline</div>
+            <div className="section-kicker">文档提纲</div>
             <h2>快速跳转</h2>
           </div>
           <div className="outline-list">
@@ -1706,7 +1690,7 @@ function ReaderAside({
       ) : null}
 
       <div className="panel-header panel-header--spaced">
-        <div className="section-kicker">Related Resources</div>
+        <div className="section-kicker">相关文档</div>
         <h2>继续阅读</h2>
       </div>
       <div className="aside-list">
@@ -1738,7 +1722,7 @@ function ReaderPage({
         <div>
           <div className="section-kicker">
             {item.collection === 'math-kb'
-              ? `${COLLECTION_LABELS[item.collection]} · ${item.moduleKey} · ${item.resourceKind}`
+              ? `${getCollectionDisplayName(item.collection)} · ${item.moduleKey} · ${item.resourceKind}`
               : `${item.layer} · ${item.resourceKind}`}
           </div>
           <h2>{item.title}</h2>
