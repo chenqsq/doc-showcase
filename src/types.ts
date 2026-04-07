@@ -1,27 +1,6 @@
 export type ResourceType = 'markdown' | 'pdf' | 'image';
-export type ResourceCollection = 'math-kb' | 'platform-docs';
-export type ResourceRole = 'student' | 'teacher' | 'unknown';
-export type DocumentPriority = 'main' | 'support' | 'appendix' | 'archive';
-export type NavigationScopeKey =
-  | 'project-start'
-  | 'platform-core'
-  | 'platform-specs'
-  | 'engine-implementation'
-  | 'subject-demo'
-  | 'team-delivery'
-  | 'archive';
-
-export type Layer =
-  | '高等数学_测试知识库'
-  | '平台层'
-  | '子引擎层'
-  | '学科层'
-  | '交付层'
-  | '技术参考'
-  | '归档'
-  | '比赛资料'
-  | '腾讯平台资料'
-  | '图像资源';
+export type ResourceCollection = 'active-docs' | 'debug-kb' | 'archive';
+export type Layer = '开发文档' | '调试知识库' | '归档';
 
 export interface CatalogItem {
   id: string;
@@ -31,12 +10,11 @@ export interface CatalogItem {
   title: string;
   relativePath: string;
   group: string;
-  moduleKey: string | null;
-  moduleLabel: string | null;
   resourceKind: string;
-  role: ResourceRole;
+  order: number;
   rawText?: string;
   assetUrl?: string;
+  summary?: string;
 }
 
 export interface OutlineItem {

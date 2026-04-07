@@ -1,97 +1,82 @@
-import type { CatalogItem, Layer, OutlineItem, ResourceCollection, ResourceRole, ResourceType } from './types';
+import { ACTIVE_DOC_BY_PATH, ACTIVE_DOCS, ARCHIVE_GROUP_ORDER, type ArchiveGroup } from './siteMeta';
+import type { CatalogItem, Layer, OutlineItem, ResourceCollection, ResourceType } from './types';
 
-const MATH_ROOT = 'kb/高等数学_测试/';
-const MATH_LAYER: Layer = '高等数学_测试知识库';
-const MATH_RESOURCE_KINDS = [
+const DEBUG_KB_ROOT = 'kb/高等数学_测试/';
+const DEBUG_KB_ARCHIVE_ROOT = 'kb/高等数学_测试/T-教师运营/';
+
+const DEBUG_RESOURCE_KINDS = [
   '课程总览',
   '章节导学',
   '知识点卡',
   '例题讲解卡',
   '练习与标准答案',
   '错题与误区卡',
-  '课堂重构笔记',
-  '教师运营摘要'
+  '课堂重构笔记'
 ] as const;
 
-const markdownFiles = import.meta.glob(['../doc/**/*.md', '../kb/高等数学_测试/**/*.md', '../CLAW_CODE_ANALYSIS_REPORT.md'], {
-  eager: true,
-  import: 'default',
-  query: '?raw'
-}) as Record<string, string>;
+const markdownFiles = import.meta.glob(
+  [
+    '../doc/开发文档/**/*.md',
+    '../kb/高等数学_测试/**/*.md',
+    '../doc/智能体文档/**/*.md',
+    '../doc/腾讯平台使用文档/**/*.md',
+    '../doc/比赛资料/**/*.txt',
+    '../CLAW_CODE_ANALYSIS_REPORT.md'
+  ],
+  {
+    import: 'default',
+    query: '?raw'
+  }
+) as Record<string, () => Promise<string>>;
 
-const pdfFiles = import.meta.glob('../doc/**/*.pdf', {
+const pdfFiles = import.meta.glob(
+  ['../doc/智能体文档/**/*.pdf', '../doc/腾讯平台使用文档/**/*.pdf', '../doc/比赛资料/**/*.pdf'],
+  {
+    eager: true,
+    import: 'default',
+    query: '?url'
+  }
+) as Record<string, string>;
+
+const imageFiles = import.meta.glob('../doc/智能体文档/**/*.{svg,png,jpg,jpeg,gif,webp,avif}', {
   eager: true,
   import: 'default',
   query: '?url'
 }) as Record<string, string>;
 
-const imageFiles = import.meta.glob('../doc/**/*.{svg,png,jpg,jpeg,gif,webp,avif}', {
-  eager: true,
-  import: 'default',
-  query: '?url'
-}) as Record<string, string>;
-
-const svgRawFiles = import.meta.glob('../doc/**/*.svg', {
+const svgRawFiles = import.meta.glob('../doc/智能体文档/**/*.svg', {
   eager: true,
   import: 'default',
   query: '?raw'
 }) as Record<string, string>;
 
-const MATH_FEATURED_PATHS = [
-  'kb/高等数学_测试/00-课程总览/高等数学_测试-00课程总览-CH00整门课程-课程总览-高数_测试全景地图.md',
-  'kb/高等数学_测试/00-课程总览/高等数学_测试-00课程总览-CH00整门课程-章节导学-学习路径说明.md',
-  'kb/高等数学_测试/M02-导数与微分/高等数学_测试-M02导数与微分-CH02导数与微分-知识点卡-瞬时变化率.md',
-  'kb/高等数学_测试/R-课堂重构/高等数学_测试-R课堂重构-CHR整门课程-课堂重构笔记-总览.md',
-  'kb/高等数学_测试/R-课堂重构/高等数学_测试-M02导数与微分-CH02导数与微分-课堂重构笔记-导数定义与求导法则入门课.md',
-  'kb/高等数学_测试/T-教师运营/高等数学_测试-T教师运营-CHT整门课程-教师运营摘要-总览.md'
-];
+const collectionRank: ResourceCollection[] = ['active-docs', 'debug-kb', 'archive'];
+const markdownLoaderByPath = new Map(
+  Object.entries(markdownFiles).map(([path, loader]) => [normalizeImportPath(path), loader])
+);
+const markdownContentCache = new Map<string, Promise<string> | string>();
 
-const PLATFORM_FEATURED_PATHS = [
-  'doc/智能体文档/00-项目阅读地图.md',
-  'doc/智能体文档/平台层/平台总纲与架构.md',
-  'doc/智能体文档/子引擎层/AI教师子引擎总览与设计.md',
-  'doc/智能体文档/学科层/高等数学接入与知识库总览.md',
-  'doc/智能体文档/交付层/比赛交付与答辩手册.md'
-];
-
-export const COLLECTION_LABELS: Record<ResourceCollection, string> = {
-  'math-kb': '高等数学知识库',
-  'platform-docs': '项目文档体系'
-};
-
-export const platformLayers: Layer[] = [
-  '平台层',
-  '子引擎层',
-  '学科层',
-  '交付层',
-  '技术参考',
-  '比赛资料',
-  '腾讯平台资料',
-  '归档',
-  '图像资源'
-];
-
-function normalizeImportPath(path: string): string {
+function normalizeImportPath(path: string) {
   return path.replace(/^\.\.\//, '').replace(/\\/g, '/');
 }
 
-function basename(path: string): string {
+function basename(path: string) {
   const parts = path.split('/');
   return parts[parts.length - 1];
 }
 
-function filenameWithoutExt(path: string): string {
+function filenameWithoutExt(path: string) {
   return basename(path).replace(/\.[^.]+$/, '');
 }
 
-function humanizeFilename(name: string): string {
+function humanizeFilename(name: string) {
   return name
     .replace(/[-_]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-function hashString(input: string): string {
+function hashString(input: string) {
   let hash = 2166136261;
   for (let index = 0; index < input.length; index += 1) {
     hash ^= input.charCodeAt(index);
@@ -100,83 +85,65 @@ function hashString(input: string): string {
   return `r${(hash >>> 0).toString(36)}`;
 }
 
-function getMarkdownTitle(rawText: string, fallback: string): string {
+function getMarkdownTitle(rawText: string, fallback: string) {
   const match = rawText.match(/^#\s+(.+)$/m);
   return match?.[1]?.trim() || fallback;
 }
 
-function getSvgTitle(rawText: string, fallback: string): string {
+function getSvgTitle(rawText: string, fallback: string) {
   const match = rawText.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
   return match?.[1]?.trim() || fallback;
 }
 
 function getCollection(relativePath: string): ResourceCollection {
-  return relativePath.startsWith(MATH_ROOT) ? 'math-kb' : 'platform-docs';
+  if (relativePath.startsWith('doc/开发文档/')) {
+    return 'active-docs';
+  }
+  if (relativePath.startsWith(DEBUG_KB_ARCHIVE_ROOT)) {
+    return 'archive';
+  }
+  if (relativePath.startsWith(DEBUG_KB_ROOT)) {
+    return 'debug-kb';
+  }
+  return 'archive';
 }
 
-function getLayer(relativePath: string, type: ResourceType): Layer {
+function getLayer(collection: ResourceCollection): Layer {
+  if (collection === 'active-docs') {
+    return '开发文档';
+  }
+  if (collection === 'debug-kb') {
+    return '调试知识库';
+  }
+  return '归档';
+}
+
+function getArchiveGroup(relativePath: string, type: ResourceType): ArchiveGroup {
   if (type === 'image') {
     return '图像资源';
   }
-  if (relativePath.startsWith(MATH_ROOT)) {
-    return MATH_LAYER;
+  if (relativePath.startsWith(DEBUG_KB_ARCHIVE_ROOT)) {
+    return '历史文档';
   }
-  if (relativePath === 'CLAW_CODE_ANALYSIS_REPORT.md') {
-    return '技术参考';
-  }
-  if (relativePath.startsWith('doc/智能体文档/') && relativePath.split('/').length === 3) {
-    return '平台层';
-  }
-  if (relativePath.startsWith('doc/智能体文档/平台层/')) {
-    return '平台层';
-  }
-  if (relativePath.startsWith('doc/智能体文档/子引擎层/')) {
-    return '子引擎层';
-  }
-  if (relativePath.startsWith('doc/智能体文档/学科层/')) {
-    return '学科层';
-  }
-  if (relativePath.startsWith('doc/智能体文档/交付层/')) {
-    return '交付层';
-  }
-  if (relativePath.startsWith('doc/智能体文档/归档/')) {
-    return '归档';
+  if (relativePath.startsWith('doc/腾讯平台使用文档/')) {
+    return '腾讯资料';
   }
   if (relativePath.startsWith('doc/比赛资料/')) {
     return '比赛资料';
   }
-  return '腾讯平台资料';
+  if (relativePath.startsWith('doc/智能体文档/')) {
+    return '历史文档';
+  }
+  return '技术参考';
 }
 
-function getPlatformGroup(relativePath: string, layer: Layer): string {
-  const segments = relativePath.split('/');
-
-  if (layer === '图像资源') {
-    const index = segments.findIndex((part) => part === '高等数学');
-    return index >= 0 ? segments[index] : '图像资源';
-  }
-
-  if (layer === '技术参考') {
-    return '技术参考';
-  }
-
-  if (layer === '比赛资料' || layer === '腾讯平台资料') {
-    return layer;
-  }
-
-  if (layer === '归档') {
-    return segments[3] || '归档';
-  }
-
-  if (relativePath.startsWith('doc/智能体文档/') && relativePath.split('/').length === 3) {
-    return '项目入口';
-  }
-
-  return layer;
+function getArchiveGroupRank(group: string) {
+  const index = ARCHIVE_GROUP_ORDER.indexOf(group as ArchiveGroup);
+  return index >= 0 ? index : ARCHIVE_GROUP_ORDER.length;
 }
 
-function getMathModule(relativePath: string): { moduleKey: string | null; moduleLabel: string | null } {
-  if (!relativePath.startsWith(MATH_ROOT)) {
+function getDebugModule(relativePath: string) {
+  if (!relativePath.startsWith(DEBUG_KB_ROOT)) {
     return { moduleKey: null, moduleLabel: null };
   }
 
@@ -197,11 +164,11 @@ function getMathModule(relativePath: string): { moduleKey: string | null; module
   };
 }
 
-function escapeRegExp(text: string): string {
+function escapeRegExp(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function getMetaValue(rawText: string | undefined, label: string): string | null {
+function getMetaValue(rawText: string | undefined, label: string) {
   if (!rawText) {
     return null;
   }
@@ -210,17 +177,39 @@ function getMetaValue(rawText: string | undefined, label: string): string | null
   return match?.[1]?.trim() ?? null;
 }
 
-function getMathResourceKind(relativePath: string, rawText: string): string {
+function getDebugResourceKindFromPath(relativePath: string) {
   const filename = filenameWithoutExt(relativePath);
   const segments = filename.split('-');
   const resourceKind =
-    MATH_RESOURCE_KINDS.find((kind) => segments.includes(kind)) ?? MATH_RESOURCE_KINDS.find((kind) => filename.includes(kind));
-  return resourceKind ?? getMetaValue(rawText, '资源类型(resource_type)') ?? '知识资产';
+    DEBUG_RESOURCE_KINDS.find((kind) => segments.includes(kind)) ??
+    DEBUG_RESOURCE_KINDS.find((kind) => filename.includes(kind));
+
+  return resourceKind ?? '调试文档';
 }
 
-function getMathDisplayTitle(relativePath: string, rawText: string): string {
+function getDebugResourceKind(relativePath: string, rawText: string) {
+  return getMetaValue(rawText, '资源类型(resource_type)') ?? getDebugResourceKindFromPath(relativePath);
+}
+
+function getDebugDisplayTitleFromPath(relativePath: string) {
   const filename = filenameWithoutExt(relativePath);
-  const resourceKind = getMathResourceKind(relativePath, rawText);
+  const resourceKind = getDebugResourceKindFromPath(relativePath);
+  const marker = `${resourceKind}-`;
+  const markerIndex = filename.indexOf(marker);
+
+  if (markerIndex >= 0) {
+    const title = filename.slice(markerIndex + marker.length).trim();
+    if (title) {
+      return title;
+    }
+  }
+
+  return humanizeFilename(filename);
+}
+
+function getDebugDisplayTitle(relativePath: string, rawText: string) {
+  const filename = filenameWithoutExt(relativePath);
+  const resourceKind = getDebugResourceKind(relativePath, rawText);
   const marker = `${resourceKind}-`;
   const markerIndex = filename.indexOf(marker);
 
@@ -234,37 +223,7 @@ function getMathDisplayTitle(relativePath: string, rawText: string): string {
   return getMarkdownTitle(rawText, humanizeFilename(filename));
 }
 
-function getMathRole(rawText: string, moduleKey: string | null): ResourceRole {
-  if (moduleKey === 'T') {
-    return 'teacher';
-  }
-
-  const roleValue = getMetaValue(rawText, '角色(role)');
-  if (roleValue === 'teacher' || roleValue === 'student') {
-    return roleValue;
-  }
-
-  if (moduleKey === 'R') {
-    return 'student';
-  }
-
-  return 'unknown';
-}
-
-function getPlatformResourceKind(type: ResourceType, layer: Layer): string {
-  if (type === 'pdf') {
-    return layer === '比赛资料' ? '比赛 PDF' : '平台 PDF';
-  }
-  if (type === 'image') {
-    return '图像资源';
-  }
-  if (layer === '技术参考') {
-    return '技术文档';
-  }
-  return '平台文档';
-}
-
-function getMathModuleSort(moduleKey: string | null): number {
+function getDebugModuleSort(moduleKey: string | null) {
   if (!moduleKey) {
     return 999;
   }
@@ -283,88 +242,133 @@ function getMathModuleSort(moduleKey: string | null): number {
   return 999;
 }
 
-function getResourceKindSort(resourceKind: string): number {
-  const index = MATH_RESOURCE_KINDS.indexOf(resourceKind as (typeof MATH_RESOURCE_KINDS)[number]);
-  return index >= 0 ? index : MATH_RESOURCE_KINDS.length + 1;
+function getDebugResourceKindSort(resourceKind: string) {
+  const index = DEBUG_RESOURCE_KINDS.indexOf(resourceKind as (typeof DEBUG_RESOURCE_KINDS)[number]);
+  return index >= 0 ? index : DEBUG_RESOURCE_KINDS.length + 1;
 }
 
-function compareCatalog(a: CatalogItem, b: CatalogItem): number {
-  const collectionOrder: ResourceCollection[] = ['math-kb', 'platform-docs'];
-  const collectionDiff = collectionOrder.indexOf(a.collection) - collectionOrder.indexOf(b.collection);
+function getOrder(relativePath: string, collection: ResourceCollection, group: string, resourceKind: string) {
+  if (collection === 'active-docs') {
+    return ACTIVE_DOC_BY_PATH.get(relativePath)?.order ?? 999;
+  }
+
+  if (collection === 'debug-kb') {
+    const module = getDebugModule(relativePath);
+    return getDebugModuleSort(module.moduleKey) * 100 + getDebugResourceKindSort(resourceKind);
+  }
+
+  return getArchiveGroupRank(group) * 1000;
+}
+
+function compareCatalog(a: CatalogItem, b: CatalogItem) {
+  const collectionDiff = collectionRank.indexOf(a.collection) - collectionRank.indexOf(b.collection);
   if (collectionDiff !== 0) {
     return collectionDiff;
   }
 
-  if (a.collection === 'math-kb' && b.collection === 'math-kb') {
-    const moduleDiff = getMathModuleSort(a.moduleKey) - getMathModuleSort(b.moduleKey);
-    if (moduleDiff !== 0) {
-      return moduleDiff;
-    }
-
-    const kindDiff = getResourceKindSort(a.resourceKind) - getResourceKindSort(b.resourceKind);
-    if (kindDiff !== 0) {
-      return kindDiff;
-    }
-
-    return a.title.localeCompare(b.title, 'zh-CN');
+  if (a.order !== b.order) {
+    return a.order - b.order;
   }
 
-  const layerDiff = platformLayers.indexOf(a.layer) - platformLayers.indexOf(b.layer);
-  if (layerDiff !== 0) {
-    return layerDiff;
-  }
-
-  const groupDiff = a.group.localeCompare(b.group, 'zh-CN');
-  if (groupDiff !== 0) {
-    return groupDiff;
+  if (a.group !== b.group) {
+    return a.group.localeCompare(b.group, 'zh-CN');
   }
 
   return a.title.localeCompare(b.title, 'zh-CN');
 }
 
-function buildCatalog(): CatalogItem[] {
+function buildMarkdownMetadata(relativePath: string): CatalogItem {
+  const fallback = humanizeFilename(filenameWithoutExt(relativePath));
+  const collection = getCollection(relativePath);
+  const layer = getLayer(collection);
+
+  let title = fallback;
+  let group = '开发文档';
+  let resourceKind = '文档';
+  let summary: string | undefined;
+
+  if (collection === 'active-docs') {
+    const meta = ACTIVE_DOC_BY_PATH.get(relativePath);
+    title = meta?.shortTitle ?? fallback;
+    group = '开发文档';
+    resourceKind = '开发文档';
+    summary = meta?.summary;
+  } else if (collection === 'debug-kb') {
+    const module = getDebugModule(relativePath);
+    title = getDebugDisplayTitleFromPath(relativePath);
+    group = module.moduleLabel ?? '调试知识库';
+    resourceKind = getDebugResourceKindFromPath(relativePath);
+  } else {
+    group = getArchiveGroup(relativePath, 'markdown');
+    resourceKind = group === '历史文档' ? '历史文档' : group;
+  }
+
+  return {
+    id: hashString(relativePath),
+    type: 'markdown',
+    collection,
+    layer,
+    title,
+    relativePath,
+    group,
+    resourceKind,
+    order: getOrder(relativePath, collection, group, resourceKind),
+    summary
+  };
+}
+
+function applyMarkdownContent(item: CatalogItem, rawText: string) {
+  const fallback = humanizeFilename(filenameWithoutExt(item.relativePath));
+  item.rawText = rawText;
+
+  if (item.collection === 'active-docs') {
+    const meta = ACTIVE_DOC_BY_PATH.get(item.relativePath);
+    item.title = meta?.shortTitle ?? getMarkdownTitle(rawText, fallback);
+    item.group = '开发文档';
+    item.resourceKind = '开发文档';
+    item.summary = meta?.summary;
+    return item;
+  }
+
+  if (item.collection === 'debug-kb') {
+    const module = getDebugModule(item.relativePath);
+    item.title = getDebugDisplayTitle(item.relativePath, rawText);
+    item.group = module.moduleLabel ?? '调试知识库';
+    item.resourceKind = getDebugResourceKind(item.relativePath, rawText);
+    item.order = getOrder(item.relativePath, item.collection, item.group, item.resourceKind);
+    return item;
+  }
+
+  item.title = getMarkdownTitle(rawText, fallback);
+  item.group = getArchiveGroup(item.relativePath, 'markdown');
+  item.resourceKind = item.group === '历史文档' ? '历史文档' : item.group;
+  item.order = getOrder(item.relativePath, item.collection, item.group, item.resourceKind);
+  return item;
+}
+
+function buildCatalog() {
   const items: CatalogItem[] = [];
 
-  Object.entries(markdownFiles).forEach(([path, rawText]) => {
-    const relativePath = normalizeImportPath(path);
-    const fallback = humanizeFilename(filenameWithoutExt(relativePath));
-    const collection = getCollection(relativePath);
-    const layer = getLayer(relativePath, 'markdown');
-    const { moduleKey, moduleLabel } = getMathModule(relativePath);
-
-    items.push({
-      id: hashString(relativePath),
-      type: 'markdown',
-      collection,
-      layer,
-      title: collection === 'math-kb' ? getMathDisplayTitle(relativePath, rawText) : getMarkdownTitle(rawText, fallback),
-      relativePath,
-      group: collection === 'math-kb' ? (moduleLabel ?? COLLECTION_LABELS[collection]) : getPlatformGroup(relativePath, layer),
-      moduleKey,
-      moduleLabel,
-      resourceKind: collection === 'math-kb' ? getMathResourceKind(relativePath, rawText) : getPlatformResourceKind('markdown', layer),
-      role: collection === 'math-kb' ? getMathRole(rawText, moduleKey) : 'unknown',
-      rawText
-    });
+  Object.keys(markdownFiles).forEach((path) => {
+    items.push(buildMarkdownMetadata(normalizeImportPath(path)));
   });
 
   Object.entries(pdfFiles).forEach(([path, assetUrl]) => {
     const relativePath = normalizeImportPath(path);
-    const fallback = humanizeFilename(filenameWithoutExt(relativePath));
-    const layer = getLayer(relativePath, 'pdf');
+    const collection = getCollection(relativePath);
+    const layer = getLayer(collection);
+    const group = getArchiveGroup(relativePath, 'pdf');
 
     items.push({
       id: hashString(relativePath),
       type: 'pdf',
-      collection: 'platform-docs',
+      collection,
       layer,
-      title: fallback,
+      title: humanizeFilename(filenameWithoutExt(relativePath)),
       relativePath,
-      group: getPlatformGroup(relativePath, layer),
-      moduleKey: null,
-      moduleLabel: null,
-      resourceKind: getPlatformResourceKind('pdf', layer),
-      role: 'unknown',
+      group,
+      resourceKind: group === '腾讯资料' ? '腾讯资料 PDF' : '归档 PDF',
+      order: getOrder(relativePath, collection, group, group),
       assetUrl
     });
   });
@@ -373,19 +377,19 @@ function buildCatalog(): CatalogItem[] {
     const relativePath = normalizeImportPath(path);
     const fallback = humanizeFilename(filenameWithoutExt(relativePath));
     const svgRawText = svgRawFiles[path];
+    const collection = getCollection(relativePath);
+    const group = getArchiveGroup(relativePath, 'image');
 
     items.push({
       id: hashString(relativePath),
       type: 'image',
-      collection: 'platform-docs',
-      layer: '图像资源',
+      collection,
+      layer: getLayer(collection),
       title: svgRawText ? getSvgTitle(svgRawText, fallback) : fallback,
       relativePath,
-      group: getPlatformGroup(relativePath, '图像资源'),
-      moduleKey: null,
-      moduleLabel: null,
+      group,
       resourceKind: '图像资源',
-      role: 'unknown',
+      order: getOrder(relativePath, collection, group, '图像资源'),
       assetUrl
     });
   });
@@ -393,29 +397,66 @@ function buildCatalog(): CatalogItem[] {
   return items.sort(compareCatalog);
 }
 
+async function readMarkdownContent(relativePath: string) {
+  const cached = markdownContentCache.get(relativePath);
+  if (typeof cached === 'string') {
+    return cached;
+  }
+  if (cached) {
+    return cached;
+  }
+
+  const loader = markdownLoaderByPath.get(relativePath);
+  if (!loader) {
+    return undefined;
+  }
+
+  const promise = loader().then((rawText) => {
+    markdownContentCache.set(relativePath, rawText);
+    return rawText;
+  });
+
+  markdownContentCache.set(relativePath, promise);
+  return promise;
+}
+
 export const catalog = buildCatalog();
 export const catalogById = new Map(catalog.map((item) => [item.id, item]));
 export const catalogByPath = new Map(catalog.map((item) => [item.relativePath, item]));
 export const navigableCatalog = catalog.filter((item) => item.type !== 'image');
-export const mathCatalog = navigableCatalog.filter((item) => item.collection === 'math-kb');
-export const platformCatalog = navigableCatalog.filter((item) => item.collection === 'platform-docs');
+export const activeDocs = navigableCatalog.filter((item) => item.collection === 'active-docs');
+export const debugKnowledgeDocs = navigableCatalog.filter((item) => item.collection === 'debug-kb');
+export const archiveDocs = navigableCatalog.filter((item) => item.collection === 'archive');
 
-export const mathFeaturedResources = MATH_FEATURED_PATHS.map((path) => catalogByPath.get(path)).filter(
+export const activeDocsInOrder = ACTIVE_DOCS.map((item) => catalogByPath.get(item.path)).filter(
   (item): item is CatalogItem => Boolean(item)
 );
 
-export const platformFeaturedResources = PLATFORM_FEATURED_PATHS.map((path) => catalogByPath.get(path)).filter(
-  (item): item is CatalogItem => Boolean(item)
-);
+export async function loadCatalogItemById(id: string) {
+  const item = catalogById.get(id);
+  if (!item) {
+    return undefined;
+  }
 
-export const featuredResources = [...mathFeaturedResources, ...platformFeaturedResources];
+  if (item.type !== 'markdown' || item.rawText) {
+    return item;
+  }
 
-export function makeHeadingId(text: string, occurrence: number): string {
+  const rawText = await readMarkdownContent(item.relativePath);
+  if (!rawText) {
+    return item;
+  }
+
+  return applyMarkdownContent(item, rawText);
+}
+
+export function makeHeadingId(text: string, occurrence: number) {
   const base = text
     .trim()
     .replace(/\s+/g, '-')
     .replace(/[^\p{Letter}\p{Number}\u4e00-\u9fa5-]+/gu, '')
     .toLowerCase();
+
   return `${base || 'section'}-${occurrence}`;
 }
 
@@ -438,38 +479,29 @@ export function extractOutline(rawText: string | undefined): OutlineItem[] {
     });
 }
 
-export function resolveRelativePath(currentRelativePath: string, href: string): string | null {
+export function resolveRelativePath(currentRelativePath: string, href: string) {
   if (!href || href.startsWith('http://') || href.startsWith('https://') || href.startsWith('#')) {
     return null;
   }
+
   const currentDir = currentRelativePath.split('/').slice(0, -1).join('/');
   const resolved = new URL(href, `https://catalog.local/${currentDir}/`).pathname.replace(/^\//, '');
   return decodeURIComponent(resolved);
 }
 
-export function findCatalogTarget(currentRelativePath: string, href: string): CatalogItem | undefined {
+export function findCatalogTarget(currentRelativePath: string, href: string) {
   const resolved = resolveRelativePath(currentRelativePath, href);
   return resolved ? catalogByPath.get(resolved) : undefined;
 }
 
-export function searchCatalog(items: CatalogItem[], query: string): CatalogItem[] {
+export function searchCatalog(items: CatalogItem[], query: string) {
   const keyword = query.trim().toLowerCase();
   if (!keyword) {
     return items;
   }
 
   return items.filter((item) => {
-    const haystack = [
-      item.title,
-      item.relativePath,
-      item.group,
-      item.layer,
-      item.moduleKey ?? '',
-      item.moduleLabel ?? '',
-      item.resourceKind,
-      item.role,
-      item.rawText ?? ''
-    ]
+    const haystack = [item.title, item.relativePath, item.group, item.resourceKind, item.summary ?? '', item.rawText ?? '']
       .join(' ')
       .toLowerCase();
 
@@ -477,34 +509,32 @@ export function searchCatalog(items: CatalogItem[], query: string): CatalogItem[
   });
 }
 
-export function getRelatedResources(item: CatalogItem): CatalogItem[] {
-  return catalog
+export function getRelatedResources(item: CatalogItem) {
+  return navigableCatalog
     .filter((candidate) => candidate.id !== item.id)
-    .filter((candidate) => candidate.type !== 'image' && candidate.collection === item.collection)
+    .filter((candidate) => candidate.collection === item.collection)
     .map((candidate) => {
       let score = 0;
 
-      if (item.collection === 'math-kb') {
-        if (candidate.moduleKey === item.moduleKey) {
-          score += 30;
-        }
-        if (candidate.resourceKind === item.resourceKind) {
-          score += 18;
-        }
-        if (candidate.role === item.role) {
-          score += 8;
-        }
-      } else {
-        if (candidate.layer === item.layer) {
-          score += 22;
-        }
-        if (candidate.group === item.group) {
-          score += 14;
-        }
+      if (candidate.group === item.group) {
+        score += 24;
       }
 
-      if (candidate.type === item.type) {
-        score += 4;
+      if (candidate.resourceKind === item.resourceKind) {
+        score += 12;
+      }
+
+      if (item.collection === 'active-docs') {
+        const orderDistance = Math.abs(candidate.order - item.order);
+        score += Math.max(0, 18 - orderDistance * 6);
+      }
+
+      if (item.collection === 'debug-kb') {
+        const sourceModule = getDebugModule(item.relativePath);
+        const targetModule = getDebugModule(candidate.relativePath);
+        if (sourceModule.moduleKey && sourceModule.moduleKey === targetModule.moduleKey) {
+          score += 18;
+        }
       }
 
       return { candidate, score };
