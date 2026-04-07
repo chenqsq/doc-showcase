@@ -4,18 +4,19 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
+  'inline-flex touch-manipulation select-none items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-[320ms] ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 active:translate-y-px active:scale-[0.982] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
   {
     variants: {
       variant: {
         default:
-          'bg-primary text-primary-foreground shadow-[var(--shadow-soft)] hover:-translate-y-0.5 hover:bg-primary/90',
+          'bg-primary text-primary-foreground shadow-[var(--shadow-soft)] hover:-translate-y-0.5 hover:bg-primary/92 active:bg-primary/88',
         secondary:
-          'border border-border/70 bg-card/80 text-foreground shadow-[var(--shadow-soft)] hover:-translate-y-0.5 hover:border-primary/40 hover:bg-card',
-        ghost: 'text-foreground/80 hover:bg-accent hover:text-accent-foreground',
-        outline: 'border border-border/70 bg-background/60 text-foreground hover:bg-accent hover:text-accent-foreground',
+          'border border-border/70 bg-card/80 text-foreground shadow-[var(--shadow-soft)] hover:-translate-y-0.5 hover:border-primary/38 hover:bg-card active:border-primary/30 active:bg-accent/72',
+        ghost: 'text-foreground/80 hover:bg-accent hover:text-accent-foreground active:bg-accent/80',
+        outline:
+          'border border-border/70 bg-background/60 text-foreground hover:bg-accent hover:text-accent-foreground active:bg-accent/80',
         subtle:
-          'bg-secondary text-secondary-foreground hover:-translate-y-0.5 hover:bg-secondary/80'
+          'bg-secondary text-secondary-foreground hover:-translate-y-0.5 hover:bg-secondary/82 active:bg-secondary/76'
       },
       size: {
         default: 'h-11 px-5',

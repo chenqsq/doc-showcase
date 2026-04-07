@@ -2,38 +2,40 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { activeDocsInOrder } from '@/catalog';
-import { HOME_SECONDARY_LINKS, getRowMeta } from '@/app-shell';
+import { HOME_SECONDARY_LINKS, getRowMeta, useMediaQuery } from '@/app-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 export default function HomeRoute() {
   const shouldReduceMotion = useReducedMotion();
+  const isDesktop = useMediaQuery('(min-width: 768px)');
   const firstDoc = activeDocsInOrder[0];
+  const enableMotion = isDesktop && !shouldReduceMotion;
 
   return (
-    <main className="page-safe-top layout-section-gap mx-auto grid w-full max-w-[var(--content-max)] px-4 pb-24 md:px-6">
+    <main className="page-safe-top layout-section-gap mx-auto grid w-full max-w-[var(--content-max)] px-4 pb-20 md:px-6 md:pb-24">
       <motion.section
-        className="layout-panel-padding relative overflow-hidden rounded-[2.4rem] border border-border/70 bg-card/80 shadow-[var(--shadow-panel)] backdrop-blur-2xl"
-        initial={shouldReduceMotion ? false : { opacity: 0, y: 24 }}
+        className="layout-panel-padding relative rounded-[var(--surface-hero-radius)] border border-border/60 bg-background/86 shadow-[var(--shadow-soft)] md:overflow-hidden md:border-border/70 md:bg-card/80 md:shadow-[var(--shadow-panel)] md:backdrop-blur-2xl"
+        initial={enableMotion ? { opacity: 0, y: 24 } : false}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       >
         <div
-          className="pointer-events-none absolute inset-x-8 top-0 h-32 opacity-70"
+          className="pointer-events-none absolute inset-x-8 top-0 hidden h-32 opacity-70 md:block"
           style={{ background: 'radial-gradient(circle at top, hsl(var(--glow-primary) / 0.26), transparent 70%)' }}
         />
-        <div className="relative grid max-w-[42rem] gap-5 md:gap-6">
+        <div className="relative grid max-w-[42rem] gap-4 md:gap-6">
           <motion.div
-            initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
+            initial={enableMotion ? { opacity: 0, y: 12 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.05 }}
           >
-            <Badge>开发文档入口</Badge>
+            <Badge className="bg-background/90 md:bg-background/70">开发文档入口</Badge>
           </motion.div>
 
           <motion.div
             className="grid gap-3"
-            initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
+            initial={enableMotion ? { opacity: 0, y: 16 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.08 }}
           >
@@ -47,7 +49,7 @@ export default function HomeRoute() {
 
           <motion.div
             className="flex flex-wrap gap-3 pt-1"
-            initial={shouldReduceMotion ? false : { opacity: 0, y: 20 }}
+            initial={enableMotion ? { opacity: 0, y: 20 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.14 }}
           >
@@ -66,7 +68,7 @@ export default function HomeRoute() {
 
           <motion.div
             className="flex flex-wrap gap-2 pt-1"
-            initial={shouldReduceMotion ? false : { opacity: 0, y: 18 }}
+            initial={enableMotion ? { opacity: 0, y: 18 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.18 }}
           >
@@ -94,12 +96,12 @@ export default function HomeRoute() {
           </p>
         </div>
 
-        <div className="overflow-hidden rounded-[2rem] border border-border/70 bg-card/76 shadow-[var(--shadow-panel)] backdrop-blur-xl">
+        <div className="overflow-hidden rounded-[var(--surface-panel-radius)] border border-border/60 bg-background/88 md:border-border/70 md:bg-card/76 md:shadow-[var(--shadow-panel)] md:backdrop-blur-xl">
           <ol className="divide-y divide-border/70">
             {activeDocsInOrder.map((item, index) => (
-              <motion.li key={item.id} whileHover={shouldReduceMotion ? undefined : { x: 6 }}>
+              <motion.li key={item.id} whileHover={enableMotion ? { x: 6 } : undefined}>
                 <Link
-                  className="grid gap-3 px-5 py-5 transition-colors hover:bg-accent/60 md:grid-cols-[72px,minmax(0,1fr),auto] md:items-center md:px-7"
+                  className="grid gap-3 px-4 py-4 transition-colors hover:bg-accent/60 active:bg-accent/70 md:grid-cols-[72px,minmax(0,1fr),auto] md:items-center md:px-7 md:py-5"
                   to={`/read/${item.id}`}
                 >
                   <span className="font-serif text-2xl text-primary">{String(index + 1).padStart(2, '0')}</span>
@@ -133,12 +135,12 @@ export default function HomeRoute() {
             const Icon = entry.icon;
 
             return (
-              <motion.div key={entry.id} whileHover={shouldReduceMotion ? undefined : { x: 6 }}>
+              <motion.div key={entry.id} whileHover={enableMotion ? { x: 6 } : undefined}>
                 <Link
-                  className="grid gap-4 rounded-[1.8rem] border border-border/70 bg-card/72 px-5 py-5 shadow-[var(--shadow-soft)] transition-colors hover:bg-card/92 md:grid-cols-[auto,minmax(0,1fr),auto] md:items-center"
+                  className="grid gap-4 rounded-[var(--surface-card-radius)] border border-border/60 bg-background/88 px-4 py-4 transition-colors hover:bg-background md:grid-cols-[auto,minmax(0,1fr),auto] md:items-center md:border-border/70 md:bg-card/72 md:px-5 md:py-5 md:shadow-[var(--shadow-soft)] md:hover:bg-card/92"
                   to={entry.to}
                 >
-                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-primary">
+                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-[var(--surface-control-radius)] bg-accent text-primary">
                     <Icon className="h-5 w-5" />
                   </span>
                   <span className="grid gap-1">

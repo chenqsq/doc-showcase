@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Cloud, Leaf, Menu, MoonStar, Palette, SunMedium, Type } from 'lucide-react';
+import { Cloud, Leaf, MoonStar, Palette, SunMedium, Type } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
   DEFAULT_THEME,
@@ -32,6 +32,7 @@ export interface HeaderNavLink {
 interface SiteHeaderProps {
   compact?: boolean;
   fontScaleId: FontScaleId;
+  mobileNavOpen?: boolean;
   navItems: HeaderNavLink[];
   onFontScaleChange: (fontScaleId: FontScaleId) => void;
   onOpenMobileNav: () => void;
@@ -51,6 +52,7 @@ const themeIconMap = {
 export function SiteHeader({
   compact = false,
   fontScaleId,
+  mobileNavOpen = false,
   navItems,
   onFontScaleChange,
   onOpenMobileNav,
@@ -63,15 +65,40 @@ export function SiteHeader({
 
   return (
     <>
-      <div className="fixed left-4 top-[var(--header-floating-top)] z-50 md:hidden">
+      <div className="fixed left-[var(--mobile-content-gutter)] top-[var(--header-floating-top)] z-50 md:hidden">
         <Button
           type="button"
           variant="secondary"
-          className="h-[var(--mobile-nav-button-size)] w-[var(--mobile-nav-button-size)] rounded-[1.2rem] border border-border/70 bg-card/84 shadow-[var(--shadow-floating)] backdrop-blur-xl"
-          aria-label="打开站点导航"
+          size="icon"
+          className={cn(
+            'h-[var(--mobile-nav-button-size)] w-[var(--mobile-nav-button-size)] rounded-[0.95rem] border border-border/70 bg-background/90 shadow-[var(--shadow-soft)] transition-[background-color,border-color,box-shadow,transform] duration-[200ms] active:scale-[0.96] md:backdrop-blur-md',
+            mobileNavOpen ? 'bg-accent text-accent-foreground shadow-[var(--shadow-floating)]' : ''
+          )}
+          aria-expanded={mobileNavOpen}
+          aria-label={mobileNavOpen ? '关闭站点导航' : '打开站点导航'}
           onClick={onOpenMobileNav}
         >
-          <Menu className="h-5 w-5" />
+          <span className="sr-only">站点导航</span>
+          <span className="relative block h-[18px] w-[20px]" aria-hidden="true">
+            <span
+              className={cn(
+                'absolute left-0 top-0 block h-[2.5px] w-full rounded-full bg-current transition-all duration-[200ms]',
+                mobileNavOpen ? 'top-[7px] rotate-45' : ''
+              )}
+            />
+            <span
+              className={cn(
+                'absolute left-0 top-[7px] block h-[2.5px] w-full rounded-full bg-current transition-all duration-[180ms]',
+                mobileNavOpen ? 'scale-x-0 opacity-0' : ''
+              )}
+            />
+            <span
+              className={cn(
+                'absolute left-0 top-[14px] block h-[2.5px] w-full rounded-full bg-current transition-all duration-[200ms]',
+                mobileNavOpen ? 'top-[7px] -rotate-45' : ''
+              )}
+            />
+          </span>
         </Button>
       </div>
 
@@ -82,9 +109,9 @@ export function SiteHeader({
       >
         <motion.div
           layout
-          transition={{ type: 'spring', stiffness: 240, damping: 28 }}
+          transition={{ type: 'spring', stiffness: 220, damping: 26 }}
           className={cn(
-            'pointer-events-auto mx-auto flex w-full max-w-[var(--content-max)] items-center gap-3 rounded-[2rem] border border-border/70 px-4 shadow-[var(--shadow-panel)] backdrop-blur-2xl transition-[height,padding,background-color,border-color,box-shadow] duration-300 md:px-6',
+            'pointer-events-auto mx-auto flex w-full max-w-[var(--content-max)] items-center gap-3 rounded-[var(--surface-hero-radius)] border border-border/70 px-4 shadow-[var(--shadow-panel)] backdrop-blur-2xl transition-[height,padding,background-color,border-color,box-shadow] duration-[320ms] md:px-6',
             compact ? 'h-[var(--header-compact-height)] bg-card/92 shadow-[var(--shadow-floating)]' : 'h-[var(--header-expanded-height)] bg-card/80'
           )}
         >
@@ -92,7 +119,7 @@ export function SiteHeader({
             <div className="flex min-w-0 flex-col">
               <span
                 className={cn(
-                  'overflow-hidden text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/80 transition-all duration-300',
+                  'overflow-hidden text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/80 transition-all duration-[320ms]',
                   compact ? 'max-h-0 opacity-0' : 'max-h-6 opacity-100'
                 )}
               >
@@ -100,7 +127,7 @@ export function SiteHeader({
               </span>
               <span
                 className={cn(
-                  'truncate font-serif text-lg text-foreground transition-all duration-300 md:text-[1.7rem]',
+                  'truncate font-serif text-lg text-foreground transition-all duration-[320ms] md:text-[1.7rem]',
                   compact ? 'md:text-xl' : ''
                 )}
               >
@@ -115,7 +142,7 @@ export function SiteHeader({
                 key={item.id}
                 to={item.to}
                 className={cn(
-                  'rounded-full px-4 py-2 text-[length:var(--type-nav)] font-medium text-muted-foreground transition-all duration-200 hover:bg-accent hover:text-accent-foreground',
+                  'rounded-full px-4 py-2 text-[length:var(--type-nav)] font-medium text-muted-foreground transition-all duration-[240ms] hover:bg-accent hover:text-accent-foreground active:scale-[0.985]',
                   item.isActive ? 'bg-accent text-accent-foreground shadow-[var(--shadow-soft)]' : ''
                 )}
               >
@@ -183,7 +210,7 @@ export function SiteHeader({
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <TooltipContent>阅读外观：{activeScaleLabel}</TooltipContent>
+              <TooltipContent>阅读外观，当前字号 {activeScaleLabel}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </motion.div>

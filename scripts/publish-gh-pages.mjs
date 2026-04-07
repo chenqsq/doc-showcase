@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { cp, mkdtemp, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -18,13 +19,26 @@ function runGit(args, options = {}) {
   return typeof result === 'string' ? result.trim() : result;
 }
 
-function hasLocalGhPagesBranch() {
+function hasLocalBranch(name) {
   try {
-    execFileSync('git', ['show-ref', '--verify', '--quiet', 'refs/heads/gh-pages'], {
+    execFileSync('git', ['show-ref', '--verify', '--quiet', `refs/heads/${name}`], {
       cwd: projectRoot,
       stdio: 'ignore'
     });
     return true;
+  } catch {
+    return false;
+  }
+}
+
+function hasRemoteBranch(name) {
+  try {
+    const output = execFileSync('git', ['ls-remote', '--heads', 'origin', name], {
+      cwd: projectRoot,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    });
+    return Boolean(output.trim());
   } catch {
     return false;
   }
@@ -54,9 +68,13 @@ function findGhPagesWorktree() {
     const lines = block.split('\n');
     const worktreeLine = lines.find((line) => line.startsWith('worktree '));
     const branchLine = lines.find((line) => line === 'branch refs/heads/gh-pages');
+    const prunableLine = lines.find((line) => line.startsWith('prunable '));
 
-    if (worktreeLine && branchLine) {
-      return worktreeLine.slice('worktree '.length);
+    if (worktreeLine && branchLine && !prunableLine) {
+      const worktreePath = worktreeLine.slice('worktree '.length);
+      if (existsSync(resolve(worktreePath, '.git'))) {
+        return worktreePath;
+      }
     }
   }
 
@@ -91,6 +109,8 @@ async function copyDistInto(targetDir) {
   );
 }
 
+runGit(['worktree', 'prune'], { stdio: 'inherit', encoding: 'buffer' });
+
 let worktreeDir = findGhPagesWorktree();
 let createdWorktree = false;
 
@@ -99,10 +119,15 @@ try {
     worktreeDir = await mkdtemp(join(tmpdir(), 'doc-showcase-gh-pages-'));
     createdWorktree = true;
 
-    if (hasLocalGhPagesBranch()) {
+    if (hasLocalBranch('gh-pages')) {
       runGit(['worktree', 'add', worktreeDir, 'gh-pages'], { stdio: 'inherit', encoding: 'buffer' });
-    } else {
+    } else if (hasRemoteBranch('gh-pages')) {
       runGit(['worktree', 'add', '-B', 'gh-pages', worktreeDir, 'origin/gh-pages'], {
+        stdio: 'inherit',
+        encoding: 'buffer'
+      });
+    } else {
+      runGit(['worktree', 'add', '--orphan', 'gh-pages', worktreeDir], {
         stdio: 'inherit',
         encoding: 'buffer'
       });
@@ -126,7 +151,7 @@ try {
   }
 
   const shortSha = runGit(['rev-parse', '--short', 'HEAD']);
-  runGit(['commit', '-m', `发布站点：${shortSha}`], {
+  runGit(['commit', '-m', `Publish site ${shortSha}`], {
     cwd: worktreeDir,
     stdio: 'inherit',
     encoding: 'buffer'

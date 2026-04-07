@@ -215,7 +215,7 @@ export function MermaidBlock({ chart, title, onOpenLightbox }: MermaidBlockProps
 
   if (error) {
     return (
-      <div className="mermaid-figure rounded-[1.5rem] border border-dashed border-border bg-card/70 p-[var(--reader-figure-padding)]">
+      <div className="mermaid-figure rounded-[var(--surface-card-radius)] border border-dashed border-border bg-background/84 p-[var(--reader-figure-padding)] md:bg-card/70">
         <Badge variant="outline">Mermaid 渲染失败</Badge>
         <pre>{chart}</pre>
       </div>
@@ -223,7 +223,7 @@ export function MermaidBlock({ chart, title, onOpenLightbox }: MermaidBlockProps
   }
 
   return (
-    <div className="mermaid-figure grid gap-[var(--reader-block-gap)] rounded-[1.65rem] border border-border/70 bg-card/82 p-[var(--reader-figure-padding)] shadow-[var(--shadow-soft)] backdrop-blur-sm">
+    <div className="mermaid-figure grid gap-[var(--reader-block-gap)] rounded-[var(--surface-card-radius)] border border-border/60 bg-background/84 p-[var(--reader-figure-padding)] md:border-border/70 md:bg-card/82 md:shadow-[var(--shadow-soft)] md:backdrop-blur-sm">
       <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
         <div className="grid gap-1.5">
           <Badge variant="outline" className="w-fit">
@@ -231,7 +231,14 @@ export function MermaidBlock({ chart, title, onOpenLightbox }: MermaidBlockProps
           </Badge>
           <strong className="text-base font-semibold text-foreground">{title}</strong>
         </div>
-        <Button type="button" variant="secondary" size="sm" className="w-fit" onClick={openLightbox} disabled={!svg}>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="w-fit rounded-[var(--surface-control-radius)] shadow-none"
+          onClick={openLightbox}
+          disabled={!svg}
+        >
           <Expand className="h-4 w-4" />
           放大查看
         </Button>
@@ -250,7 +257,7 @@ export function MermaidBlock({ chart, title, onOpenLightbox }: MermaidBlockProps
       <StealthScrollArea
         ref={viewportRef}
         axis="both"
-        className="mermaid-figure__viewport overflow-auto rounded-[1.45rem] border border-border/60 bg-background/88 p-[var(--reader-figure-padding)] text-left transition-colors"
+        className="mermaid-figure__viewport overflow-auto rounded-[1rem] border border-border/60 bg-background/90 p-[var(--reader-figure-padding)] text-left transition-colors md:rounded-[1.05rem]"
         onClick={openLightbox}
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {

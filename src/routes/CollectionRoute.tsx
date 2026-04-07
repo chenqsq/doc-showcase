@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { useDeferredValue, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -33,7 +32,7 @@ export default function CollectionRoute({ collection }: CollectionRouteProps) {
   const SectionIcon = COLLECTION_CARD_ICONS[collection];
 
   return (
-    <main className="page-safe-top layout-section-gap mx-auto grid w-full max-w-[var(--content-max)] px-4 pb-24 md:px-6">
+    <main className="page-safe-top layout-section-gap mx-auto grid w-full max-w-[var(--content-max)] px-4 pb-20 md:px-6 md:pb-24">
       <section className="grid gap-4">
         <Badge variant="outline" className="w-fit bg-background/70">
           {getCollectionKicker(collection)}
@@ -44,9 +43,9 @@ export default function CollectionRoute({ collection }: CollectionRouteProps) {
         <p className="max-w-3xl text-base leading-8 text-muted-foreground">{COLLECTION_SUMMARIES[collection]}</p>
       </section>
 
-      <section className="layout-panel-gap layout-panel-padding grid rounded-[1.8rem] border border-border/70 bg-card/75 shadow-[var(--shadow-soft)] backdrop-blur-xl">
+      <section className="layout-panel-gap layout-panel-padding grid rounded-[var(--surface-panel-radius)] border border-border/60 bg-background/88 md:border-border/70 md:bg-card/75 md:shadow-[var(--shadow-soft)] md:backdrop-blur-xl">
         <label
-          className="flex min-h-14 items-center gap-3 rounded-full border border-border/70 bg-background/72 px-4 text-muted-foreground"
+          className="flex min-h-14 items-center gap-3 rounded-full border border-border/70 bg-background/82 px-4 text-muted-foreground"
           htmlFor={`search-${collection}`}
         >
           <SearchIcon className="h-4 w-4 shrink-0" />
@@ -54,7 +53,7 @@ export default function CollectionRoute({ collection }: CollectionRouteProps) {
             id={`search-${collection}`}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder={`搜索${COLLECTION_LABELS[collection]}中的标题、路径或正文`}
+            placeholder={`搜索 ${COLLECTION_LABELS[collection]} 中的标题、路径或正文`}
             className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
         </label>
@@ -66,7 +65,7 @@ export default function CollectionRoute({ collection }: CollectionRouteProps) {
           {sections.map((section) => (
             <section
               key={section.id}
-              className="layout-panel-gap layout-panel-padding grid rounded-[1.9rem] border border-border/70 bg-card/74 shadow-[var(--shadow-soft)] backdrop-blur-xl"
+              className="layout-panel-gap layout-panel-padding grid rounded-[var(--surface-panel-radius)] border border-border/60 bg-background/88 md:border-border/70 md:bg-card/74 md:shadow-[var(--shadow-soft)] md:backdrop-blur-xl"
             >
               <div className="grid gap-3">
                 <Badge variant="outline" className="w-fit bg-background/70">
@@ -85,10 +84,10 @@ export default function CollectionRoute({ collection }: CollectionRouteProps) {
                   <div key={item.id} className="grid gap-2">
                     {index > 0 ? <Separator /> : null}
                     <Link
-                      className="grid gap-3 py-3 transition-colors hover:text-primary md:grid-cols-[auto,minmax(0,1fr),auto] md:items-center"
+                      className="grid gap-3 rounded-[var(--surface-card-radius)] px-3 py-3 transition-colors hover:bg-accent/50 hover:text-primary active:bg-accent/70 md:grid-cols-[auto,minmax(0,1fr),auto] md:items-center"
                       to={`/read/${item.id}`}
                     >
-                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-accent text-primary">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--surface-control-radius)] bg-accent text-primary">
                         <SectionIcon className="h-4 w-4" />
                       </span>
                       <span className="grid gap-1">
@@ -108,7 +107,7 @@ export default function CollectionRoute({ collection }: CollectionRouteProps) {
           ))}
         </div>
       ) : (
-        <div className="rounded-[1.8rem] border border-dashed border-border bg-card/72 p-6 text-center text-sm leading-7 text-muted-foreground">
+        <div className="rounded-[var(--surface-panel-radius)] border border-dashed border-border bg-background/84 p-6 text-center text-sm leading-7 text-muted-foreground md:bg-card/72">
           当前搜索条件下没有结果，可以尝试减少关键词或切换到其他范围继续浏览。
         </div>
       )}

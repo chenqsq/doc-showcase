@@ -22,7 +22,7 @@ export interface FontScaleOption {
 
 const SHARED_THEME_VARIABLES = {
   background: 'transparent',
-  fontSize: '14px',
+  fontSize: '13px',
   fontFamily:
     '"Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif'
 };

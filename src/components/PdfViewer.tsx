@@ -120,27 +120,27 @@ export function PdfViewer({ src, title }: PdfViewerProps) {
       </div>
 
       {loadError ? (
-        <div className="rounded-[1.6rem] border border-dashed border-border bg-card/70 p-5 text-sm leading-6 text-muted-foreground">
+        <div className="rounded-[var(--surface-card-radius)] border border-dashed border-border bg-background/84 p-5 text-sm leading-6 text-muted-foreground md:bg-card/70">
           {loadError}
         </div>
       ) : null}
 
       {useNativeFallback || shouldPreferNative ? (
         <div className="grid gap-4">
-          <div className="rounded-[1.6rem] border border-dashed border-border bg-card/70 p-5 text-sm leading-6 text-muted-foreground">
+          <div className="rounded-[var(--surface-card-radius)] border border-dashed border-border bg-background/84 p-5 text-sm leading-6 text-muted-foreground md:bg-card/70">
             {shouldPreferNative
               ? '当前开发环境优先使用浏览器原生 PDF 预览，避免本地路径兼容问题。'
               : '当前环境已切换为原生 PDF 预览，以保证资料继续可读。'}
           </div>
-          <iframe className="min-h-[78vh] w-full rounded-[1.6rem] border border-border bg-card" src={src} title={title} />
+          <iframe className="min-h-[78vh] w-full rounded-[var(--surface-card-radius)] border border-border bg-card" src={src} title={title} />
         </div>
       ) : null}
 
       {!useNativeFallback && !shouldPreferNative ? (
         <Document
           file={pdfData ? { data: pdfData } : null}
-          loading={<div className="rounded-[1.6rem] border border-dashed border-border bg-card/70 p-5 text-sm text-muted-foreground">PDF 加载中…</div>}
-          error={<div className="rounded-[1.6rem] border border-dashed border-border bg-card/70 p-5 text-sm text-muted-foreground">PDF 无法渲染，请直接打开原文件查看。</div>}
+          loading={<div className="rounded-[var(--surface-card-radius)] border border-dashed border-border bg-background/84 p-5 text-sm text-muted-foreground md:bg-card/70">PDF 加载中…</div>}
+          error={<div className="rounded-[var(--surface-card-radius)] border border-dashed border-border bg-background/84 p-5 text-sm text-muted-foreground md:bg-card/70">PDF 无法渲染，请直接打开原文件查看。</div>}
           onLoadSuccess={({ numPages: loadedPages }) => {
             setNumPages(loadedPages);
             setPageNumber((current) => Math.min(current, loadedPages));
@@ -159,7 +159,7 @@ export function PdfViewer({ src, title }: PdfViewerProps) {
                   <button
                     key={page}
                     type="button"
-                    className={`grid gap-2 justify-items-center rounded-[1.25rem] border px-2.5 py-3 transition-colors ${
+                    className={`grid gap-2 justify-items-center rounded-[var(--surface-control-radius)] border px-2.5 py-3 transition-colors ${
                       page === pageNumber ? 'border-primary/30 bg-accent shadow-[var(--shadow-soft)]' : 'border-border/70 bg-background/70 hover:bg-card'
                     }`.trim()}
                     onClick={() => setPageNumber(page)}
@@ -172,7 +172,7 @@ export function PdfViewer({ src, title }: PdfViewerProps) {
             </aside>
 
             <section className="grid gap-3" ref={ref}>
-              <div className="flex flex-wrap items-center justify-center gap-3 rounded-[1.5rem] border border-border/70 bg-card/75 p-3 text-sm text-foreground">
+              <div className="flex flex-wrap items-center justify-center gap-3 rounded-[var(--surface-card-radius)] border border-border/70 bg-background/84 p-3 text-sm text-foreground md:bg-card/75">
                 <Button type="button" variant="secondary" size="sm" onClick={() => setPageNumber((value) => Math.max(1, value - 1))}>
                   上一页
                 </Button>
@@ -191,13 +191,13 @@ export function PdfViewer({ src, title }: PdfViewerProps) {
                 </Button>
               </div>
 
-              <StealthScrollArea axis="both" className="grid justify-items-center overflow-auto rounded-[1.7rem] border border-border/70 bg-card/70 p-[var(--reader-figure-padding)]">
+              <StealthScrollArea axis="both" className="grid justify-items-center overflow-auto rounded-[var(--surface-card-radius)] border border-border/70 bg-background/84 p-[var(--reader-figure-padding)] md:bg-card/70">
                 <Page
                   pageNumber={pageNumber}
                   width={pageWidth * zoom}
                   renderAnnotationLayer={false}
                   renderTextLayer={false}
-                  loading={<div className="rounded-[1.4rem] border border-dashed border-border bg-card/70 p-4 text-sm text-muted-foreground">页面渲染中…</div>}
+                  loading={<div className="rounded-[var(--surface-control-radius)] border border-dashed border-border bg-background/84 p-4 text-sm text-muted-foreground md:bg-card/70">页面渲染中…</div>}
                 />
               </StealthScrollArea>
             </section>

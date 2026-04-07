@@ -27,3 +27,17 @@ export interface LightboxState {
   src: string;
   title: string;
 }
+
+export interface ReaderMobileNavigationState {
+  activeHeadingId?: string;
+  collectionLabel: string;
+  collectionMeta: string;
+  collectionRoute: string;
+  currentIndex: number;
+  item: CatalogItem;
+  nextItem?: CatalogItem;
+  onSelectHeading: (id: string) => void;
+  outline: OutlineItem[];
+  previousItem?: CatalogItem;
+  sequenceItems: CatalogItem[];
+}

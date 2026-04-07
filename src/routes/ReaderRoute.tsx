@@ -4,6 +4,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { Navigate, useParams } from 'react-router-dom';
 import {
   COLLECTION_LABELS,
+  READER_DESKTOP_SHELL_QUERY,
   ReaderContentFallback,
   getCollectionRoute,
   getSequenceItems,
@@ -11,11 +12,10 @@ import {
   writeReaderSidebarCollapsed
 } from '@/app-shell';
 import { catalogById, extractOutline, loadCatalogItemById } from '@/catalog';
-import { MobileSheet } from '@/components/MobileSheet';
 import { ReaderSidebar, type ReaderSidebarPanel } from '@/components/ReaderSidebar';
 import { StealthScrollArea } from '@/components/StealthScrollArea';
-import { Button } from '@/components/ui/button';
-import type { CatalogItem, LightboxState } from '@/types';
+import { cn } from '@/lib/utils';
+import type { CatalogItem, LightboxState, ReaderMobileNavigationState } from '@/types';
 
 const MarkdownArticle = lazy(() =>
   import('@/components/MarkdownArticle').then((module) => ({ default: module.MarkdownArticle }))
@@ -25,12 +25,14 @@ const PdfViewer = lazy(() =>
 );
 
 interface ReaderRouteProps {
+  onReaderMobileNavigationChange: (navigation: ReaderMobileNavigationState | null) => void;
   onReaderScrollStateChange: (scrollTop: number) => void;
   onRegisterReaderScrollContainer: (node: HTMLDivElement | null) => void;
   onZoom: (lightbox: LightboxState) => void;
 }
 
 export default function ReaderRoute({
+  onReaderMobileNavigationChange,
   onReaderScrollStateChange,
   onRegisterReaderScrollContainer,
   onZoom
@@ -38,16 +40,19 @@ export default function ReaderRoute({
   const { id } = useParams();
   const baseItem = id ? catalogById.get(id) : undefined;
   const [item, setItem] = useState<CatalogItem | undefined>(baseItem);
-  const [mobileOutlineOpen, setMobileOutlineOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => readReaderSidebarCollapsed());
   const [sidebarPanel, setSidebarPanel] = useState<ReaderSidebarPanel>('outline');
   const [activeHeadingId, setActiveHeadingId] = useState<string | undefined>();
   const [desktopReaderShell, setDesktopReaderShell] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : false
+    typeof window !== 'undefined' ? window.matchMedia(READER_DESKTOP_SHELL_QUERY).matches : false
   );
   const shouldReduceMotion = useReducedMotion();
   const articleScrollRef = useRef<HTMLDivElement | null>(null);
   const outline = useMemo(() => extractOutline(item?.rawText), [item?.rawText]);
+  const panelMountScope = useMemo(
+    () => `${item?.id ?? 'unknown'}:${desktopReaderShell ? 'desktop' : 'single'}`,
+    [desktopReaderShell, item?.id]
+  );
 
   useEffect(() => {
     setItem(baseItem);
@@ -73,7 +78,7 @@ export default function ReaderRoute({
       return undefined;
     }
 
-    const media = window.matchMedia('(min-width: 1024px)');
+    const media = window.matchMedia(READER_DESKTOP_SHELL_QUERY);
     const updateReaderShell = () => setDesktopReaderShell(media.matches);
 
     updateReaderShell();
@@ -92,9 +97,8 @@ export default function ReaderRoute({
     if (articleScrollRef.current) {
       articleScrollRef.current.scrollTop = 0;
     }
-    setMobileOutlineOpen(false);
     setSidebarPanel('outline');
-  }, [item?.id]);
+  }, [desktopReaderShell, item?.id]);
 
   useEffect(() => {
     writeReaderSidebarCollapsed(sidebarCollapsed);
@@ -108,25 +112,9 @@ export default function ReaderRoute({
     [onRegisterReaderScrollContainer]
   );
 
-  if (!item || item.type === 'image') {
-    return <Navigate to="/" replace />;
-  }
-
-  const sequenceItems = getSequenceItems(item);
-  const currentIndex = sequenceItems.findIndex((entry) => entry.id === item.id);
-  const previousItem = currentIndex > 0 ? sequenceItems[currentIndex - 1] : undefined;
-  const nextItem =
-    currentIndex >= 0 && currentIndex < sequenceItems.length - 1 ? sequenceItems[currentIndex + 1] : undefined;
-  const collectionLabel = COLLECTION_LABELS[item.collection];
-  const collectionRoute = getCollectionRoute(item.collection);
-  const railWidth = sidebarCollapsed ? 88 : 304;
-  const collectionMeta = [`第 ${String(currentIndex + 1).padStart(2, '0')} 篇`, item.group]
-    .filter(Boolean)
-    .join(' · ');
-
   useEffect(() => {
     setActiveHeadingId(outline[0]?.id);
-  }, [item.id, outline]);
+  }, [item?.id, outline]);
 
   useEffect(() => {
     if (!outline.length) {
@@ -185,33 +173,107 @@ export default function ReaderRoute({
     };
   }, [desktopReaderShell, outline]);
 
-  const handleSelectHeading = (headingId: string) => {
-    const target = document.getElementById(headingId);
-    if (!target) {
-      return;
+  const handleSelectHeading = useCallback(
+    (headingId: string) => {
+      const target = document.getElementById(headingId);
+      if (!target) {
+        return;
+      }
+
+      target.scrollIntoView({
+        behavior: shouldReduceMotion ? 'auto' : 'smooth',
+        block: 'start'
+      });
+      setActiveHeadingId(headingId);
+    },
+    [shouldReduceMotion]
+  );
+
+  const sequenceItems = useMemo(() => (item ? getSequenceItems(item) : []), [item]);
+  const currentIndex = useMemo(
+    () => (item ? sequenceItems.findIndex((entry) => entry.id === item.id) : -1),
+    [item, sequenceItems]
+  );
+  const previousItem = currentIndex > 0 ? sequenceItems[currentIndex - 1] : undefined;
+  const nextItem =
+    currentIndex >= 0 && currentIndex < sequenceItems.length - 1 ? sequenceItems[currentIndex + 1] : undefined;
+  const collectionLabel = item ? COLLECTION_LABELS[item.collection] : '';
+  const collectionRoute = item ? getCollectionRoute(item.collection) : '/';
+  const collectionMeta = item ? `第 ${String(Math.max(currentIndex + 1, 1)).padStart(2, '0')} 篇` : '';
+  const railWidth = sidebarCollapsed ? 88 : 368;
+  const mobileNavigation = useMemo<ReaderMobileNavigationState | null>(() => {
+    if (!item || item.type === 'image') {
+      return null;
     }
 
-    target.scrollIntoView({
-      behavior: shouldReduceMotion ? 'auto' : 'smooth',
-      block: 'start'
-    });
-    setActiveHeadingId(headingId);
-  };
+    return {
+      activeHeadingId,
+      collectionLabel,
+      collectionMeta,
+      collectionRoute,
+      currentIndex,
+      item,
+      nextItem,
+      onSelectHeading: handleSelectHeading,
+      outline,
+      previousItem,
+      sequenceItems
+    };
+  }, [
+    activeHeadingId,
+    collectionLabel,
+    collectionMeta,
+    collectionRoute,
+    currentIndex,
+    handleSelectHeading,
+    item,
+    nextItem,
+    outline,
+    previousItem,
+    sequenceItems
+  ]);
+
+  useEffect(() => {
+    if (!mobileNavigation) {
+      onReaderMobileNavigationChange(null);
+      return undefined;
+    }
+
+    onReaderMobileNavigationChange(mobileNavigation);
+
+    return () => {
+      onReaderMobileNavigationChange(null);
+    };
+  }, [mobileNavigation, onReaderMobileNavigationChange]);
+
+  if (!item || item.type === 'image') {
+    return <Navigate to="/" replace />;
+  }
 
   return (
-    <main className="page-safe-top reader-workspace-safe-top mx-auto w-full max-w-[1460px] px-4 pb-24 md:px-6 lg:h-dvh lg:overflow-hidden lg:pb-3">
-      <div className="flex items-start gap-6 xl:gap-8 lg:h-[calc(100dvh-var(--reader-workspace-offset)-0.75rem)]">
+    <main
+      className={cn(
+        'page-safe-top reader-workspace-safe-top mx-auto w-full max-w-[1460px] px-3 md:px-6',
+        desktopReaderShell ? 'h-dvh overflow-hidden pb-1' : 'pb-20 sm:px-4 md:pb-24'
+      )}
+    >
+      <div
+        className={cn(
+          'flex items-start gap-3 xl:gap-4',
+          desktopReaderShell ? 'h-[calc(100dvh-var(--reader-workspace-offset-current)-0.2rem)]' : 'flex-col'
+        )}
+      >
         <motion.aside
-          className="relative hidden shrink-0 lg:block lg:h-full"
-          style={{ width: railWidth }}
-          animate={shouldReduceMotion ? undefined : { width: railWidth }}
+          className={cn('relative shrink-0', desktopReaderShell ? 'block h-full' : 'hidden')}
+          style={desktopReaderShell ? { width: railWidth } : undefined}
+          animate={shouldReduceMotion || !desktopReaderShell ? undefined : { width: railWidth }}
           initial={false}
-          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
         >
           <button
             type="button"
-            className="absolute right-[-16px] top-1/2 z-20 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground shadow-[var(--shadow-floating)] transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            aria-label={sidebarCollapsed ? '展开导航' : '收起导航'}
+            className="absolute right-[-16px] top-1/2 z-20 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground shadow-[var(--shadow-floating)] transition-[background-color,color,transform,box-shadow] duration-[220ms] ease-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:scale-[0.96]"
+            aria-label={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
             aria-expanded={!sidebarCollapsed}
             onClick={() => setSidebarCollapsed((current) => !current)}
           >
@@ -222,11 +284,11 @@ export default function ReaderRoute({
             {!sidebarCollapsed ? (
               <motion.div
                 key="sidebar"
-                className="h-full overflow-hidden rounded-[2rem] border border-sidebar-border/80 bg-sidebar/95 p-3.5 shadow-[var(--shadow-panel)] backdrop-blur-xl"
-                initial={shouldReduceMotion ? false : { opacity: 0, x: -12 }}
+                className="h-full overflow-hidden rounded-[var(--surface-panel-radius)] border border-sidebar-border/80 bg-sidebar/92 p-2.5 shadow-[var(--shadow-panel)] backdrop-blur-md"
+                initial={shouldReduceMotion ? false : { opacity: 0, x: -16 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={shouldReduceMotion ? undefined : { opacity: 0, x: -12 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
+                exit={shouldReduceMotion ? undefined : { opacity: 0, x: -16 }}
+                transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
               >
                 <ReaderSidebar
                   activeHeadingId={activeHeadingId}
@@ -240,6 +302,7 @@ export default function ReaderRoute({
                   onPanelChange={setSidebarPanel}
                   onSelectHeading={handleSelectHeading}
                   outline={outline}
+                  panelMountScope={panelMountScope}
                   previousItem={previousItem}
                   sequenceItems={sequenceItems}
                 />
@@ -247,30 +310,36 @@ export default function ReaderRoute({
             ) : (
               <motion.div
                 key="mini-rail"
-                className="grid h-full content-center justify-items-center gap-4 rounded-[1.8rem] border border-sidebar-border/80 bg-sidebar/92 px-3 py-5 text-sidebar-foreground shadow-[var(--shadow-panel)] backdrop-blur-xl"
+                className="grid h-full content-center justify-items-center gap-4 rounded-[var(--surface-panel-radius)] border border-sidebar-border/80 bg-sidebar/92 px-3 py-5 text-sidebar-foreground shadow-[var(--shadow-panel)] backdrop-blur-md"
                 initial={shouldReduceMotion ? false : { opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={shouldReduceMotion ? undefined : { opacity: 0 }}
-                transition={{ duration: 0.18, ease: 'easeOut' }}
+                transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
               >
-                <strong className="font-serif text-2xl text-primary">{String(currentIndex + 1).padStart(2, '0')}</strong>
+                <strong className="font-serif text-2xl text-primary">
+                  {String(currentIndex + 1).padStart(2, '0')}
+                </strong>
               </motion.div>
             )}
           </AnimatePresence>
         </motion.aside>
 
-        <section className="min-w-0 flex-1 space-y-[var(--layout-panel-gap)] lg:flex lg:h-full lg:min-h-0 lg:flex-col lg:space-y-0">
-          <div className="lg:hidden">
-            <Button type="button" variant="secondary" onClick={() => setMobileOutlineOpen(true)}>
-              打开目录
-            </Button>
-          </div>
-
-          <div className="layout-panel-padding mx-auto w-full max-w-[var(--reader-max)] rounded-[2rem] border border-border/70 bg-card/84 shadow-[var(--shadow-panel)] backdrop-blur-2xl lg:flex lg:h-full lg:min-h-0 lg:max-w-none lg:flex-1 lg:flex-col lg:overflow-hidden lg:p-[var(--reader-shell-padding)]">
+        <section className={cn('min-w-0 flex-1', desktopReaderShell ? 'flex h-full min-h-0 flex-col' : 'space-y-4')}>
+          <div
+            className={cn(
+              'mx-auto w-full max-w-[var(--reader-max)] bg-transparent p-0 shadow-none',
+              desktopReaderShell
+                ? 'flex h-full min-h-0 max-w-none flex-1 flex-col overflow-hidden rounded-[var(--surface-panel-radius)] border border-border/70 bg-card/82 px-[var(--reader-shell-padding)] py-[var(--reader-shell-padding)] shadow-[var(--shadow-panel)] backdrop-blur-xl'
+                : 'md:rounded-[var(--surface-panel-radius)] md:border md:border-border/65 md:bg-card/76 md:px-[var(--layout-panel-padding)] md:py-[var(--layout-panel-padding)] md:shadow-[var(--shadow-soft)] md:backdrop-blur-sm'
+            )}
+          >
             <StealthScrollArea
               ref={attachArticleScrollContainer}
-              axis="y"
-              className="reader-scroll-shell lg:h-full lg:overflow-y-auto lg:pb-[var(--reader-content-end-space)]"
+              axis={desktopReaderShell ? 'y' : 'x'}
+              className={cn(
+                'reader-scroll-shell overflow-visible pb-[var(--reader-content-end-space)]',
+                desktopReaderShell ? 'h-full overflow-y-auto overflow-x-hidden' : ''
+              )}
               onScroll={(event) => onReaderScrollStateChange(event.currentTarget.scrollTop)}
             >
               <Suspense fallback={<ReaderContentFallback mode={item.type === 'pdf' ? 'pdf' : 'markdown'} />}>
@@ -287,31 +356,6 @@ export default function ReaderRoute({
           </div>
         </section>
       </div>
-
-      <MobileSheet
-        open={mobileOutlineOpen}
-        onOpenChange={setMobileOutlineOpen}
-        side="left"
-        title="阅读导航"
-        description="查看本文目录、文档顺序和上一篇下一篇。"
-      >
-        <ReaderSidebar
-          activeHeadingId={activeHeadingId}
-          activePanel={sidebarPanel}
-          collectionLabel={collectionLabel}
-          collectionMeta={collectionMeta}
-          collectionRoute={collectionRoute}
-          currentIndex={currentIndex}
-          item={item}
-          nextItem={nextItem}
-          onPanelChange={setSidebarPanel}
-          onSelectHeading={handleSelectHeading}
-          onSelectLink={() => setMobileOutlineOpen(false)}
-          outline={outline}
-          previousItem={previousItem}
-          sequenceItems={sequenceItems}
-        />
-      </MobileSheet>
     </main>
   );
 }
