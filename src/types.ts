@@ -1,6 +1,6 @@
 export type ResourceType = 'markdown' | 'pdf' | 'image';
 export type ResourceCollection = 'active-docs' | 'debug-kb' | 'archive';
-export type Layer = '开发文档' | '调试知识库' | '归档';
+export type Layer = '作品文档' | '调试知识库' | '归档';
 
 export interface CatalogItem {
   id: string;

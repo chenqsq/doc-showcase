@@ -20,7 +20,6 @@ import {
   type FontScaleId,
   type ThemeId
 } from '@/appearance';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -58,21 +57,21 @@ export const COLLECTION_ROUTES: Record<ResourceCollection, string> = {
 };
 
 export const COLLECTION_LABELS: Record<ResourceCollection, string> = {
-  'active-docs': '开发文档',
+  'active-docs': '作品文档',
   'debug-kb': '调试知识库',
-  archive: '归档'
+  archive: '技术真源与归档'
 };
 
 export const COLLECTION_SUMMARIES: Record<ResourceCollection, string> = {
-  'active-docs': '按推荐阅读顺序查看需求、闭环、架构、平台集成与验证文档。',
-  'debug-kb': '高等数学资料仅用于联调、检索验证与回归样例，不代表正式产品学科能力。',
-  archive: '历史方案、腾讯资料与比赛材料统一下沉，默认只作为参考入口。'
+  'active-docs': '按推荐阅读顺序查看知脉课堂的需求、页面、架构、算法、接口与比赛交付文档。',
+  'debug-kb': '高等数学调试知识库只承担联调、检索验证与回归样例，不参与作品主叙事。',
+  archive: '平台技术真源、历史实现、腾讯资料和比赛材料统一收在这里，按需查阅。'
 };
 
 export const COLLECTION_NOTES: Record<ResourceCollection, string> = {
-  'active-docs': '这里不再拆分平台需求和子引擎需求，所有正文都围绕同一产品与统一架构。',
-  'debug-kb': '调试知识库只服务于实现验证，不参与开发文档叙事。',
-  archive: '归档资料不进入默认阅读顺序，只用于回看旧方案或补充对照。'
+  'active-docs': '这里是比赛正式交付包，外部口径统一使用知脉课堂，默认从作品总览进入。',
+  'debug-kb': '调试知识库只服务于实现验证，不参与作品主叙事。',
+  archive: '技术真源与归档资料不进入默认阅读顺序，只在追溯实现、补充证明或查看旧方案时使用。'
 };
 
 export const PRIMARY_NAV_ITEMS: NavItemConfig[] = [
@@ -84,7 +83,7 @@ export const PRIMARY_NAV_ITEMS: NavItemConfig[] = [
   },
   {
     id: 'docs',
-    label: '开发文档',
+    label: '作品文档',
     to: '/docs',
     isActive: (pathname, currentItem) =>
       pathname.startsWith('/docs') || currentItem?.collection === 'active-docs'
@@ -98,7 +97,7 @@ export const PRIMARY_NAV_ITEMS: NavItemConfig[] = [
   },
   {
     id: 'archive',
-    label: '归档',
+    label: '真源与归档',
     to: '/archive',
     isActive: (pathname, currentItem) =>
       pathname.startsWith('/archive') || currentItem?.collection === 'archive'
@@ -115,12 +114,14 @@ export const HOME_SECONDARY_LINKS: HomeSecondaryLink[] = [
   },
   {
     id: 'archive',
-    title: '归档资料',
-    description: '历史方案、腾讯资料和比赛材料集中到这里，不干扰当前开发文档。',
+    title: '技术真源与归档',
+    description: '平台真源、历史实现、腾讯资料和比赛材料集中到这里，按需追溯。',
     to: '/archive',
     icon: FolderArchive
   }
 ];
+
+export const READER_DESKTOP_SHELL_QUERY = '(min-width: 1200px)';
 
 const READER_SIDEBAR_KEY = 'doc-reader-sidebar-collapsed';
 const THEME_STORAGE_KEY = 'doc-showcase-theme';
@@ -253,12 +254,12 @@ export function getCollectionRoute(collection: ResourceCollection) {
 
 export function getCollectionKicker(collection: ResourceCollection) {
   if (collection === 'active-docs') {
-    return '开发文档';
+    return '作品文档';
   }
   if (collection === 'debug-kb') {
     return '调试资料';
   }
-  return '历史归档';
+  return '技术真源';
 }
 
 export function buildSections(items: CatalogItem[], collection: ResourceCollection): GroupSection[] {
@@ -266,7 +267,7 @@ export function buildSections(items: CatalogItem[], collection: ResourceCollecti
     return ACTIVE_DOC_SECTIONS.map((section) => ({
       id: section.id,
       label: section.label,
-      kicker: '开发文档',
+      kicker: '作品文档',
       description: section.summary,
       items: (ACTIVE_DOC_BY_SECTION.get(section.id) ?? [])
         .map((meta) => activeDocsInOrder.find((item) => item.relativePath === meta.path))
@@ -316,37 +317,39 @@ export function getRowMeta(item: CatalogItem) {
 
 export function AppBackground() {
   const shouldReduceMotion = useReducedMotion();
+  const isDesktopAmbient = useMediaQuery('(min-width: 768px)');
+  const shouldAnimateAmbient = isDesktopAmbient && !shouldReduceMotion;
 
   return (
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
       <motion.div
-        className="absolute left-[-8rem] top-6 h-72 w-72 rounded-full blur-3xl"
+        className="absolute left-[-8rem] top-6 h-60 w-60 rounded-full blur-3xl md:h-72 md:w-72"
         style={{ background: 'radial-gradient(circle, hsl(var(--glow-primary) / 0.4) 0%, transparent 72%)' }}
         animate={
-          shouldReduceMotion
-            ? undefined
-            : {
+          shouldAnimateAmbient
+            ? {
                 x: [0, 32, 0],
                 y: [0, 18, 0]
               }
+            : undefined
         }
         transition={{ duration: 18, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
       />
       <motion.div
-        className="absolute right-[-6rem] top-40 h-80 w-80 rounded-full blur-3xl"
+        className="absolute right-[-4rem] top-32 h-64 w-64 rounded-full blur-3xl md:right-[-6rem] md:top-40 md:h-80 md:w-80"
         style={{ background: 'radial-gradient(circle, hsl(var(--glow-secondary) / 0.34) 0%, transparent 72%)' }}
         animate={
-          shouldReduceMotion
-            ? undefined
-            : {
+          shouldAnimateAmbient
+            ? {
                 x: [0, -24, 0],
                 y: [0, 24, 0]
               }
+            : undefined
         }
         transition={{ duration: 22, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
       />
       <div
-        className="absolute inset-0 opacity-30"
+        className={cn('absolute inset-0', isDesktopAmbient ? 'opacity-30' : 'opacity-12')}
         style={{
           backgroundImage:
             'linear-gradient(hsl(var(--border) / 0.18) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / 0.18) 1px, transparent 1px)',
@@ -359,6 +362,7 @@ export function AppBackground() {
 }
 
 interface AppearanceControlsProps {
+  compact?: boolean;
   fontScaleId: FontScaleId;
   onFontScaleChange: (fontScaleId: FontScaleId) => void;
   onThemeChange: (themeId: ThemeId) => void;
@@ -366,36 +370,44 @@ interface AppearanceControlsProps {
 }
 
 export function AppearanceControls({
+  compact = false,
   fontScaleId,
   onFontScaleChange,
   onThemeChange,
   themeId
 }: AppearanceControlsProps) {
   return (
-    <div className="grid gap-[var(--layout-panel-gap)]" aria-label="阅读外观">
-      <section className="grid gap-3">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+    <div className={cn('grid gap-4', compact ? 'gap-2.5' : '')} aria-label="阅读外观">
+      <section className={cn('grid gap-2.5', compact ? 'gap-1.5' : '')}>
+        <div
+          className={cn(
+            'flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground',
+            compact ? 'text-[10px]' : ''
+          )}
+        >
           <Palette className="h-4 w-4 text-primary" />
           主题配色
         </div>
-        <div className="grid gap-2">
+        <div className={cn('grid grid-cols-2 gap-2', compact ? 'gap-1.5' : '')}>
           {THEME_OPTIONS.map((theme) => (
             <Button
               key={theme.id}
               type="button"
               variant={theme.id === themeId ? 'default' : 'secondary'}
-              className="h-auto justify-between rounded-[1.4rem] px-4 py-3 text-left"
+              className={cn(
+                'h-auto min-h-[3.15rem] items-start justify-start rounded-[0.82rem] px-3 py-2.5 text-left shadow-none',
+                compact ? 'min-h-[2.4rem] rounded-[0.72rem] px-2.5 py-1.5' : ''
+              )}
               onClick={() => onThemeChange(theme.id)}
             >
-              <span className="grid gap-0.5">
-                <span>{theme.label}</span>
-                <span
-                  className={cn(
-                    'text-xs leading-5',
-                    theme.id === themeId ? 'text-primary-foreground/80' : 'text-muted-foreground'
-                  )}
-                >
-                  {theme.description}
+              <span className="grid min-w-0 gap-0.5">
+                <span className="flex items-center gap-2">
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: theme.accent }}
+                    aria-hidden="true"
+                  />
+                  <span className={cn('truncate', compact ? 'text-[0.8rem]' : '')}>{theme.label}</span>
                 </span>
               </span>
             </Button>
@@ -403,31 +415,29 @@ export function AppearanceControls({
         </div>
       </section>
 
-      <section className="grid gap-3">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+      <section className={cn('grid gap-2.5', compact ? 'gap-1.5' : '')}>
+        <div
+          className={cn(
+            'flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground',
+            compact ? 'text-[10px]' : ''
+          )}
+        >
           <Type className="h-4 w-4 text-primary" />
           字号密度
         </div>
-        <div className="grid gap-2">
+        <div className={cn('grid grid-cols-3 gap-2', compact ? 'gap-1.5' : '')}>
           {FONT_SCALE_OPTIONS.map((scale) => (
             <Button
               key={scale.id}
               type="button"
               variant={scale.id === fontScaleId ? 'default' : 'secondary'}
-              className="h-auto justify-between rounded-[1.4rem] px-4 py-3 text-left"
+              className={cn(
+                'h-10 rounded-[0.82rem] px-2.5 text-center shadow-none',
+                compact ? 'h-[2.05rem] rounded-[0.72rem] px-2 text-[0.78rem]' : ''
+              )}
               onClick={() => onFontScaleChange(scale.id)}
             >
-              <span className="grid gap-0.5">
-                <span>{scale.label}</span>
-                <span
-                  className={cn(
-                    'text-xs leading-5',
-                    scale.id === fontScaleId ? 'text-primary-foreground/80' : 'text-muted-foreground'
-                  )}
-                >
-                  {scale.description}
-                </span>
-              </span>
+              <span>{scale.label}</span>
             </Button>
           ))}
         </div>
@@ -464,9 +474,9 @@ export function PageRouteFallback() {
 
 export function ReaderRouteFallback() {
   return (
-    <main className="page-safe-top reader-workspace-safe-top mx-auto w-full max-w-[1460px] px-4 pb-24 md:px-6 lg:h-dvh lg:overflow-hidden lg:pb-3">
-      <div className="flex items-start gap-6 xl:gap-8 lg:h-[calc(100dvh-var(--reader-workspace-offset)-0.75rem)]">
-        <aside className="hidden shrink-0 lg:block lg:h-full lg:w-[304px]">
+    <main className="page-safe-top reader-workspace-safe-top mx-auto w-full max-w-[1460px] px-4 pb-24 md:px-6 min-[1200px]:h-dvh min-[1200px]:overflow-hidden min-[1200px]:pb-3">
+      <div className="flex flex-col items-start gap-4 xl:gap-6 min-[1200px]:h-[calc(100dvh-var(--reader-workspace-offset-current)-0.5rem)] min-[1200px]:flex-row">
+        <aside className="hidden shrink-0 min-[1200px]:block min-[1200px]:h-full min-[1200px]:w-[var(--reader-sidebar-width-expanded)]">
           <div className="grid h-full gap-4 rounded-[2rem] border border-sidebar-border/80 bg-sidebar/95 p-3.5 shadow-[var(--shadow-panel)] backdrop-blur-xl">
             <div className="h-16 rounded-[1.6rem] bg-accent/55" />
             <div className="h-32 rounded-[1.8rem] bg-background/76" />
@@ -475,7 +485,7 @@ export function ReaderRouteFallback() {
         </aside>
 
         <section className="min-w-0 flex-1">
-          <div className="layout-panel-padding mx-auto w-full max-w-[var(--reader-max)] rounded-[2rem] border border-border/70 bg-card/84 shadow-[var(--shadow-panel)] backdrop-blur-2xl lg:flex lg:h-full lg:min-h-0 lg:max-w-none lg:flex-1 lg:flex-col lg:overflow-hidden">
+          <div className="layout-panel-padding mx-auto w-full max-w-[var(--reader-max)] rounded-[2rem] border border-border/70 bg-card/84 shadow-[var(--shadow-panel)] backdrop-blur-2xl min-[1200px]:flex min-[1200px]:h-full min-[1200px]:min-h-0 min-[1200px]:max-w-none min-[1200px]:flex-1 min-[1200px]:flex-col min-[1200px]:overflow-hidden">
             <div className="grid gap-5">
               <div className="h-16 max-w-[34rem] rounded-[1.8rem] bg-secondary/75" />
               <div className="h-12 max-w-[42rem] rounded-[1.4rem] bg-accent/60" />
@@ -525,12 +535,12 @@ export function LightboxFallback() {
 export function MobileNavFallback() {
   return (
     <div className="grid gap-[var(--layout-panel-gap)]">
-      <nav className="grid gap-3" aria-label="移动端导航占位">
+      <nav className="grid gap-2.5" aria-label="移动端站点导航占位">
         {PRIMARY_NAV_ITEMS.map((item) => (
           <Button
             key={item.id}
             variant="secondary"
-            className="h-auto justify-between rounded-[1.4rem] px-4 py-4"
+            className="h-10 justify-between rounded-[0.85rem] px-3.5 shadow-none"
             disabled
           >
             <span>{item.label}</span>
@@ -541,13 +551,16 @@ export function MobileNavFallback() {
 
       <Separator />
 
-      <div className="grid gap-3 rounded-[1.6rem] border border-border/70 bg-card/72 p-4">
+      <div className="grid gap-3 rounded-[1rem] border border-border/70 bg-card/72 p-4">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           <Palette className="h-4 w-4 text-primary" />
           阅读外观
         </div>
-        <div className="h-10 rounded-full bg-accent/60" />
-        <div className="h-10 rounded-full bg-accent/60" />
+        <div className="grid grid-cols-2 gap-2">
+          <div className="h-14 rounded-[0.9rem] bg-accent/60" />
+          <div className="h-14 rounded-[0.9rem] bg-accent/60" />
+        </div>
+        <div className="h-10 rounded-[0.9rem] bg-accent/60" />
       </div>
     </div>
   );

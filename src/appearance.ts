@@ -31,7 +31,7 @@ export const SITE_THEMES: Record<ThemeId, SiteThemeDefinition> = {
   cloud: {
     id: 'cloud',
     label: '云海蓝',
-    description: '冷白底上的深蓝层级，适合开发文档与架构阅读。',
+    description: '冷白底上的深蓝层级，适合作品方案、页面设计与架构阅读。',
     accent: '#3b82f6',
     mermaid: {
       darkMode: false,

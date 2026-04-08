@@ -96,7 +96,7 @@ export function SiteHeader({
                   compact ? 'max-h-0 opacity-0' : 'max-h-6 opacity-100'
                 )}
               >
-                开发文档工作台
+                竞赛作品工作台
               </span>
               <span
                 className={cn(
@@ -104,7 +104,7 @@ export function SiteHeader({
                   compact ? 'md:text-xl' : ''
                 )}
               >
-                AI 自主引导学习平台
+                知脉课堂
               </span>
             </div>
           </Link>

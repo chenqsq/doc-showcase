@@ -16,6 +16,7 @@ const DEBUG_RESOURCE_KINDS = [
 
 const markdownFiles = import.meta.glob(
   [
+    '../doc/作品文档/**/*.md',
     '../doc/开发文档/**/*.md',
     '../kb/高等数学_测试/**/*.md',
     '../doc/智能体文档/**/*.md',
@@ -96,7 +97,7 @@ function getSvgTitle(rawText: string, fallback: string) {
 }
 
 function getCollection(relativePath: string): ResourceCollection {
-  if (relativePath.startsWith('doc/开发文档/')) {
+  if (relativePath.startsWith('doc/作品文档/')) {
     return 'active-docs';
   }
   if (relativePath.startsWith(DEBUG_KB_ARCHIVE_ROOT)) {
@@ -110,7 +111,7 @@ function getCollection(relativePath: string): ResourceCollection {
 
 function getLayer(collection: ResourceCollection): Layer {
   if (collection === 'active-docs') {
-    return '开发文档';
+    return '作品文档';
   }
   if (collection === 'debug-kb') {
     return '调试知识库';
@@ -123,7 +124,10 @@ function getArchiveGroup(relativePath: string, type: ResourceType): ArchiveGroup
     return '图像资源';
   }
   if (relativePath.startsWith(DEBUG_KB_ARCHIVE_ROOT)) {
-    return '历史文档';
+    return '技术参考';
+  }
+  if (relativePath.startsWith('doc/开发文档/')) {
+    return '历史实现';
   }
   if (relativePath.startsWith('doc/腾讯平台使用文档/')) {
     return '腾讯资料';
@@ -132,7 +136,7 @@ function getArchiveGroup(relativePath: string, type: ResourceType): ArchiveGroup
     return '比赛资料';
   }
   if (relativePath.startsWith('doc/智能体文档/')) {
-    return '历史文档';
+    return '技术真源';
   }
   return '技术参考';
 }
@@ -283,15 +287,15 @@ function buildMarkdownMetadata(relativePath: string): CatalogItem {
   const layer = getLayer(collection);
 
   let title = fallback;
-  let group = '开发文档';
+  let group = '作品文档';
   let resourceKind = '文档';
   let summary: string | undefined;
 
   if (collection === 'active-docs') {
     const meta = ACTIVE_DOC_BY_PATH.get(relativePath);
     title = meta?.shortTitle ?? fallback;
-    group = '开发文档';
-    resourceKind = '开发文档';
+    group = '作品文档';
+    resourceKind = '作品文档';
     summary = meta?.summary;
   } else if (collection === 'debug-kb') {
     const module = getDebugModule(relativePath);
@@ -324,8 +328,8 @@ function applyMarkdownContent(item: CatalogItem, rawText: string) {
   if (item.collection === 'active-docs') {
     const meta = ACTIVE_DOC_BY_PATH.get(item.relativePath);
     item.title = meta?.shortTitle ?? getMarkdownTitle(rawText, fallback);
-    item.group = '开发文档';
-    item.resourceKind = '开发文档';
+    item.group = '作品文档';
+    item.resourceKind = '作品文档';
     item.summary = meta?.summary;
     return item;
   }

@@ -15,112 +15,123 @@ export interface ActiveDocMeta {
 
 export const ACTIVE_DOC_SECTIONS: ActiveDocSectionMeta[] = [
   {
-    id: 'foundation',
-    label: '基础入口',
-    summary: '先统一阅读顺序、产品定位和边界，再进入闭环与架构设计。'
+    id: 'overview',
+    label: '总览与需求',
+    summary: '先统一作品定义、比赛交付边界和需求范围，再进入场景与页面设计。'
   },
   {
-    id: 'learning-loop',
-    label: '学习闭环',
-    summary: '围绕学生主闭环定义需求、风险判定、学习计划和长期记忆回流。'
+    id: 'experience',
+    label: '场景与体验',
+    summary: '围绕课堂重构、学生伴学、错题复练和教师洞察建立页面与交互链路。'
   },
   {
     id: 'architecture',
-    label: '系统架构',
-    summary: '统一描述前端、后端和平台服务，不再拆成双产品叙事。'
+    label: '架构与实现',
+    summary: '统一描述技术选型、算法设计、知识库结构和接口对接。'
   },
   {
-    id: 'integration',
-    label: '平台集成',
-    summary: '聚焦腾讯智能体开发平台集成、数据对象与接口映射。'
-  },
-  {
-    id: 'validation',
-    label: '调试与验证',
-    summary: '通过调试知识库、测试矩阵和迭代计划保证实现可持续落地。'
+    id: 'delivery',
+    label: '交付与答辩',
+    summary: '收口测试、PPT、视频、访问手册与开发技术文档，直接对应比赛交付。'
   }
 ];
 
 export const ACTIVE_DOCS: ActiveDocMeta[] = [
   {
     order: 0,
-    path: 'doc/开发文档/00-开发总览.md',
-    navLabel: '开发总览',
-    shortTitle: '开发总览',
-    summary: '统一站点目标、阅读顺序、术语约定和非目标。',
-    sectionId: 'foundation'
+    path: 'doc/作品文档/00-作品总览与阅读地图.md',
+    navLabel: '作品总览',
+    shortTitle: '作品总览与阅读地图',
+    summary: '统一作品名、交付边界、阅读顺序和比赛材料映射。',
+    sectionId: 'overview'
   },
   {
     order: 1,
-    path: 'doc/开发文档/01-统一需求分析.md',
-    navLabel: '统一需求分析',
-    shortTitle: '统一需求分析',
-    summary: '把用户、问题、范围、成功标准收口到一份需求分析中。',
-    sectionId: 'foundation'
+    path: 'doc/作品文档/01-PRD与需求分析.md',
+    navLabel: 'PRD',
+    shortTitle: 'PRD 与需求分析',
+    summary: '定义产品定位、角色范围、功能需求与成功标准。',
+    sectionId: 'overview'
   },
   {
     order: 2,
-    path: 'doc/开发文档/02-AI自主学习闭环设计.md',
-    navLabel: '学习闭环',
-    shortTitle: 'AI自主学习闭环设计',
-    summary: '定义建档、诊断、练习、风险判定、学习计划与复习回流。',
-    sectionId: 'learning-loop'
+    path: 'doc/作品文档/02-场景与用户流程.md',
+    navLabel: '场景流程',
+    shortTitle: '场景与用户流程',
+    summary: '把上传、重构、伴学、复练、洞察串成标准演示链路。',
+    sectionId: 'experience'
   },
   {
     order: 3,
-    path: 'doc/开发文档/03-总体架构设计.md',
-    navLabel: '总体架构',
-    shortTitle: '总体架构设计',
-    summary: '统一描述前端、后端、腾讯平台、知识检索和观测体系。',
-    sectionId: 'architecture'
+    path: 'doc/作品文档/03-页面与交互设计.md',
+    navLabel: '页面设计',
+    shortTitle: '页面与交互设计',
+    summary: '定义六个核心工作台页面、状态与评委演示点。',
+    sectionId: 'experience'
   },
   {
     order: 4,
-    path: 'doc/开发文档/04-前端架构设计.md',
-    navLabel: '前端设计',
-    shortTitle: '前端架构设计',
-    summary: '说明导航、页面流、学习过程展示与调试入口。',
+    path: 'doc/作品文档/04-总体架构与技术选型.md',
+    navLabel: '总体架构',
+    shortTitle: '总体架构与技术选型',
+    summary: '固定 Vue + Go 单体 + ADP 的比赛版整体架构。',
     sectionId: 'architecture'
   },
   {
     order: 5,
-    path: 'doc/开发文档/05-后端架构设计.md',
-    navLabel: '后端设计',
-    shortTitle: '后端架构设计',
-    summary: '定义服务拆分、风险判定、计划生成、ADP 适配和观测。',
+    path: 'doc/作品文档/05-算法与知识库设计.md',
+    navLabel: '算法知识库',
+    shortTitle: '算法与知识库设计',
+    summary: '定义知识重构、任务规划、掌握度、错题画像与群体洞察。',
     sectionId: 'architecture'
   },
   {
     order: 6,
-    path: 'doc/开发文档/06-腾讯智能体开发平台集成设计.md',
-    navLabel: '腾讯平台集成',
-    shortTitle: '腾讯智能体开发平台集成设计',
-    summary: '说明应用模式、工作流编排、多智能体协作与接口接入。',
-    sectionId: 'integration'
+    path: 'doc/作品文档/06-接口与API说明.md',
+    navLabel: '接口 API',
+    shortTitle: '接口与 API 说明',
+    summary: '定义 REST + SSE 混合接口、上下文字段与公开对象。',
+    sectionId: 'architecture'
   },
   {
     order: 7,
-    path: 'doc/开发文档/07-数据对象与接口约定.md',
-    navLabel: '数据与接口',
-    shortTitle: '数据对象与接口约定',
-    summary: '统一中文对象、中文字段、事件回流与外部接口映射。',
-    sectionId: 'integration'
+    path: 'doc/作品文档/07-测试验证与预期效果.md',
+    navLabel: '测试验证',
+    shortTitle: '测试验证与预期效果',
+    summary: '建立比赛覆盖矩阵、标准链路验收和术语一致性检查。',
+    sectionId: 'delivery'
   },
   {
     order: 8,
-    path: 'doc/开发文档/08-调试知识库设计.md',
-    navLabel: '调试知识库',
-    shortTitle: '调试知识库设计',
-    summary: '明确高等数学知识库只承担调试、联调和回归职责。',
-    sectionId: 'validation'
+    path: 'doc/作品文档/08-答辩PPT大纲.md',
+    navLabel: '答辩 PPT',
+    shortTitle: '答辩 PPT 大纲',
+    summary: '提供 16 页左右的答辩结构与讲述重点。',
+    sectionId: 'delivery'
   },
   {
     order: 9,
-    path: 'doc/开发文档/09-测试验证与迭代计划.md',
-    navLabel: '测试与迭代',
-    shortTitle: '测试验证与迭代计划',
-    summary: '整理验收标准、测试矩阵、回归方式和后续扩科计划。',
-    sectionId: 'validation'
+    path: 'doc/作品文档/09-演示视频脚本.md',
+    navLabel: '视频脚本',
+    shortTitle: '演示视频脚本',
+    summary: '提供 3 分钟内的视频镜头顺序、口播与字幕建议。',
+    sectionId: 'delivery'
+  },
+  {
+    order: 10,
+    path: 'doc/作品文档/10-访问与评测手册.md',
+    navLabel: '访问手册',
+    shortTitle: '访问与评测手册',
+    summary: '说明访问入口、账号权限、评委体验步骤与异常处理。',
+    sectionId: 'delivery'
+  },
+  {
+    order: 11,
+    path: 'doc/作品文档/11-开发技术文档.md',
+    navLabel: '技术文档',
+    shortTitle: '开发技术文档',
+    summary: '收口平台选择、关键实现、部署方式与二次开发指引。',
+    sectionId: 'delivery'
   }
 ];
 
@@ -134,6 +145,6 @@ export const ACTIVE_DOC_BY_SECTION = new Map(
   ])
 );
 
-export const ARCHIVE_GROUP_ORDER = ['历史文档', '腾讯资料', '比赛资料', '技术参考', '图像资源'] as const;
+export const ARCHIVE_GROUP_ORDER = ['技术真源', '历史实现', '腾讯资料', '比赛资料', '技术参考', '图像资源'] as const;
 
 export type ArchiveGroup = (typeof ARCHIVE_GROUP_ORDER)[number];
