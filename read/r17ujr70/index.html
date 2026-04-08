@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI主导学习生命周期的自进化自学智能体平台</title>
+    <link rel="icon" type="image/svg+xml" href="/doc-showcase/favicon.svg" />
+    <meta
+      name="description"
+      content="AI主导学习生命周期的自进化自学智能体平台比赛作品文档站，统一承载学习地图、闯关学习、画像笔记、知识进化与答辩交付文档。"
+    />
+    <script>
+      (function () {
+        const redirectKey = 'p';
+        const basePath = '/doc-showcase';
+        const params = new URLSearchParams(window.location.search);
+        const redirectPath = params.get(redirectKey);
+
+        if (!redirectPath) {
+          return;
+        }
+
+        const normalizedPath = decodeURIComponent(redirectPath);
+        const nextPath = normalizedPath.startsWith('/') ? normalizedPath : `/${normalizedPath}`;
+        window.history.replaceState(null, '', `${basePath}${nextPath}`);
+      })();
+    </script>
+    <script type="module" crossorigin src="/doc-showcase/assets/index-3JuF23EH.js"></script>
+    <link rel="modulepreload" crossorigin href="/doc-showcase/assets/react-core-BG5wkQsr.js">
+    <link rel="modulepreload" crossorigin href="/doc-showcase/assets/motion-ui-DRSzuhE-.js">
+    <link rel="modulepreload" crossorigin href="/doc-showcase/assets/pdf-stack-C0c2L7AV.js">
+    <link rel="stylesheet" crossorigin href="/doc-showcase/assets/index-CaYf7SgY.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+  </html>
