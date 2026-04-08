@@ -63,13 +63,13 @@ export const COLLECTION_LABELS: Record<ResourceCollection, string> = {
 };
 
 export const COLLECTION_SUMMARIES: Record<ResourceCollection, string> = {
-  'active-docs': '按推荐阅读顺序查看知脉课堂的需求、页面、架构、算法、接口与比赛交付文档。',
+  'active-docs': '按推荐阅读顺序查看 AI 主导学习生命周期平台的需求、页面、架构、算法、接口与比赛交付文档。',
   'debug-kb': '高等数学调试知识库只承担联调、检索验证与回归样例，不参与作品主叙事。',
   archive: '平台技术真源、历史实现、腾讯资料和比赛材料统一收在这里，按需查阅。'
 };
 
 export const COLLECTION_NOTES: Record<ResourceCollection, string> = {
-  'active-docs': '这里是比赛正式交付包，外部口径统一使用知脉课堂，默认从作品总览进入。',
+  'active-docs': '这里是比赛正式交付包，默认从作品总览进入学生主线，再按需进入后台和技术真源。',
   'debug-kb': '调试知识库只服务于实现验证，不参与作品主叙事。',
   archive: '技术真源与归档资料不进入默认阅读顺序，只在追溯实现、补充证明或查看旧方案时使用。'
 };

@@ -96,7 +96,7 @@ export function SiteHeader({
                   compact ? 'max-h-0 opacity-0' : 'max-h-6 opacity-100'
                 )}
               >
-                竞赛作品工作台
+                AI主导学习生命周期
               </span>
               <span
                 className={cn(
@@ -104,7 +104,7 @@ export function SiteHeader({
                   compact ? 'md:text-xl' : ''
                 )}
               >
-                知脉课堂
+                自进化自学智能体平台
               </span>
             </div>
           </Link>

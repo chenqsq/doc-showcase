@@ -39,11 +39,11 @@ export default function HomeRoute() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.08 }}
           >
-            <h1 className="max-w-[12ch] font-serif text-[clamp(2.2rem,4vw,3.6rem)] leading-[1.04] tracking-[-0.02em] text-foreground">
-              知脉课堂作品工作台
+            <h1 className="max-w-[16ch] font-serif text-[clamp(2rem,3.5vw,3.2rem)] leading-[1.08] text-foreground">
+              AI主导学习生命周期的自进化自学智能体平台
             </h1>
             <p className="max-w-[34rem] text-base leading-8 text-muted-foreground md:text-[1.02rem]">
-              从这里进入知脉课堂的正式比赛交付包，按顺序查看需求、页面、架构、算法、接口与答辩材料；调试知识库和技术真源按需进入。
+              从这里进入正式比赛交付包，按顺序查看学生主线、实时演化学习地图、闯关学习、画像笔记、知识进化后台和技术真源。
             </p>
           </motion.div>
 
@@ -76,10 +76,10 @@ export default function HomeRoute() {
               12 篇作品文档
             </Badge>
             <Badge variant="outline" className="bg-background/70">
-              六个工作台页面
+              四个学生页 + 两个后台页
             </Badge>
             <Badge variant="outline" className="bg-background/70">
-              支持答辩与访问交付
+              实时演化学习地图
             </Badge>
           </motion.div>
         </div>
@@ -92,7 +92,7 @@ export default function HomeRoute() {
           </Badge>
           <h2 className="font-serif text-[clamp(2rem,3vw,3rem)] leading-none text-foreground">作品文档</h2>
           <p className="max-w-3xl text-sm leading-7 text-muted-foreground md:text-base">
-            先读作品总览和 PRD，再进入场景、页面、架构、算法、接口与比赛交付文档。
+            先读作品总览和 PRD，再进入学习地图、页面、架构、算法、接口与比赛交付文档。
           </p>
         </div>
 

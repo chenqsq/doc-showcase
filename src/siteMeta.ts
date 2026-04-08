@@ -17,17 +17,17 @@ export const ACTIVE_DOC_SECTIONS: ActiveDocSectionMeta[] = [
   {
     id: 'overview',
     label: '总览与需求',
-    summary: '先统一作品定义、比赛交付边界和需求范围，再进入场景与页面设计。'
+    summary: '先统一作品定义、学习主线和比赛交付边界，再进入场景与页面设计。'
   },
   {
     id: 'experience',
     label: '场景与体验',
-    summary: '围绕课堂重构、学生伴学、错题复练和教师洞察建立页面与交互链路。'
+    summary: '围绕选科开学、实时演化学习地图、闯关学习和笔记复习建立体验链路。'
   },
   {
     id: 'architecture',
     label: '架构与实现',
-    summary: '统一描述技术选型、算法设计、知识库结构和接口对接。'
+    summary: '统一描述技术选型、地图算法、知识进化结构和接口对接。'
   },
   {
     id: 'delivery',
@@ -42,7 +42,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/00-作品总览与阅读地图.md',
     navLabel: '作品总览',
     shortTitle: '作品总览与阅读地图',
-    summary: '统一作品名、交付边界、阅读顺序和比赛材料映射。',
+    summary: '统一作品定义、学习主线、阅读顺序和比赛材料映射。',
     sectionId: 'overview'
   },
   {
@@ -50,7 +50,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/01-PRD与需求分析.md',
     navLabel: 'PRD',
     shortTitle: 'PRD 与需求分析',
-    summary: '定义产品定位、角色范围、功能需求与成功标准。',
+    summary: '定义 AI 主导学习生命周期平台的定位、能力边界和成功标准。',
     sectionId: 'overview'
   },
   {
@@ -58,7 +58,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/02-场景与用户流程.md',
     navLabel: '场景流程',
     shortTitle: '场景与用户流程',
-    summary: '把上传、重构、伴学、复练、洞察串成标准演示链路。',
+    summary: '把选科开学、地图校准、闯关学习、补桥回主线和知识进化串成标准演示链路。',
     sectionId: 'experience'
   },
   {
@@ -66,7 +66,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/03-页面与交互设计.md',
     navLabel: '页面设计',
     shortTitle: '页面与交互设计',
-    summary: '定义六个核心工作台页面、状态与评委演示点。',
+    summary: '定义四个学生页、两个后台页，以及地图和关卡的核心交互。',
     sectionId: 'experience'
   },
   {
@@ -74,7 +74,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/04-总体架构与技术选型.md',
     navLabel: '总体架构',
     shortTitle: '总体架构与技术选型',
-    summary: '固定 Vue + Go 单体 + ADP 的比赛版整体架构。',
+    summary: '固定 Vue + Go 单体 + ADP 的单机架构，承接学习地图、画像、笔记和知识进化。',
     sectionId: 'architecture'
   },
   {
@@ -82,7 +82,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/05-算法与知识库设计.md',
     navLabel: '算法知识库',
     shortTitle: '算法与知识库设计',
-    summary: '定义知识重构、任务规划、掌握度、错题画像与群体洞察。',
+    summary: '定义地图生成、重规划、画像更新、笔记汇总和跨科调度。',
     sectionId: 'architecture'
   },
   {
@@ -90,7 +90,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/06-接口与API说明.md',
     navLabel: '接口 API',
     shortTitle: '接口与 API 说明',
-    summary: '定义 REST + SSE 混合接口、上下文字段与公开对象。',
+    summary: '定义选科开学、地图状态、闯关学习、画像更新和知识进化接口。',
     sectionId: 'architecture'
   },
   {
@@ -98,7 +98,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/07-测试验证与预期效果.md',
     navLabel: '测试验证',
     shortTitle: '测试验证与预期效果',
-    summary: '建立比赛覆盖矩阵、标准链路验收和术语一致性检查。',
+    summary: '建立主链路验收、地图重规划验证和术语一致性检查。',
     sectionId: 'delivery'
   },
   {
@@ -106,7 +106,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/08-答辩PPT大纲.md',
     navLabel: '答辩 PPT',
     shortTitle: '答辩 PPT 大纲',
-    summary: '提供 16 页左右的答辩结构与讲述重点。',
+    summary: '提供围绕学习地图、闯关推进和平台自进化的答辩结构。',
     sectionId: 'delivery'
   },
   {
@@ -114,7 +114,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/09-演示视频脚本.md',
     navLabel: '视频脚本',
     shortTitle: '演示视频脚本',
-    summary: '提供 3 分钟内的视频镜头顺序、口播与字幕建议。',
+    summary: '提供 3 分钟内的选科开学、补桥回主线和知识演化镜头顺序。',
     sectionId: 'delivery'
   },
   {
@@ -122,7 +122,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/10-访问与评测手册.md',
     navLabel: '访问手册',
     shortTitle: '访问与评测手册',
-    summary: '说明访问入口、账号权限、评委体验步骤与异常处理。',
+    summary: '说明学生主线体验、后台补充体验和异常处理。',
     sectionId: 'delivery'
   },
   {
@@ -130,7 +130,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/11-开发技术文档.md',
     navLabel: '技术文档',
     shortTitle: '开发技术文档',
-    summary: '收口平台选择、关键实现、部署方式与二次开发指引。',
+    summary: '收口平台选择、Agent 群职责、部署方式与二次开发边界。',
     sectionId: 'delivery'
   }
 ];
