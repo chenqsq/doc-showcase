@@ -8,7 +8,9 @@ vite-*.err.log
 npm-install.log
 output-*.png
 .playwright-cli/
+output/
 output/perf/
 _online_index.html
 _online_index.js
 pr-body.md
+vite-plan.log
