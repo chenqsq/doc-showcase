@@ -31,8 +31,8 @@
 
 :root {
   color-scheme: light;
-  --font-sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
-  --font-serif: "Noto Serif SC", "Songti SC", serif;
+  --font-sans: "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+  --font-serif: "Songti SC", "STSong", "SimSun", serif;
   --type-body: 1.02rem;
   --type-body-small: 0.94rem;
   --type-caption: 0.82rem;
@@ -346,6 +346,74 @@
       scroll-behavior: auto !important;
     }
   }
+}
+
+@keyframes app-ambient-orb-primary {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(32px, 18px, 0);
+  }
+}
+
+@keyframes app-ambient-orb-secondary {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(-24px, 24px, 0);
+  }
+}
+
+@keyframes app-ambient-orb-primary-reader {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(16px, 10px, 0);
+  }
+}
+
+@keyframes app-ambient-orb-secondary-reader {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(-14px, 14px, 0);
+  }
+}
+
+.app-ambient-orb-motion {
+  will-change: transform;
+}
+
+.app-ambient-orb-motion[data-ambient-orb='primary'] {
+  animation: app-ambient-orb-primary 18s ease-in-out infinite;
+}
+
+.app-ambient-orb-motion[data-ambient-orb='secondary'] {
+  animation: app-ambient-orb-secondary 22s ease-in-out infinite;
+}
+
+.app-ambient-orb-motion-reader {
+  will-change: transform;
+}
+
+.app-ambient-orb-motion-reader[data-ambient-orb='primary'] {
+  animation: app-ambient-orb-primary-reader 28s ease-in-out infinite;
+}
+
+.app-ambient-orb-motion-reader[data-ambient-orb='secondary'] {
+  animation: app-ambient-orb-secondary-reader 34s ease-in-out infinite;
 }
 
 @layer utilities {

@@ -1,3 +1,4 @@
+import { makeCatalogItemId } from './catalog-id';
 import { ACTIVE_DOC_BY_PATH, ACTIVE_DOCS, ARCHIVE_GROUP_ORDER, type ArchiveGroup } from './siteMeta';
 import type { CatalogItem, Layer, OutlineItem, ResourceCollection, ResourceType } from './types';
 
@@ -77,15 +78,6 @@ function humanizeFilename(name: string) {
     .trim();
 }
 
-function hashString(input: string) {
-  let hash = 2166136261;
-  for (let index = 0; index < input.length; index += 1) {
-    hash ^= input.charCodeAt(index);
-    hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
-  }
-  return `r${(hash >>> 0).toString(36)}`;
-}
-
 function getMarkdownTitle(rawText: string, fallback: string) {
   const match = rawText.match(/^#\s+(.+)$/m);
   return match?.[1]?.trim() || fallback;
@@ -127,7 +119,7 @@ function getArchiveGroup(relativePath: string, type: ResourceType): ArchiveGroup
     return '技术参考';
   }
   if (relativePath.startsWith('doc/开发文档/')) {
-    return '历史实现';
+    return '工程参考';
   }
   if (relativePath.startsWith('doc/腾讯平台使用文档/')) {
     return '腾讯资料';
@@ -308,7 +300,7 @@ function buildMarkdownMetadata(relativePath: string): CatalogItem {
   }
 
   return {
-    id: hashString(relativePath),
+    id: makeCatalogItemId(relativePath),
     type: 'markdown',
     collection,
     layer,
@@ -364,7 +356,7 @@ function buildCatalog() {
     const group = getArchiveGroup(relativePath, 'pdf');
 
     items.push({
-      id: hashString(relativePath),
+      id: makeCatalogItemId(relativePath),
       type: 'pdf',
       collection,
       layer,
@@ -385,7 +377,7 @@ function buildCatalog() {
     const group = getArchiveGroup(relativePath, 'image');
 
     items.push({
-      id: hashString(relativePath),
+      id: makeCatalogItemId(relativePath),
       type: 'image',
       collection,
       layer: getLayer(collection),
@@ -452,6 +444,15 @@ export async function loadCatalogItemById(id: string) {
   }
 
   return applyMarkdownContent(item, rawText);
+}
+
+export function preloadCatalogItemById(id: string) {
+  const item = catalogById.get(id);
+  if (!item || item.type !== 'markdown' || item.rawText) {
+    return;
+  }
+
+  void readMarkdownContent(item.relativePath);
 }
 
 export function makeHeadingId(text: string, occurrence: number) {

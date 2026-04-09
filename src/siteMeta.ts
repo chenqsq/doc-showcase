@@ -82,7 +82,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/05-算法与知识库设计.md',
     navLabel: '算法知识库',
     shortTitle: '算法与知识库设计',
-    summary: '定义地图生成、重规划、画像更新、笔记汇总和跨科调度。',
+    summary: '定义地图生成、重规划、画像更新、Git 化知识演化与跨科调度。',
     sectionId: 'architecture'
   },
   {
@@ -130,7 +130,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/11-开发技术文档.md',
     navLabel: '技术文档',
     shortTitle: '开发技术文档',
-    summary: '收口平台选择、Agent 群职责、部署方式与二次开发边界。',
+    summary: '收口 ADP+Go 混合架构、上下文边界、Agent 群职责与知识治理原则。',
     sectionId: 'delivery'
   }
 ];
@@ -145,6 +145,6 @@ export const ACTIVE_DOC_BY_SECTION = new Map(
   ])
 );
 
-export const ARCHIVE_GROUP_ORDER = ['技术真源', '历史实现', '腾讯资料', '比赛资料', '技术参考', '图像资源'] as const;
+export const ARCHIVE_GROUP_ORDER = ['技术真源', '工程参考', '腾讯资料', '比赛资料', '技术参考', '图像资源'] as const;
 
 export type ArchiveGroup = (typeof ARCHIVE_GROUP_ORDER)[number];

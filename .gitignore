@@ -2,7 +2,13 @@ node_modules/
 dist/
 vite-dev.log
 vite-dev.err
+vite-*.log
+vite-*.err.log
 *.tsbuildinfo
 npm-install.log
 output-*.png
 .playwright-cli/
+output/perf/
+_online_index.html
+_online_index.js
+pr-body.md

@@ -1,33 +1,32 @@
 import { ArrowRight } from 'lucide-react';
-import { Suspense, lazy, useCallback, useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import {
-  DEFAULT_FONT_SCALE,
-  DEFAULT_THEME,
-  type FontScaleId,
-  type ThemeId
-} from '@/appearance';
+import { type FontScaleId, type ThemeId } from '@/appearance';
 import {
   AppBackground,
   AppearanceControls,
+  HEADER_DESKTOP_QUERY,
   LightboxFallback,
   PRIMARY_NAV_ITEMS,
   PageRouteFallback,
+  READER_DESKTOP_SHELL_QUERY,
   ReaderRouteFallback,
   readFontScalePreference,
   readThemePreference,
   useMediaQuery,
   writeFontScalePreference,
   writeThemePreference
-} from '@/app-shell';
-import { catalogById } from '@/catalog';
+} from '@/shell-core';
 import { MobileSheet } from '@/components/MobileSheet';
+import { ReaderSidebar } from '@/components/ReaderSidebar';
 import { SiteHeader, type HeaderNavLink, type HeaderSurface } from '@/components/SiteHeader';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import type { LightboxState } from '@/types';
+import type { ReaderMobileNavigationState } from '@/routes/ReaderRoute';
+import type { LightboxState, ResourceCollection } from '@/types';
 
 const HomeRoute = lazy(() => import('@/routes/HomeRoute'));
+const DocsRoute = lazy(() => import('@/routes/DocsRoute'));
 const CollectionRoute = lazy(() => import('@/routes/CollectionRoute'));
 const ReaderRoute = lazy(() => import('@/routes/ReaderRoute'));
 const ZoomLightbox = lazy(() =>
@@ -44,6 +43,10 @@ function RouteElement({
   return <Suspense fallback={fallback}>{children}</Suspense>;
 }
 
+const DEFAULT_HEADER_COMPACT_SCROLL = 160;
+const READER_HEADER_COMPACT_ENTER_SCROLL = 104;
+const READER_HEADER_COMPACT_EXIT_SCROLL = 72;
+
 export default function App() {
   const [lightbox, setLightbox] = useState<LightboxState | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -51,22 +54,14 @@ export default function App() {
   const [themeId, setThemeId] = useState<ThemeId>(() => readThemePreference());
   const [headerCompact, setHeaderCompact] = useState(false);
   const [readerScrollContainer, setReaderScrollContainer] = useState<HTMLDivElement | null>(null);
+  const [readerCollection, setReaderCollection] = useState<ResourceCollection | null>(null);
+  const [readerMobileNavigation, setReaderMobileNavigation] = useState<ReaderMobileNavigationState | null>(null);
   const location = useLocation();
-  const isDesktopHeader = useMediaQuery('(min-width: 768px)');
-  const usesReaderScrollShell = useMediaQuery('(min-width: 1024px)');
+  const isDesktopHeader = useMediaQuery(HEADER_DESKTOP_QUERY);
+  const usesReaderScrollShell = useMediaQuery(READER_DESKTOP_SHELL_QUERY);
   const currentId = location.pathname.startsWith('/read/') ? location.pathname.slice('/read/'.length) : '';
-  const currentItem = currentId ? catalogById.get(currentId) : undefined;
   const isReaderPage = location.pathname.startsWith('/read/');
   const surface: HeaderSurface = isReaderPage ? 'reader' : location.pathname === '/' ? 'home' : 'collection';
-
-  const handleReaderShellScroll = useCallback(
-    (scrollTop: number) => {
-      if (surface === 'reader' && usesReaderScrollShell) {
-        setHeaderCompact(scrollTop > 96);
-      }
-    },
-    [surface, usesReaderScrollShell]
-  );
 
   useEffect(() => {
     setMobileNavOpen(false);
@@ -92,7 +87,7 @@ export default function App() {
     root.style.setProperty('--header-expanded-height', '5rem');
     root.style.setProperty('--header-compact-height', '3.5rem');
     root.style.setProperty('--header-floating-top', '1rem');
-    root.style.setProperty('--mobile-nav-button-size', '3rem');
+    root.style.setProperty('--mobile-nav-button-size', '3.75rem');
     root.style.setProperty('--header-layout-offset', headerLayoutOffset);
     root.style.setProperty('--header-safe-offset', headerLayoutOffset);
     root.style.setProperty('--mobile-top-safe-offset', mobileTopSafeOffset);
@@ -155,15 +150,36 @@ export default function App() {
 
   useEffect(() => {
     if (surface !== 'reader') {
+      setReaderCollection(null);
       setReaderScrollContainer(null);
+      setReaderMobileNavigation(null);
     }
   }, [surface]);
 
   useEffect(() => {
-    const scrollContainer = surface === 'reader' && usesReaderScrollShell ? readerScrollContainer : null;
+    if (isReaderPage) {
+      setReaderCollection(null);
+    }
+  }, [currentId, isReaderPage]);
+
+  useEffect(() => {
+    const isDesktopReaderShell = surface === 'reader' && usesReaderScrollShell;
+    const scrollContainer = isDesktopReaderShell ? readerScrollContainer : null;
     const updateCompactState = () => {
-      const nextCompact = scrollContainer ? scrollContainer.scrollTop > 96 : window.scrollY > 160;
-      setHeaderCompact((current) => (current === nextCompact ? current : nextCompact));
+      const scrollTop = scrollContainer ? scrollContainer.scrollTop : window.scrollY;
+
+      setHeaderCompact((current) => {
+        if (isDesktopReaderShell) {
+          if (current) {
+            return scrollTop <= READER_HEADER_COMPACT_EXIT_SCROLL ? false : current;
+          }
+
+          return scrollTop >= READER_HEADER_COMPACT_ENTER_SCROLL;
+        }
+
+        const nextCompact = scrollTop > DEFAULT_HEADER_COMPACT_SCROLL;
+        return current === nextCompact ? current : nextCompact;
+      });
     };
 
     updateCompactState();
@@ -185,18 +201,23 @@ export default function App() {
       window.removeEventListener('scroll', updateCompactState);
       window.removeEventListener('resize', updateCompactState);
     };
-  }, [location.pathname, readerScrollContainer, surface, usesReaderScrollShell]);
+  }, [
+    location.pathname,
+    readerScrollContainer,
+    surface,
+    usesReaderScrollShell
+  ]);
 
   const navItems: HeaderNavLink[] = PRIMARY_NAV_ITEMS.map((item) => ({
     id: item.id,
     label: item.label,
     to: item.to,
-    isActive: item.isActive(location.pathname, currentItem)
+    isActive: item.isActive(location.pathname, readerCollection ?? undefined)
   }));
 
   return (
     <div className="relative min-h-screen overflow-x-clip pb-10">
-      <AppBackground />
+      <AppBackground ambientMode={surface === 'reader' ? 'reader' : 'default'} />
 
       <SiteHeader
         compact={headerCompact}
@@ -214,10 +235,10 @@ export default function App() {
         onOpenChange={setMobileNavOpen}
         side="left"
         title="站点导航"
-        description="切换首页、文档分区和阅读外观设置。"
+        description="切换主文档、辅助区块和阅读外观。"
       >
         <div className="grid gap-[var(--layout-panel-gap)]">
-          <nav className="grid gap-3" aria-label="移动端导航">
+          <nav className="grid gap-3" aria-label="移动端站点导航">
             {navItems.map((item) => (
               <Button
                 key={item.id}
@@ -225,13 +246,50 @@ export default function App() {
                 variant={item.isActive ? 'default' : 'secondary'}
                 className="h-auto justify-between rounded-[1.4rem] px-4 py-4"
               >
-                <Link to={item.to} onClick={() => setMobileNavOpen(false)}>
+                <Link
+                  to={item.to}
+                  data-perf-id="site-mobile-nav-link"
+                  data-nav-id={item.id}
+                  onClick={() => setMobileNavOpen(false)}
+                >
                   <span>{item.label}</span>
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
             ))}
           </nav>
+
+          {mobileNavOpen && readerMobileNavigation ? (
+            <>
+              <Separator />
+
+              <section className="grid gap-3" data-perf-id="reader-mobile-context">
+                <div className="grid gap-1">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    当前文档
+                  </div>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    在这里查看当前文档目录和推荐阅读顺序。
+                  </p>
+                </div>
+
+                <div className="h-[min(72vh,42rem)] min-h-[24rem] overflow-hidden rounded-[1.6rem] border border-sidebar-border/80 bg-sidebar/95 p-3.5 shadow-[var(--shadow-panel)] backdrop-blur-xl">
+                  <ReaderSidebar
+                    activeHeadingId={readerMobileNavigation.activeHeadingId}
+                    activePanel={readerMobileNavigation.activePanel}
+                    collectionLabel={readerMobileNavigation.collectionLabel}
+                    collectionMeta={readerMobileNavigation.collectionMeta}
+                    item={readerMobileNavigation.item}
+                    onPanelChange={readerMobileNavigation.onPanelChange}
+                    onSelectHeading={readerMobileNavigation.onSelectHeading}
+                    onSelectLink={() => setMobileNavOpen(false)}
+                    outline={readerMobileNavigation.outline}
+                    sequenceItems={readerMobileNavigation.sequenceItems}
+                  />
+                </div>
+              </section>
+            </>
+          ) : null}
 
           <Separator />
 
@@ -257,7 +315,7 @@ export default function App() {
           path="/docs"
           element={
             <RouteElement fallback={<PageRouteFallback />}>
-              <CollectionRoute collection="active-docs" />
+              <DocsRoute />
             </RouteElement>
           }
         />
@@ -285,7 +343,9 @@ export default function App() {
           element={
             <RouteElement fallback={<ReaderRouteFallback />}>
               <ReaderRoute
-                onReaderScrollStateChange={handleReaderShellScroll}
+                mobileNavOpen={mobileNavOpen}
+                onReaderCollectionChange={setReaderCollection}
+                onReaderMobileNavigationChange={setReaderMobileNavigation}
                 onRegisterReaderScrollContainer={setReaderScrollContainer}
                 onZoom={setLightbox}
               />

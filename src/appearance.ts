@@ -23,8 +23,7 @@ export interface FontScaleOption {
 const SHARED_THEME_VARIABLES = {
   background: 'transparent',
   fontSize: '14px',
-  fontFamily:
-    '"Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif'
+  fontFamily: '"PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif'
 };
 
 export const SITE_THEMES: Record<ThemeId, SiteThemeDefinition> = {

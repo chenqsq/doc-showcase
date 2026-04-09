@@ -42,53 +42,20 @@ const markdownStackPackages = [
   'vfile',
   'zwitch'
 ];
-const diagramStackPackages = [
-  '/mermaid/',
-  '@mermaid-js',
-  '@braintree/sanitize-url',
-  '@iconify',
-  '@upsetjs',
-  '/cytoscape/',
-  'cytoscape-cose-bilkent',
-  'cytoscape-fcose',
-  '/d3',
-  'd3-',
-  'dagre-d3-es',
-  '/dayjs/',
-  '/dompurify/',
-  '/katex/',
-  '/khroma/',
-  '/langium/',
-  '/lodash-es/',
-  '/marked/',
-  '/roughjs/',
-  '/stylis/',
-  '/ts-dedent/',
-  '/uuid/',
-  '/layout-base/',
-  '/cose-base/',
-  '/delaunator/',
-  '/internmap/',
-  '/hachure-fill/',
-  '/path-data-parser/',
-  '/path2d/',
-  '/points-on-curve/',
-  '/points-on-path/',
-  '/robust-predicates/',
-  '/chevrotain/',
-  '/chevrotain-allstar/',
-  '/vscode-jsonrpc/',
-  '/vscode-languageserver',
-  '/vscode-uri/'
-];
+const uiFoundationPackages = ['clsx', 'tailwind-merge', 'class-variance-authority'];
 const pdfStackPackages = ['react-pdf', 'pdfjs-dist'];
 const zoomStackPackages = ['react-zoom-pan-pinch'];
+const appRuntimeModules = ['\0vite/modulepreload-polyfill.js', '\0vite/preload-helper.js', '\0commonjsHelpers.js'];
 
 function matchesAny(id: string, patterns: string[]) {
   return patterns.some((pattern) => id.includes(pattern));
 }
 
 function manualChunks(id: string) {
+  if (matchesAny(id, appRuntimeModules)) {
+    return 'app-runtime';
+  }
+
   if (!id.includes('node_modules')) {
     return undefined;
   }
@@ -97,12 +64,12 @@ function manualChunks(id: string) {
     return 'pdf-stack';
   }
 
-  if (matchesAny(id, zoomStackPackages)) {
-    return 'zoom-stack';
+  if (matchesAny(id, uiFoundationPackages)) {
+    return 'ui-foundation';
   }
 
-  if (matchesAny(id, diagramStackPackages)) {
-    return 'diagram-stack';
+  if (matchesAny(id, zoomStackPackages)) {
+    return 'zoom-stack';
   }
 
   if (matchesAny(id, markdownStackPackages)) {
@@ -126,7 +93,8 @@ export default defineConfig(({ command }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks
+        manualChunks,
+        hoistTransitiveImports: false
       }
     }
   },

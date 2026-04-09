@@ -1,65 +1,46 @@
+import { BookOpenText } from 'lucide-react';
 import { useDeferredValue, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  COLLECTION_LABELS,
-  COLLECTION_NOTES,
-  COLLECTION_SUMMARIES,
-  getCollectionKicker
-} from '@/shell-core';
-import { searchCatalog } from '@/catalog';
-import {
-  COLLECTION_CARD_ICONS,
-  COLLECTION_SEARCH_ICON,
-  buildSections,
-  getCollectionItems,
-  getRowMeta
-} from '@/catalog-ui';
+import { activeDocItems, buildActiveDocSections, getActiveDocRowMeta, searchActiveDocItems } from '@/active-docs';
+import { COLLECTION_LABELS, COLLECTION_NOTES, COLLECTION_SUMMARIES, getCollectionKicker } from '@/shell-core';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import type { ResourceCollection } from '@/types';
 
-interface CollectionRouteProps {
-  collection: ResourceCollection;
-}
-
-export default function CollectionRoute({ collection }: CollectionRouteProps) {
+export default function DocsRoute() {
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
-  const items = useMemo(
-    () => searchCatalog(getCollectionItems(collection), deferredQuery),
-    [collection, deferredQuery]
-  );
-  const sections = useMemo(() => buildSections(items, collection), [collection, items]);
-  const SearchIcon = COLLECTION_SEARCH_ICON;
-  const SectionIcon = COLLECTION_CARD_ICONS[collection];
+  const items = useMemo(() => searchActiveDocItems(deferredQuery), [deferredQuery]);
+  const sections = useMemo(() => buildActiveDocSections(items), [items]);
 
   return (
     <main className="page-safe-top layout-section-gap mx-auto grid w-full max-w-[var(--content-max)] px-4 pb-24 md:px-6">
       <section className="grid gap-4">
         <Badge variant="outline" className="w-fit bg-background/70">
-          {getCollectionKicker(collection)}
+          {getCollectionKicker('active-docs')}
         </Badge>
         <h1 className="font-serif text-[clamp(2.2rem,4vw,3.6rem)] leading-none tracking-[-0.03em] text-foreground">
-          {COLLECTION_LABELS[collection]}
+          {COLLECTION_LABELS['active-docs']}
         </h1>
-        <p className="max-w-3xl text-base leading-8 text-muted-foreground">{COLLECTION_SUMMARIES[collection]}</p>
+        <p className="max-w-3xl text-base leading-8 text-muted-foreground">
+          {COLLECTION_SUMMARIES['active-docs']}
+        </p>
       </section>
 
       <section className="layout-panel-gap layout-panel-padding grid rounded-[1.8rem] border border-border/70 bg-card/75 shadow-[var(--shadow-soft)] backdrop-blur-xl">
         <label
           className="flex min-h-14 items-center gap-3 rounded-full border border-border/70 bg-background/72 px-4 text-muted-foreground"
-          htmlFor={`search-${collection}`}
+          htmlFor="search-active-docs"
         >
-          <SearchIcon className="h-4 w-4 shrink-0" />
+          <BookOpenText className="h-4 w-4 shrink-0" />
           <input
-            id={`search-${collection}`}
+            id="search-active-docs"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder={`搜索${COLLECTION_LABELS[collection]}中的标题、路径或正文`}
+            placeholder="搜索作品文档中的标题、路径或摘要"
             className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
         </label>
-        <p className="text-sm leading-7 text-muted-foreground">{COLLECTION_NOTES[collection]}</p>
+        <p className="text-sm leading-7 text-muted-foreground">{COLLECTION_NOTES['active-docs']}</p>
       </section>
 
       {sections.length ? (
@@ -90,20 +71,18 @@ export default function CollectionRoute({ collection }: CollectionRouteProps) {
                       data-perf-id="collection-doc-link"
                       data-doc-id={item.id}
                       data-doc-index={index}
-                      data-collection={collection}
+                      data-collection="active-docs"
                       to={`/read/${item.id}`}
                     >
                       <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-accent text-primary">
-                        <SectionIcon className="h-4 w-4" />
+                        <BookOpenText className="h-4 w-4" />
                       </span>
                       <span className="grid gap-1">
                         <small className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                          {getRowMeta(item)}
+                          {getActiveDocRowMeta(item.order)}
                         </small>
                         <strong className="text-base leading-7 text-foreground">{item.title}</strong>
-                        <span className="text-sm leading-7 text-muted-foreground">
-                          {item.summary ?? '进入正文查看完整内容。'}
-                        </span>
+                        <span className="text-sm leading-7 text-muted-foreground">{item.summary}</span>
                       </span>
                     </Link>
                   </div>
@@ -114,7 +93,7 @@ export default function CollectionRoute({ collection }: CollectionRouteProps) {
         </div>
       ) : (
         <div className="rounded-[1.8rem] border border-dashed border-border bg-card/72 p-6 text-center text-sm leading-7 text-muted-foreground">
-          当前搜索条件下没有结果，可以尝试减少关键词或切换到其他范围继续浏览。
+          当前搜索条件下没有结果，可以尝试减少关键词或回到推荐阅读顺序继续浏览。
         </div>
       )}
     </main>

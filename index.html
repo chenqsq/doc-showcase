@@ -5,16 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI主导学习生命周期的自进化自学智能体平台</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;800&family=Noto+Serif+SC:wght@600;700&display=swap"
-      rel="stylesheet"
-    />
     <meta
       name="description"
       content="AI主导学习生命周期的自进化自学智能体平台比赛作品文档站，统一承载学习地图、闯关学习、画像笔记、知识进化与答辩交付文档。"
     />
+    <script>
+      (function () {
+        const redirectKey = 'p';
+        const basePath = '/doc-showcase';
+        const params = new URLSearchParams(window.location.search);
+        const redirectPath = params.get(redirectKey);
+
+        if (!redirectPath) {
+          return;
+        }
+
+        const normalizedPath = decodeURIComponent(redirectPath);
+        const nextPath = normalizedPath.startsWith('/') ? normalizedPath : `/${normalizedPath}`;
+        window.history.replaceState(null, '', `${basePath}${nextPath}`);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
