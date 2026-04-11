@@ -1,0 +1,11 @@
+{
+  "projectSlug": "doc-showcase",
+  "projectName": "专升本比赛项目",
+  "projectDescription": "Competition project bridge for the doc-showcase repository, covering live showcase docs, implementation facts, and runtime outputs.",
+  "docsRoots": ["doc/作品文档"],
+  "outputRoots": ["output"],
+  "factsRoots": ["doc/开发文档", "doc/智能体文档", "ops"],
+  "extraFiles": ["package.json", "vite.config.ts", "components.json", "index.html"],
+  "exclude": ["output/perf/pages/**", "output/perf/preview/**"],
+  "workflowRunIds": []
+}
