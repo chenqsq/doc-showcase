@@ -31,7 +31,7 @@ const n=`# AI主导学习平台-总体架构设计\r
 \r
 ## 4. 单机部署约束\r
 \r
-- 前端静态站点与 Go 单体分离部署\r
+- 前端静态站点与 Python 单体分离部署
 - PostgreSQL 承接主数据和审计日志\r
 - COS / MinIO 承接资料和思维导图资源\r
 - ADP 和 SSE 承接多 Agent 工作流与流式输出\r
