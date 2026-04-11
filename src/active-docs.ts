@@ -42,5 +42,5 @@ export function searchActiveDocItems(query: string) {
 }
 
 export function getActiveDocRowMeta(order: number) {
-  return `第${String(order + 1).padStart(2, '0')} 篇`;
+  return `第 ${String(order + 1).padStart(2, '0')} 篇`;
 }

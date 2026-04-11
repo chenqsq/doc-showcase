@@ -16,23 +16,23 @@ export interface ActiveDocMeta {
 export const ACTIVE_DOC_SECTIONS: ActiveDocSectionMeta[] = [
   {
     id: 'overview',
-    label: '总览与需求',
-    summary: '先统一作品定义、学习主线和比赛交付边界，再进入场景与页面设计。'
+    label: '作品总览',
+    summary: '先看这是什么作品、面向谁、主闭环是什么，再进入详细设计。'
   },
   {
     id: 'experience',
-    label: '场景与体验',
-    summary: '围绕选科开学、实时演化学习地图、闯关学习和笔记复习建立体验链路。'
+    label: '体验与页面',
+    summary: '看学生端、后台端分别怎么用，页面和流程怎样串成完整演示。'
   },
   {
     id: 'architecture',
-    label: '架构与实现',
-    summary: '统一描述技术选型、地图算法、知识进化结构和接口对接。'
+    label: '技术实现',
+    summary: '看前端、FastAPI、PostgreSQL、ADP 和知识库分别负责什么。'
   },
   {
     id: 'delivery',
-    label: '交付与答辩',
-    summary: '收口测试、PPT、视频、访问手册与开发技术文档，直接对应比赛交付。'
+    label: '答辩与交付',
+    summary: '看测试、答辩、视频、评测和接手说明，直接对应比赛交付。'
   }
 ];
 
@@ -42,7 +42,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/00-作品总览与阅读地图.md',
     navLabel: '作品总览',
     shortTitle: '作品总览与阅读地图',
-    summary: '统一作品定义、学习主线、阅读顺序和比赛材料映射。',
+    summary: '5 分钟看懂作品定位、主闭环、当前进度和不同角色先看哪里。',
     sectionId: 'overview'
   },
   {
@@ -50,7 +50,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/01-PRD与需求分析.md',
     navLabel: 'PRD',
     shortTitle: 'PRD 与需求分析',
-    summary: '定义 AI 主导学习生命周期平台的定位、能力边界和成功标准。',
+    summary: '看作品解决什么问题、用户是谁、页面范围和验收标准是什么。',
     sectionId: 'overview'
   },
   {
@@ -58,7 +58,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/02-场景与用户流程.md',
     navLabel: '场景流程',
     shortTitle: '场景与用户流程',
-    summary: '把选科开学、地图校准、闯关学习、补桥回主线和知识进化串成标准演示链路。',
+    summary: '把选科、诊断、闯关、补桥、复习和知识更新串成完整演示主线。',
     sectionId: 'experience'
   },
   {
@@ -66,7 +66,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/03-页面与交互设计.md',
     navLabel: '页面设计',
     shortTitle: '页面与交互设计',
-    summary: '定义四个学生页、两个后台页，以及地图和关卡的核心交互。',
+    summary: '看学生端和后台端分别有哪些页面、每个页面负责什么。',
     sectionId: 'experience'
   },
   {
@@ -74,7 +74,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/04-总体架构与技术选型.md',
     navLabel: '总体架构',
     shortTitle: '总体架构与技术选型',
-    summary: '固定 Vue + Go 单体 + ADP 的单机架构，承接学习地图、画像、笔记和知识进化。',
+    summary: '确认 Vue 3、Python FastAPI、PostgreSQL、ADP 的分工和系统边界。',
     sectionId: 'architecture'
   },
   {
@@ -82,7 +82,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/05-算法与知识库设计.md',
     navLabel: '算法知识库',
     shortTitle: '算法与知识库设计',
-    summary: '定义地图生成、重规划、画像更新、Git 化知识演化与跨科调度。',
+    summary: '看学习地图、补桥、画像、知识入库和演化规则如何成立。',
     sectionId: 'architecture'
   },
   {
@@ -90,7 +90,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/06-接口与API说明.md',
     navLabel: '接口 API',
     shortTitle: '接口与 API 说明',
-    summary: '定义选科开学、地图状态、闯关学习、画像更新和知识进化接口。',
+    summary: '看页面、后端和 ADP 之间要交换哪些对象、状态和接口。',
     sectionId: 'architecture'
   },
   {
@@ -98,7 +98,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/07-测试验证与预期效果.md',
     navLabel: '测试验证',
     shortTitle: '测试验证与预期效果',
-    summary: '建立主链路验收、地图重规划验证和术语一致性检查。',
+    summary: '看最小验收链路、专项验证点和通过标准怎么定义。',
     sectionId: 'delivery'
   },
   {
@@ -106,7 +106,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/08-答辩PPT大纲.md',
     navLabel: '答辩 PPT',
     shortTitle: '答辩 PPT 大纲',
-    summary: '提供围绕学习地图、闯关推进和平台自进化的答辩结构。',
+    summary: '看答辩时该怎么讲故事、怎么组织页面和技术证明。',
     sectionId: 'delivery'
   },
   {
@@ -114,7 +114,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/09-演示视频脚本.md',
     navLabel: '视频脚本',
     shortTitle: '演示视频脚本',
-    summary: '提供 3 分钟内的选科开学、补桥回主线和知识演化镜头顺序。',
+    summary: '看 3 分钟视频应该怎么拍、怎么切镜头、怎么做降级预案。',
     sectionId: 'delivery'
   },
   {
@@ -122,7 +122,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/10-访问与评测手册.md',
     navLabel: '访问手册',
     shortTitle: '访问与评测手册',
-    summary: '说明学生主线体验、后台补充体验和异常处理。',
+    summary: '看评委和测试同学怎样访问、体验和验收这套作品。',
     sectionId: 'delivery'
   },
   {
@@ -130,7 +130,7 @@ export const ACTIVE_DOCS: ActiveDocMeta[] = [
     path: 'doc/作品文档/11-开发技术文档.md',
     navLabel: '技术文档',
     shortTitle: '开发技术文档',
-    summary: '收口 ADP+Go 混合架构、上下文边界、Agent 群职责与知识治理原则。',
+    summary: '看当前展示站怎么启动，以及目标产品后续该怎么继续实现。',
     sectionId: 'delivery'
   }
 ];
