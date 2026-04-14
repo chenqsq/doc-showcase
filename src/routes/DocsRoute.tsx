@@ -36,7 +36,7 @@ export default function DocsRoute() {
             id="search-active-docs"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="搜索作品文档中的标题、路径或摘要"
+            placeholder="搜索真人类文档中的标题、路径或摘要"
             className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
         </label>

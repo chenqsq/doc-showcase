@@ -9,8 +9,8 @@ export const activeDocItems: CatalogItem[] = ACTIVE_DOCS.map((item) => ({
   layer: '作品文档',
   title: item.shortTitle,
   relativePath: item.path,
-  group: '作品文档',
-  resourceKind: '作品文档',
+  group: '真人类文档',
+  resourceKind: '真人类文档',
   order: item.order,
   summary: item.summary
 }));
@@ -21,7 +21,7 @@ export function buildActiveDocSections(items: CatalogItem[]) {
   return ACTIVE_DOC_SECTIONS.map((section) => ({
     id: section.id,
     label: section.label,
-    kicker: '作品文档',
+    kicker: '真人类文档',
     description: section.summary,
     items: (ACTIVE_DOC_BY_SECTION.get(section.id) ?? [])
       .map((meta) => activeDocItemsByPath.get(meta.path))

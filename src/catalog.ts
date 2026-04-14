@@ -2,6 +2,7 @@ import { makeCatalogItemId } from './catalog-id';
 import { ACTIVE_DOC_BY_PATH, ACTIVE_DOCS, ARCHIVE_GROUP_ORDER, type ArchiveGroup } from './siteMeta';
 import type { CatalogItem, Layer, OutlineItem, ResourceCollection, ResourceType } from './types';
 
+const ACTIVE_DOC_ROOT = 'doc/作品文档/真人类文档/';
 const DEBUG_KB_ROOT = 'kb/高等数学_测试/';
 const DEBUG_KB_ARCHIVE_ROOT = 'kb/高等数学_测试/T-教师运营/';
 
@@ -17,7 +18,7 @@ const DEBUG_RESOURCE_KINDS = [
 
 const markdownFiles = import.meta.glob(
   [
-    '../doc/作品文档/**/*.md',
+    '../doc/作品文档/真人类文档/**/*.md',
     '../doc/开发文档/**/*.md',
     '../kb/高等数学_测试/**/*.md',
     '../doc/智能体文档/**/*.md',
@@ -89,7 +90,7 @@ function getSvgTitle(rawText: string, fallback: string) {
 }
 
 function getCollection(relativePath: string): ResourceCollection {
-  if (relativePath.startsWith('doc/作品文档/')) {
+  if (relativePath.startsWith(ACTIVE_DOC_ROOT)) {
     return 'active-docs';
   }
   if (relativePath.startsWith(DEBUG_KB_ARCHIVE_ROOT)) {
@@ -279,15 +280,15 @@ function buildMarkdownMetadata(relativePath: string): CatalogItem {
   const layer = getLayer(collection);
 
   let title = fallback;
-  let group = '作品文档';
+  let group = '真人类文档';
   let resourceKind = '文档';
   let summary: string | undefined;
 
   if (collection === 'active-docs') {
     const meta = ACTIVE_DOC_BY_PATH.get(relativePath);
     title = meta?.shortTitle ?? fallback;
-    group = '作品文档';
-    resourceKind = '作品文档';
+    group = '真人类文档';
+    resourceKind = '真人类文档';
     summary = meta?.summary;
   } else if (collection === 'debug-kb') {
     const module = getDebugModule(relativePath);
@@ -320,8 +321,8 @@ function applyMarkdownContent(item: CatalogItem, rawText: string) {
   if (item.collection === 'active-docs') {
     const meta = ACTIVE_DOC_BY_PATH.get(item.relativePath);
     item.title = meta?.shortTitle ?? getMarkdownTitle(rawText, fallback);
-    item.group = '作品文档';
-    item.resourceKind = '作品文档';
+    item.group = '真人类文档';
+    item.resourceKind = '真人类文档';
     item.summary = meta?.summary;
     return item;
   }

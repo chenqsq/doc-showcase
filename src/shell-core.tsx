@@ -30,14 +30,14 @@ export interface HomeSecondaryLink {
 }
 
 export const COLLECTION_LABELS: Record<ResourceCollection, string> = {
-  'active-docs': '作品文档',
+  'active-docs': '真人类文档',
   'debug-kb': '调试知识库',
   archive: '参考与归档'
 };
 
 export const COLLECTION_SUMMARIES: Record<ResourceCollection, string> = {
   'active-docs':
-    '按推荐阅读顺序查看 AI 主导学习生命周期平台的需求、页面、架构、算法、接口与比赛交付文档。',
+    '按推荐阅读顺序查看真人类文档主线，聚焦比赛版的需求、页面、技术设计、测试与维护。',
   'debug-kb':
     '高等数学调试知识库只服务于联调、检索验证与回归样例，不参与作品主叙事。',
   archive: '平台技术溯源、工程参考、腾讯资料和比赛材料统一收在这里，按需查阅。'
@@ -45,7 +45,7 @@ export const COLLECTION_SUMMARIES: Record<ResourceCollection, string> = {
 
 export const COLLECTION_NOTES: Record<ResourceCollection, string> = {
   'active-docs':
-    '这里是比赛正式交付包，默认从作品总览进入学生主线，再按需进入后台和技术参考。',
+    '这里展示的是真人类文档主线，默认按比赛真实交付口径阅读，再按需进入辅助资料区。',
   'debug-kb': '调试知识库只服务于实现验证，不参与作品主叙事。',
   archive: '参考与归档资料不进入默认阅读顺序，只在追溯实现、补充证明或查看旧方案时使用。'
 };
@@ -59,7 +59,7 @@ export const PRIMARY_NAV_ITEMS: NavItemConfig[] = [
   },
   {
     id: 'docs',
-    label: '作品文档',
+    label: '真人类文档',
     to: '/docs',
     isActive: (pathname, currentCollection) =>
       pathname.startsWith('/docs') || currentCollection === 'active-docs'
@@ -219,7 +219,7 @@ export function usePrefersReducedMotion() {
 
 export function getCollectionKicker(collection: ResourceCollection) {
   if (collection === 'active-docs') {
-    return '作品文档';
+    return '真人类文档';
   }
 
   if (collection === 'debug-kb') {

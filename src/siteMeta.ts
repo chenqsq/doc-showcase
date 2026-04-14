@@ -15,122 +15,106 @@ export interface ActiveDocMeta {
 
 export const ACTIVE_DOC_SECTIONS: ActiveDocSectionMeta[] = [
   {
-    id: 'overview',
-    label: '作品总览',
-    summary: '先看这是什么作品、面向谁、主闭环是什么，再进入详细设计。'
+    id: 'definition',
+    label: '产品定义',
+    summary: '先看比赛版要解决什么问题、核心闭环和范围边界，再进入具体设计。'
   },
   {
     id: 'experience',
-    label: '体验与页面',
-    summary: '看学生端、后台端分别怎么用，页面和流程怎样串成完整演示。'
+    label: '页面与使用',
+    summary: '看学生端、后台端分别怎样承接流程，以及用户如何进入和使用系统。'
   },
   {
     id: 'architecture',
-    label: '技术实现',
-    summary: '看前端、FastAPI、PostgreSQL、ADP 和知识库分别负责什么。'
+    label: '技术设计',
+    summary: '看架构、数据库、算法、知识库和 API 如何共同支撑比赛版实现。'
   },
   {
     id: 'delivery',
-    label: '答辩与交付',
-    summary: '看测试、答辩、视频、评测和接手说明，直接对应比赛交付。'
+    label: '测试与维护',
+    summary: '看测试验证、交付注意事项和后续维护入口，直接对应比赛落地。'
   }
 ];
 
 export const ACTIVE_DOCS: ActiveDocMeta[] = [
   {
     order: 0,
-    path: 'doc/作品文档/00-作品总览与阅读地图.md',
-    navLabel: '作品总览',
-    shortTitle: '作品总览与阅读地图',
-    summary: '5 分钟看懂作品定位、主闭环、当前进度和不同角色先看哪里。',
-    sectionId: 'overview'
+    path: 'doc/作品文档/真人类文档/00-PRD需求分析.md',
+    navLabel: 'PRD',
+    shortTitle: 'PRD 需求分析',
+    summary: '看比赛版解决什么问题、核心闭环、角色边界和验收口径。',
+    sectionId: 'definition'
   },
   {
     order: 1,
-    path: 'doc/作品文档/01-PRD与需求分析.md',
-    navLabel: 'PRD',
-    shortTitle: 'PRD 与需求分析',
-    summary: '看作品解决什么问题、用户是谁、页面范围和验收标准是什么。',
-    sectionId: 'overview'
+    path: 'doc/作品文档/真人类文档/01-架构设计与技术选型.md',
+    navLabel: '架构设计',
+    shortTitle: '架构设计与技术选型',
+    summary: '看前端、FastAPI、PostgreSQL、ADP 与对象存储的职责划分。',
+    sectionId: 'architecture'
   },
   {
     order: 2,
-    path: 'doc/作品文档/02-场景与用户流程.md',
-    navLabel: '场景流程',
-    shortTitle: '场景与用户流程',
-    summary: '把选科、诊断、闯关、补桥、复习和知识更新串成完整演示主线。',
-    sectionId: 'experience'
+    path: 'doc/作品文档/真人类文档/02-数据库设计.md',
+    navLabel: '数据库',
+    shortTitle: '数据库设计',
+    summary: '看学习主链、知识治理和审计相关表结构如何落到 PostgreSQL。',
+    sectionId: 'architecture'
   },
   {
     order: 3,
-    path: 'doc/作品文档/03-页面与交互设计.md',
-    navLabel: '页面设计',
+    path: 'doc/作品文档/真人类文档/03-页面与交互设计.md',
+    navLabel: '页面交互',
     shortTitle: '页面与交互设计',
-    summary: '看学生端和后台端分别有哪些页面、每个页面负责什么。',
+    summary: '看学生端与后台端页面结构、关键状态块和演示入口。',
     sectionId: 'experience'
   },
   {
     order: 4,
-    path: 'doc/作品文档/04-总体架构与技术选型.md',
-    navLabel: '总体架构',
-    shortTitle: '总体架构与技术选型',
-    summary: '确认 Vue 3、Python FastAPI、PostgreSQL、ADP 的分工和系统边界。',
+    path: 'doc/作品文档/真人类文档/04-算法设计说明.md',
+    navLabel: '算法设计',
+    shortTitle: '算法设计说明',
+    summary: '看地图生成、短诊断重规划、闯关推进和补桥判定逻辑。',
     sectionId: 'architecture'
   },
   {
     order: 5,
-    path: 'doc/作品文档/05-算法与知识库设计.md',
-    navLabel: '算法知识库',
-    shortTitle: '算法与知识库设计',
-    summary: '看学习地图、补桥、画像、知识入库和演化规则如何成立。',
+    path: 'doc/作品文档/真人类文档/05-知识库设计.md',
+    navLabel: '知识库',
+    shortTitle: '知识库设计',
+    summary: '看资料入库、候选校验、发布回滚和知识演化的规则。',
     sectionId: 'architecture'
   },
   {
     order: 6,
-    path: 'doc/作品文档/06-接口与API说明.md',
-    navLabel: '接口 API',
-    shortTitle: '接口与 API 说明',
-    summary: '看页面、后端和 ADP 之间要交换哪些对象、状态和接口。',
+    path: 'doc/作品文档/真人类文档/06-API文档.md',
+    navLabel: 'API 文档',
+    shortTitle: 'API 文档',
+    summary: '看比赛版前后端之间的 REST、SSE、状态对象和响应要求。',
     sectionId: 'architecture'
   },
   {
     order: 7,
-    path: 'doc/作品文档/07-测试验证与预期效果.md',
-    navLabel: '测试验证',
-    shortTitle: '测试验证与预期效果',
-    summary: '看最小验收链路、专项验证点和通过标准怎么定义。',
-    sectionId: 'delivery'
+    path: 'doc/作品文档/真人类文档/07-用户使用文档.md',
+    navLabel: '用户使用',
+    shortTitle: '用户使用文档',
+    summary: '当前为占位文档，后续用于补齐面向终端用户的使用说明。',
+    sectionId: 'experience'
   },
   {
     order: 8,
-    path: 'doc/作品文档/08-答辩PPT大纲.md',
-    navLabel: '答辩 PPT',
-    shortTitle: '答辩 PPT 大纲',
-    summary: '看答辩时该怎么讲故事、怎么组织页面和技术证明。',
+    path: 'doc/作品文档/真人类文档/08-测试文档.md',
+    navLabel: '测试文档',
+    shortTitle: '测试文档',
+    summary: '看核心验收链路、性能 smoke、稳定性检查和通过标准。',
     sectionId: 'delivery'
   },
   {
     order: 9,
-    path: 'doc/作品文档/09-演示视频脚本.md',
-    navLabel: '视频脚本',
-    shortTitle: '演示视频脚本',
-    summary: '看 3 分钟视频应该怎么拍、怎么切镜头、怎么做降级预案。',
-    sectionId: 'delivery'
-  },
-  {
-    order: 10,
-    path: 'doc/作品文档/10-访问与评测手册.md',
-    navLabel: '访问手册',
-    shortTitle: '访问与评测手册',
-    summary: '看评委和测试同学怎样访问、体验和验收这套作品。',
-    sectionId: 'delivery'
-  },
-  {
-    order: 11,
-    path: 'doc/作品文档/11-开发技术文档.md',
-    navLabel: '技术文档',
-    shortTitle: '开发技术文档',
-    summary: '看当前展示站怎么启动，以及目标产品后续该怎么继续实现。',
+    path: 'doc/作品文档/真人类文档/09-项目维护手册.md',
+    navLabel: '维护手册',
+    shortTitle: '项目维护手册',
+    summary: '看比赛版项目的启动顺序、巡检入口、排障和恢复动作。',
     sectionId: 'delivery'
   }
 ];

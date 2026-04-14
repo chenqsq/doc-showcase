@@ -35,6 +35,17 @@ function normalizePath(value) {
   return value.replace(/\\/g, '/');
 }
 
+function isCatalogAssetPath(relativePath) {
+  return (
+    relativePath.startsWith('doc/作品文档/真人类文档/') ||
+    relativePath.startsWith('doc/开发文档/') ||
+    relativePath.startsWith('doc/智能体文档/') ||
+    relativePath.startsWith('doc/腾讯平台使用文档/') ||
+    relativePath.startsWith('doc/比赛资料/') ||
+    relativePath.startsWith('kb/高等数学_测试/')
+  );
+}
+
 function hashString(input) {
   let hash = 2166136261;
   for (let index = 0; index < input.length; index += 1) {
@@ -78,6 +89,10 @@ async function collectCatalogRoutePaths() {
       }
 
       const relativePath = normalizePath(relative(projectRoot, absolutePath));
+      if (!isCatalogAssetPath(relativePath)) {
+        continue;
+      }
+
       routePaths.add(`read/${hashString(relativePath)}`);
     }
   }

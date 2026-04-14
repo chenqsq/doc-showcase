@@ -10,20 +10,20 @@ function getDocByOrder(order: number) {
 }
 
 export default function HomeRoute() {
-  const overviewDoc = getDocByOrder(0);
-  const prdDoc = getDocByOrder(1);
+  const prdDoc = getDocByOrder(0);
+  const archDoc = getDocByOrder(1);
+  const databaseDoc = getDocByOrder(2);
   const pageDoc = getDocByOrder(3);
-  const archDoc = getDocByOrder(4);
-  const testDoc = getDocByOrder(7);
-  const manualDoc = getDocByOrder(10);
+  const testDoc = getDocByOrder(8);
+  const manualDoc = getDocByOrder(9);
 
   const quickEntries = [
     {
-      id: 'overview',
-      title: '先看作品总览',
-      description: '5 分钟看懂这是什么作品、演示主线是什么、当前做到哪一步。',
+      id: 'requirements',
+      title: '先看需求与范围',
+      description: '先把比赛版解决什么问题、主闭环是什么、这次做到哪一步看明白。',
       icon: MonitorPlay,
-      to: overviewDoc ? `/read/${overviewDoc.id}` : '/docs'
+      to: prdDoc ? `/read/${prdDoc.id}` : '/docs'
     },
     {
       id: 'pages',
@@ -35,7 +35,7 @@ export default function HomeRoute() {
     {
       id: 'architecture',
       title: '看技术方案',
-      description: '快速确认前端、FastAPI、PostgreSQL、ADP 各自负责什么。',
+      description: '快速确认架构、数据库、算法、知识库和 API 各自怎样配合。',
       icon: LibraryBig,
       to: archDoc ? `/read/${archDoc.id}` : '/docs'
     },
@@ -59,13 +59,13 @@ export default function HomeRoute() {
       id: 'speaker',
       role: '答辩主讲人',
       hint: '想组织答辩主线和演示顺序',
-      to: overviewDoc ? `/read/${overviewDoc.id}` : '/docs'
+      to: prdDoc ? `/read/${prdDoc.id}` : '/docs'
     },
     {
       id: 'developer',
       role: '新接手开发者',
-      hint: '想知道页面、接口和后续实现怎么接',
-      to: archDoc ? `/read/${archDoc.id}` : '/docs'
+      hint: '想知道架构、数据库和接口应该怎么接起来',
+      to: databaseDoc ? `/read/${databaseDoc.id}` : archDoc ? `/read/${archDoc.id}` : '/docs'
     },
     {
       id: 'tester',
@@ -95,17 +95,17 @@ export default function HomeRoute() {
               AI主导学习生命周期的自进化自学智能体平台
             </h1>
             <p className="max-w-[40rem] text-base leading-8 text-muted-foreground md:text-[1.02rem]">
-              这不是单纯的聊天机器人，而是一套让学生从选科、诊断、闯关、补桥、复习到知识更新都能被 AI 持续接管的学习系统。
+              这不是单纯的聊天机器人，而是一套让学生从选科、诊断、闯关、补桥、复习到知识更新都能被 AI 持续接住的学习系统。
             </p>
             <p className="max-w-[36rem] text-sm leading-7 text-muted-foreground md:text-base">
-              如果你只想快速看懂作品，先看总览；如果你想直接看页面、技术方案或评测方式，下面已经给你分好入口。
+              这里默认展示真人类文档主线。如果你想先看需求、页面、技术方案或测试维护，下面已经给你分好入口。
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3 pt-1">
             <Button asChild size="lg">
-              <Link to={overviewDoc ? `/read/${overviewDoc.id}` : '/docs'}>
-                进入作品总览
+              <Link to={prdDoc ? `/read/${prdDoc.id}` : '/docs'}>
+                进入真人类文档
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -175,11 +175,11 @@ export default function HomeRoute() {
       <section className="layout-panel-gap grid">
         <div className="grid gap-3">
           <Badge variant="outline" className="w-fit bg-background/70">
-            全部作品文档
+            全部真人类文档
           </Badge>
           <h2 className="font-serif text-[clamp(1.9rem,2.8vw,2.8rem)] leading-none text-foreground">完整阅读顺序</h2>
           <p className="max-w-3xl text-sm leading-7 text-muted-foreground md:text-base">
-            真要从头到尾读，再按这条顺序走。这里保留完整入口，但不再把它顶成首页主视图。
+            真要从头到尾读，就按这条顺序走。这里保留完整入口，但主线内容已经切到真人类文档。
           </p>
         </div>
 
